@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container my-5">
+
+  <!-- Toolbar -->
+  <div class="d-flex flex-wrap justify-content-between align-items-center mb-4">
+    <div>
+      <h1 class="fw-bold mb-0">Branches</h1>
+      <p class="text-muted mb-0">School campuses and offices.</p>
+    </div>
+    {% if user.role == 'SYSTEM_ADMIN' or user.is_superuser %}
+      <a class="btn btn-primary" href="{% url 'branch_create' %}">
+        <i class="bi bi-building-add"></i> Add Branch
+      </a>
+    {% endif %}
+  </div>
+
+  <!-- Branches Table Card -->
+  <div class="card shadow-lg">
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+          <thead class="table-light">
+            <tr>
+              <th>Code</th>
+              <th>Name</th>
+              <th>Contact</th>
+              <th>Status</th>
+              <th class="text-center">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for branch in branches %}
+            <tr>
+              <td>{{ branch.code }}</td>
+              <td>{{ branch.name }}</td>
+              <td>{{ branch.phone|default:"—" }}</td>
+              <td>
+                {% if branch.is_active %}
+                  <span class="badge bg-success">Active</span>
+                {% else %}
+                  <span class="badge bg-secondary">Inactive</span>
+                {% endif %}
+              </td>
+              <td class="text-center">
+                {% if user.role == 'SYSTEM_ADMIN' or user.is_superuser %}
+                  <a href="{% url 'branch_edit' branch.pk %}" class="btn btn-sm btn-outline-primary">
+                    <i class="bi bi-pencil-square"></i> Edit
+                  </a>
+                {% endif %}
+              </td>
+            </tr>
+            {% empty %}
+            <tr>
+              <td colspan="5" class="text-center text-muted py-4">
+                No branches yet.
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

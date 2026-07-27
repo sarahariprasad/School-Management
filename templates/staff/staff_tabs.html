@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Staff Management | School ERP{% endblock %}
+{% block content %}
+
+<div class="container my-5">
+
+  <!-- Tabs -->
+  <ul class="nav nav-tabs" id="staffTab" role="tablist">
+    <li class="nav-item">
+      <button class="nav-link {% if active_tab == 'create' %}active{% endif %}" id="create-tab"
+              data-bs-toggle="tab" data-bs-target="#create" type="button" role="tab">
+        <i class="bi bi-person-plus"></i> Create Staff
+      </button>
+    </li>
+    <li class="nav-item">
+      <button class="nav-link {% if active_tab == 'deactivate' %}active{% endif %}" id="deactivate-tab"
+              data-bs-toggle="tab" data-bs-target="#deactivate" type="button" role="tab">
+        <i class="bi bi-person-dash"></i> Deactivate
+      </button>
+    </li>
+    <li class="nav-item">
+      <button class="nav-link {% if active_tab == 'documents' %}active{% endif %}" id="documents-tab"
+              data-bs-toggle="tab" data-bs-target="#documents" type="button" role="tab">
+        <i class="bi bi-file-earmark-text"></i> Documents
+      </button>
+    </li>
+    <li class="nav-item">
+      <button class="nav-link {% if active_tab == 'education' %}active{% endif %}" id="education-tab"
+              data-bs-toggle="tab" data-bs-target="#education" type="button" role="tab">
+        <i class="bi bi-book"></i> Education
+      </button>
+    </li>
+  </ul>
+
+  <!-- Tab Content -->
+  <div class="tab-content card p-4 shadow-sm" id="staffTabContent">
+
+    <!-- Create Staff -->
+    <div class="tab-pane fade {% if active_tab == 'create' %}show active{% endif %}" id="create" role="tabpanel">
+      <h3>Add Staff Member</h3>
+      <form method="post" enctype="multipart/form-data" action="{% url 'staff_create' %}">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit" class="btn btn-primary">Save</button>
+      </form>
+    </div>
+
+    <!-- Deactivate Staff -->
+    <div class="tab-pane fade {% if active_tab == 'deactivate' %}show active{% endif %}" id="deactivate" role="tabpanel">
+      <h3>Deactivate Staff</h3>
+      <form method="post" action="{% url 'staff_deactivate' profile.pk %}">
+        {% csrf_token %}
+        {{ exit_form.as_p }}
+        <button type="submit" class="btn btn-warning">Deactivate</button>
+      </form>
+    </div>
+
+    <!-- Documents -->
+    <div class="tab-pane fade {% if active_tab == 'documents' %}show active{% endif %}" id="documents" role="tabpanel">
+      <h3>Upload Documents</h3>
+      <form method="post" enctype="multipart/form-data" action="{% url 'document_add' profile.pk %}">
+        {% csrf_token %}
+        {{ document_form.as_p }}
+        <button type="submit" class="btn btn-info">Upload</button>
+      </form>
+    </div>
+
+    <!-- Education -->
+    <div class="tab-pane fade {% if active_tab == 'education' %}show active{% endif %}" id="education" role="tabpanel">
+      <h3>Add Education Record</h3>
+      <form method="post" enctype="multipart/form-data" action="{% url 'education_add' profile.pk %}">
+        {% csrf_token %}
+        {{ education_form.as_p }}
+        <button type="submit" class="btn btn-success">Add</button>
+      </form>
+    </div>
+
+  </div>
+</div>
+
+{% endblock %}

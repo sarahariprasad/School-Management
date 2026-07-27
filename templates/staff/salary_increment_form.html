@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block title %}Add Salary Increment{% endblock %}
+{% block content %}
+<h2>Add Salary Increment for {{ profile.user.get_full_name }}</h2>
+<div class="card">
+  <form method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit" class="btn">Save</button>
+    <a href="{% url 'staff_profile_admin_view' profile.pk %}" class="btn secondary">Cancel</a>
+  </form>
+</div>
+{% endblock %}

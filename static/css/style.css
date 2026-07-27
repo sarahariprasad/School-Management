@@ -1,0 +1,86 @@
+:root {
+  --navy: #102a43;
+  --blue: #2563eb;
+  --bg: #f5f7fb;
+  --line: #dbe3ee;
+}
+
+body {
+  background: var(--bg);
+  color: #1f2937;
+  font: 15px system-ui, sans-serif;
+
+  /* Adjust these values to match navbar/footer height */
+  padding-top: 80px;   /* navbar height (~70px) + gap */
+  padding-bottom: 70px; /* footer height (~60px) + gap */
+}
+
+main.container {
+  margin-top: 1rem; /* extra breathing space below navbar */
+}
+
+.bg-navy {
+  background-color: var(--navy) !important;
+}
+
+.card {
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  box-shadow: 0 1px 3px #0000000a;
+}
+
+.btn {
+  border-radius: 7px;
+}
+
+.btn-primary {
+  background: var(--blue);
+  border: none;
+}
+
+.btn-secondary {
+  background: #64748b;
+  border: none;
+}
+
+label {
+  display: block;
+  font-weight: 650;
+  margin-top: 1rem;
+}
+
+input, select, textarea {
+  width: 100%;
+  margin-top: .35rem;
+  padding: .65rem;
+  border: 1px solid #b8c6d6;
+  border-radius: 7px;
+  font: inherit;
+}
+
+.errorlist {
+  color: #b42318;
+  padding-left: 1rem;
+}
+
+.bg-lightgreen {
+  background-color: #d5f67c !important; /* LightGreen */
+}
+
+.login-wrapper {
+  margin-top: 100px;
+}
+
+.login-background {
+  background: url("../images/school_pattern.jpg") center/cover no-repeat;
+  opacity: 0.9;
+}
+
+.reset-background {
+  background: url("../images/school_pattern.jpg") center/cover no-repeat;
+  background-color: #f8f9fa;
+}
+
+.bright-text {
+  color: #15285a;
+}

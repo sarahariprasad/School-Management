@@ -1,0 +1,257 @@
+{% extends "base.html" %}
+{% block title %}My Profile{% endblock %}
+{% block content %}
+<div class="container my-5">
+
+  <!-- Tabs -->
+  <ul class="nav nav-tabs" id="profileTabs" role="tablist">
+    <li class="nav-item">
+      <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#profile">Profile</button>
+    </li>
+    <li class="nav-item">
+      <button class="nav-link" data-bs-toggle="tab" data-bs-target="#experience">Experience</button>
+    </li>
+    <li class="nav-item">
+      <button class="nav-link" data-bs-toggle="tab" data-bs-target="#promotion">Promotions</button>
+    </li>
+    <li class="nav-item">
+      <button class="nav-link" data-bs-toggle="tab" data-bs-target="#salary">Salary</button>
+    </li>
+    <li class="nav-item">
+      <button class="nav-link" data-bs-toggle="tab" data-bs-target="#documents">Documents</button>
+    </li>
+  </ul>
+
+  <!-- Tab Content -->
+  <div class="tab-content mt-3">
+
+    <!-- Profile Tab -->
+    <div class="tab-pane fade show active" id="profile">
+      <div class="card shadow-sm mb-3">
+        <div class="card-body">
+          <dl class="row">
+            <dt class="col-sm-3">Name</dt>
+            <dd class="col-sm-9">{{ profile.user.get_full_name|default:profile.user.username }}</dd>
+
+            <dt class="col-sm-3">Email</dt>
+            <dd class="col-sm-9">{{ profile.user.email }}</dd>
+
+            <dt class="col-sm-3">Phone</dt>
+            <dd class="col-sm-9">{{ profile.phone }}</dd>
+
+            <dt class="col-sm-3">Address</dt>
+            <dd class="col-sm-9">{{ profile.address }}</dd>
+
+            <dt class="col-sm-3">Branch</dt>
+            <dd class="col-sm-9">{{ profile.user.branch.name }}</dd>
+
+            <dt class="col-sm-3">Designation</dt>
+            <dd class="col-sm-9">{{ profile.designation }}</dd>
+
+            <dt class="col-sm-3">Joining Date</dt>
+            <dd class="col-sm-9">{{ profile.joining_date }}</dd>
+
+            <dt class="col-sm-3">Status</dt>
+            <dd class="col-sm-9">
+              {% if profile.is_active %}
+                <span class="badge bg-success">Active</span>
+              {% else %}
+                <span class="badge bg-secondary">Inactive</span>
+              {% endif %}
+            </dd>
+          </dl>
+          <!-- Trigger Modal (only on your own profile — this always edits the logged-in user) -->
+          {% if is_self %}
+            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#editContactModal">
+              <i class="bi bi-pencil-square"></i> Edit Address / Phone
+            </button>
+          {% else %}
+            <a href="{% url 'staff_edit' profile.pk %}" class="btn btn-primary">
+              <i class="bi bi-pencil-square"></i> Edit Staff Details
+            </a>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Experience Tab -->
+    <div class="tab-pane fade" id="experience">
+      <div class="card shadow-sm">
+        <div class="card-body">
+          <h5 class="card-title">Experience History</h5>
+          {% if not is_self %}
+            <a href="{% url 'experience_add' profile.pk %}" class="btn btn-sm btn-outline-primary mb-2">
+              <i class="bi bi-plus-lg"></i> Add Experience
+            </a>
+          {% endif %}
+          <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+              <thead class="table-light">
+                <tr><th>Organization</th><th>Role</th><th>Start</th><th>End</th></tr>
+              </thead>
+              <tbody>
+                {% for exp in experience_history %}
+                <tr>
+                  <td>{{ exp.organization }}</td>
+                  <td>{{ exp.role }}</td>
+                  <td>{{ exp.start_date }}</td>
+                  <td>{{ exp.end_date|default:"Present" }}</td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="4" class="text-center text-muted">No experience records yet.</td></tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Promotion Tab -->
+    <div class="tab-pane fade" id="promotion">
+      <div class="card shadow-sm">
+        <div class="card-body">
+          <h5 class="card-title">Promotion History</h5>
+          {% if not is_self %}
+            <a href="{% url 'promotion_add' profile.pk %}" class="btn btn-sm btn-outline-primary mb-2">
+              <i class="bi bi-plus-lg"></i> Add Promotion
+            </a>
+          {% endif %}
+          <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+              <thead class="table-light">
+                <tr><th>Old Designation</th><th>New Designation</th><th>Date</th></tr>
+              </thead>
+              <tbody>
+                {% for promo in promotions %}
+                <tr>
+                  <td>{{ promo.old_designation }}</td>
+                  <td>{{ promo.new_designation }}</td>
+                  <td>{{ promo.promotion_date }}</td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="3" class="text-center text-muted">No promotions yet.</td></tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Salary Tab -->
+    <div class="tab-pane fade" id="salary">
+      <div class="card shadow-sm">
+        <div class="card-body">
+          <h5 class="card-title">Salary Increment History</h5>
+          {% if not is_self %}
+            <a href="{% url 'salary_increment_add' profile.pk %}" class="btn btn-sm btn-outline-primary mb-2">
+              <i class="bi bi-plus-lg"></i> Add Salary Increment
+            </a>
+          {% endif %}
+          <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+              <thead class="table-light">
+                <tr><th>Year</th><th>Base Salary</th><th>Increment</th><th>New Salary</th></tr>
+              </thead>
+              <tbody>
+                {% for inc in increments %}
+                <tr>
+                  <td>{{ inc.year }}</td>
+                  <td>{{ inc.base_salary }}</td>
+                  <td>{{ inc.increment_amount }}</td>
+                  <td>{{ inc.new_salary }}</td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="4" class="text-center text-muted">No salary records yet.</td></tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Documents Tab -->
+    <div class="tab-pane fade" id="documents">
+      <div class="card shadow-sm">
+        <div class="card-body">
+          <h5 class="card-title">Documents</h5>
+          {% if not is_self %}
+            <a href="{% url 'staff_documents' profile.pk %}" class="btn btn-sm btn-outline-primary mb-2">
+              <i class="bi bi-upload"></i> Upload More Documents
+            </a>
+          {% endif %}
+
+          <!-- Address Proof -->
+          {% if profile.address_proof %}
+            <p>
+              <strong>Address Proof:</strong>
+              <a href="{% url 'address_proof_download' profile.pk %}" class="btn btn-sm btn-outline-primary">
+                Download
+              </a>
+            </p>
+          {% else %}
+            <p class="text-muted">No address proof uploaded.</p>
+          {% endif %}
+
+          <!-- Education Certificates -->
+          <h6>Education Certificates</h6>
+          <ul>
+            {% for edu in profile.education_records.all %}
+              <li>
+                {{ edu.qualification }}
+                <a href="{% url 'education_download' profile.pk edu.pk %}" class="btn btn-sm btn-outline-primary">
+                  Download
+                </a>
+              </li>
+            {% empty %}
+              <li class="text-muted">No education certificates uploaded.</li>
+            {% endfor %}
+          </ul>
+
+          <!-- Staff Documents -->
+          <h6>Staff Documents</h6>
+          <ul>
+            {% for doc in profile.documents.all %}
+              <li>
+                {{ doc.title }}
+                <a href="{% url 'staff_document_download' profile.pk doc.pk %}" class="btn btn-sm btn-outline-primary">
+                  Download
+                </a>
+              </li>
+            {% empty %}
+              <li class="text-muted">No staff documents uploaded.</li>
+            {% endfor %}
+          </ul>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+{% if is_self %}
+<!-- Modal for Editing Address/Phone (self-service only) -->
+<div class="modal fade" id="editContactModal" tabindex="-1" aria-labelledby="editContactModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form method="post" action="{% url 'staff_profile_edit' %}">
+        {% csrf_token %}
+        <div class="modal-header">
+          <h5 class="modal-title" id="editContactModalLabel">Edit Contact Info</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          {{ form.as_p }}  <!-- StaffSelfEditForm with only address & phone -->
+        </div>
+        <div class="modal-footer">
+          <button type="submit" class="btn btn-primary">Save Changes</button>
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,135 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Staff List | School ERP{% endblock %}
+{% block content %}
+
+<div class="d-flex flex-column min-vh-100 staff-background">
+  <div class="container my-5">
+
+    <!-- Toolbar -->
+    <div class="d-flex flex-wrap justify-content-between align-items-center mb-4">
+      <h1 class="fw-bold mb-0">Staff</h1>
+      <div class="d-flex gap-2">
+        {% if user.is_system_admin or user.role == 'BRANCH_ADMIN' %}
+          <a class="btn btn-primary" href="{% url 'staff_create' %}">
+            <i class="bi bi-person-plus"></i> Add Staff
+          </a>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Staff Table Card -->
+    <div class="card shadow-lg">
+
+      <!-- Search Bar -->
+      <div class="card-header bg-white">
+        <form method="get">
+          <div class="row g-2 align-items-center">
+            <div class="col-md-6">
+              <input
+                type="text"
+                name="search"
+                class="form-control"
+                placeholder="Search by Employee ID, Name, Email, Phone, Department..."
+                value="{{ search }}"
+              >
+            </div>
+
+            <div class="col-auto">
+              <button type="submit" class="btn btn-primary">
+                <i class="bi bi-search"></i> Search
+              </button>
+            </div>
+
+            {% if search %}
+            <div class="col-auto">
+              <a href="{% url 'staff_list' %}" class="btn btn-outline-secondary">
+                <i class="bi bi-x-circle"></i> Clear
+              </a>
+            </div>
+            {% endif %}
+
+            <div class="col text-end">
+              <small class="text-muted">
+                Total Staff: <strong>{{ staff.count }}</strong>
+              </small>
+            </div>
+          </div>
+        </form>
+      </div>
+
+      <!-- Table -->
+      <div class="card-body p-0">
+        <div class="table-responsive">
+          <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+              <tr>
+                <th>ID</th>
+                <th>Name</th>
+                <th>Department</th>
+                <th>Branch</th>
+                <th>Status</th>
+                <th>Current Role</th>
+                
+                <th class="text-center">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for person in staff %}
+              <tr>
+                <td>{{ person.employee_id }}</td>
+                <td>{{ person.user.get_full_name|default:person.user.email }}</td>
+                <td>{{ person.get_department_display }}</td>
+                <td>{{ person.user.branch.name|default:"—" }}</td>
+                <td>
+                  {% if person.is_active %}
+                    <span class="badge bg-success">Active</span>
+                  {% else %}
+                    <span class="badge bg-secondary">
+                      Left {{ person.leaving_date|date:"d M Y" }}
+                    </span>
+                  {% endif %}
+                </td>
+                <td>
+                  {% if person.promotions.last %}
+                    {{ person.promotions.last.new_designation }}
+                  {% else %}
+                    {{ person.designation }}
+                  {% endif %}
+                </td>
+                <td>
+                  <div class="d-flex flex-wrap gap-2">
+                    {% if user.is_system_admin or user.role == 'BRANCH_ADMIN' %}
+                      <a href="{% url 'staff_edit' person.pk %}" class="btn btn-sm btn-outline-primary">Edit</a>
+                      <a href="{% url 'staff_documents' person.pk %}" class="btn btn-sm btn-outline-info">Documents</a>
+                      {% if person.is_active %}
+                        <a href="{% url 'staff_deactivate' person.pk %}" class="btn btn-sm btn-outline-warning">Mark Left</a>
+                      {% endif %}
+                    {% endif %}
+                    
+                  </div>
+                </td>
+
+              </tr>
+              {% empty %}
+              <tr>
+                <td colspan="8" class="text-center text-muted py-4">
+                  {% if search %}
+                    No staff found matching "<strong>{{ search }}</strong>".
+                  {% else %}
+                    No staff members yet.
+                  {% endif %}
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+</div>
+
+{% endblock %}
