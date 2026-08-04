@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Student List | School ERP{% endblock %}
+{% block content %}
+<div class="container mt-4">
+    <h2 class="mb-4 text-center">Student List</h2>
+
+    <!-- Toolbar -->
+    <form method="get" class="row mb-3">
+        <div class="col-md-4">
+            <input type="text" name="q" value="{{ request.GET.q }}" class="form-control" placeholder="Search by name, ID, class, teacher">
+        </div>
+        {% if error_message %}
+        <div class="alert alert-danger">{{ error_message }}</div>
+        {% endif %}
+
+        <div class="col-md-3">
+            <select name="status" class="form-select">
+                <option value="">All Status</option>
+                <option value="active" {% if request.GET.status == "active" %}selected{% endif %}>Active</option>
+                <option value="inactive" {% if request.GET.status == "inactive" %}selected{% endif %}>Inactive</option>
+            </select>
+        </div>
+        <div class="col-md-2">
+            <button type="submit" class="btn btn-primary w-100">Filter</button>
+        </div>
+        <div class="col-md-3 text-end">
+            <a href="{% url 'student_create' %}" class="btn btn-success">+ Add Student</a>
+        </div>
+    </form>
+
+    <!-- Student Table -->
+    <div class="table-responsive shadow-sm rounded bg-white">
+        <table class="table table-striped table-hover align-middle">
+            <thead class="table-dark">
+                <tr>
+                    <th>Photo</th>
+                    <th>Student ID</th>
+                    <th>Name</th>
+                    <th>Class</th>
+                    <th>Assigned Teacher</th>
+                    <th>Therapies</th>
+                    <th>Admission Date</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for student in students %}
+                <tr>
+                    <td>
+                        {% if student.photo %}
+                            <img src="{{ student.photo.url }}" alt="Photo" class="img-thumbnail" style="width:60px; height:60px;">
+                        {% else %}
+                            <span class="text-muted">No Photo</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ student.student_id }}</td>
+                    <td>{{ student.name }}</td>
+                    <td>{{ student.student_class }}</td>
+                    <td>{{ student.assigned_teacher }}</td>
+                    <td>
+                        {% for therapy in student.therapies.all %}
+                            <span class="badge bg-info text-dark">{{ therapy.name }}</span>
+                        {% empty %}
+                            <span class="text-muted">None</span>
+                        {% endfor %}
+                    </td>
+                    <td>{{ student.admission_date }}</td>
+                    <td>
+                        {% if student.is_active %}
+                            <span class="badge bg-success">Active</span>
+                        {% else %}
+                            <span class="badge bg-secondary">Inactive</span>
+                            {% if student.inactive_date %}
+                                <small class="text-muted">since {{ student.inactive_date }}</small>
+                            {% endif %}
+                        {% endif %}
+                    </td>
+                    <td>
+                        <a href="{% url 'student_edit' student.pk %}" class="btn btn-sm btn-primary">Edit</a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="9" class="text-center text-muted py-4">
+                        No students found.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+
+{% endblock %}
