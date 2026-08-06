@@ -2,13 +2,10 @@ from django.contrib.auth.decorators import login_required
 from django.http import FileResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from core.permissions import branch_scope, role_required
-from .forms import EducationRecordForm, ExperienceFormSet, StaffCreateForm, StaffDocumentForm, StaffExitForm, StaffProfileForm,StaffSelfEditForm,PromotionHistoryForm,ExperienceHistoryForm,SalaryIncrementForm,EducationFormSet,DocumentFormSet,SalaryFormSet
+from .forms import EducationRecordForm, ExperienceFormSet, StaffCreateForm, StaffDocumentForm, StaffExitForm, StaffProfileForm,StaffSelfEditForm,PromotionHistoryForm,ExperienceHistoryForm,SalaryIncrementForm,EducationFormSet,DocumentFormSet,SalaryFormSet,PromotionFormSet
 from .models import EducationRecord, StaffDocument, StaffProfile
 from django.db.models import Q, Value
 from django.db.models.functions import Concat
-
-
-
 
 ## staff list view with search ##
 @login_required
@@ -63,7 +60,7 @@ def staff_create(request):
             education_formset.save()
             document_formset.save()
             salary_formset.save()
-            return redirect("staff_edit", pk=profile.pk)
+            return redirect("staff_list")
     else:
         form = StaffCreateForm(actor=request.user)
         education_formset = EducationFormSet()
@@ -77,8 +74,6 @@ def staff_create(request):
         "salary_formset": salary_formset,
         "title": "Add staff member",
     })
-
-
 
 @role_required("SYSTEM_ADMIN", "BRANCH_ADMIN")
 def staff_deactivate(request, pk):
@@ -239,40 +234,42 @@ def staff_profile_admin_view(request, pk):
 ### staff view and edit ####
 @role_required("SYSTEM_ADMIN", "BRANCH_ADMIN")
 def staff_edit(request, pk):
-    profile = get_object_or_404(
-        branch_scope(request.user, StaffProfile.objects.select_related("user"), "user__branch"),
-        pk=pk
-    )
+    profile = get_object_or_404(StaffProfile, pk=pk)
 
     if request.method == "POST":
-        profile_form = StaffProfileForm(request.POST, request.FILES, instance=profile)
+        form = StaffProfileForm(request.POST, request.FILES, instance=profile)
         education_formset = EducationFormSet(request.POST, request.FILES, instance=profile)
         document_formset = DocumentFormSet(request.POST, request.FILES, instance=profile)
         salary_formset = SalaryFormSet(request.POST, instance=profile)
         experience_formset = ExperienceFormSet(request.POST, request.FILES, instance=profile)
+        promotion_formset = PromotionFormSet(request.POST, instance=profile)
 
-        if (profile_form.is_valid() and education_formset.is_valid() and
+        if (form.is_valid() and education_formset.is_valid() and
             document_formset.is_valid() and salary_formset.is_valid() and
-            experience_formset.is_valid()):
-            profile_form.save()
+            experience_formset.is_valid() and promotion_formset.is_valid()):
+            
+            profile = form.save()
             education_formset.save()
             document_formset.save()
             salary_formset.save()
             experience_formset.save()
-            return redirect("staff_profile_admin_view", pk=profile.pk)
+            promotion_formset.save()
+
+            return redirect("staff_list")
     else:
-        profile_form = StaffProfileForm(instance=profile)
+        form = StaffProfileForm(instance=profile)
         education_formset = EducationFormSet(instance=profile)
         document_formset = DocumentFormSet(instance=profile)
         salary_formset = SalaryFormSet(instance=profile)
         experience_formset = ExperienceFormSet(instance=profile)
+        promotion_formset = PromotionFormSet(instance=profile)
 
     return render(request, "staff/profile_edit.html", {
-        "profile_form": profile_form,
+        "profile_form": form,
         "education_formset": education_formset,
         "document_formset": document_formset,
         "salary_formset": salary_formset,
         "experience_formset": experience_formset,
-        "title": "Edit staff member",
-        "profile": profile,
+        "promotion_formset": promotion_formset,
+        "title": f"Edit Staff: {profile.user.first_name} {profile.user.last_name}",
     })

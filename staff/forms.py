@@ -21,7 +21,7 @@ class StaffCreateForm(forms.ModelForm):
 
     class Meta:
         model = StaffProfile
-        fields = ("employee_id", "department", "designation", "joining_date", "phone", "address", "city", "state", "postal_code", "address_proof_type", "address_proof", "is_active")
+        fields = ("employee_id", "department", "designation", "joining_date", "phone", "address", "city", "state","photo", "postal_code", "address_proof_type", "address_proof", "is_active")
         widgets = {"joining_date": forms.DateInput(attrs={"type": "date"})}
 
     def __init__(self, *args, actor=None, **kwargs):
@@ -84,32 +84,38 @@ class StaffExitForm(forms.ModelForm):
             "leaving_date": forms.DateInput(attrs={"type": "date"}),
             "exit_reason": forms.Textarea(attrs={"rows": 4, "placeholder": "Resigned, contract ended, etc."}),
         }
-
 class StaffProfileForm(forms.ModelForm):
-    email = forms.EmailField(required=True)
+    # Extra fields from the related User model
+    first_name = forms.CharField(
+        max_length=150,
+        required=True,
+        widget=forms.TextInput(attrs={"class": "form-control"})
+    )
+    last_name = forms.CharField(
+        max_length=150,
+        required=True,
+        widget=forms.TextInput(attrs={"class": "form-control"})
+    )
+    email = forms.EmailField(
+        required=True,
+        widget=forms.EmailInput(attrs={"class": "form-control"})
+    )
+    
+
     class Meta:
         model = StaffProfile
         fields = [
-            "employee_id",
-            "department",
-            "designation",
-            "joining_date",
-            
-            "phone",
-            "address",
-            "city",
-            "state",
-            "postal_code",
-            "address_proof_type",
-            "address_proof",
-            "is_active",
+            "employee_id", "department", "designation", "joining_date", "phone",
+            "address", "city", "state", "postal_code", "address_proof_type",
+            "address_proof", "photo", "is_active",
         ]
-        widgets = {
-            "joining_date": forms.DateInput(attrs={"type": "date"})
-        }
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         if self.instance and self.instance.user_id:
+            # Populate initial values from the linked User
+            self.fields["first_name"].initial = self.instance.user.first_name
+            self.fields["last_name"].initial = self.instance.user.last_name
             self.fields["email"].initial = self.instance.user.email
 
     def save(self, commit=True):
@@ -117,13 +123,12 @@ class StaffProfileForm(forms.ModelForm):
         if commit:
             profile.save()
             user = profile.user
+            # Save back to User model
+            user.first_name = self.cleaned_data["first_name"]
+            user.last_name = self.cleaned_data["last_name"]
             user.email = self.cleaned_data["email"]
-            # Keep login access in sync with the "Active" flag on this form.
-            # Without this, an admin can mark a profile inactive/active here
-            # while the underlying login (User.is_active) silently stays
-            # out of sync with what staff_deactivate() does.
             user.is_active = profile.is_active
-            user.save(update_fields=["email", "is_active"])
+            user.save(update_fields=["first_name", "last_name", "email", "is_active"])
         return profile
 
 class EducationRecordForm(forms.ModelForm):
@@ -145,20 +150,25 @@ class ExperienceHistoryForm(forms.ModelForm):
         model = ExperienceHistory
         fields = ["organization", "role", "start_date", "end_date"]
 
+class PromotionHistoryForm(forms.ModelForm):
+    class Meta:
+        model = PromotionHistory
+        fields = ["old_designation", "new_designation", "promotion_date"]
 # Inline formsets
 EducationFormSet = inlineformset_factory(StaffProfile, EducationRecord, form=EducationRecordForm, extra=1, can_delete=True)
 DocumentFormSet = inlineformset_factory(StaffProfile, StaffDocument, form=StaffDocumentForm, extra=1, can_delete=True)
 SalaryFormSet = inlineformset_factory(StaffProfile, SalaryIncrement, form=SalaryIncrementForm, extra=1, can_delete=True)
 ExperienceFormSet = inlineformset_factory(StaffProfile, ExperienceHistory, form=ExperienceHistoryForm, extra=1, can_delete=True)
-
+PromotionFormSet = inlineformset_factory(
+    StaffProfile, PromotionHistory,
+    form=PromotionHistoryForm,
+    extra=1, can_delete=True
+)
 class StaffSelfEditForm(forms.ModelForm):
     class Meta:
         model = StaffProfile
         fields = ["address", "phone"]  # only these fields are editable
 
 
-class PromotionHistoryForm(forms.ModelForm):
-    class Meta:
-        model = PromotionHistory
-        fields = ["old_designation", "new_designation", "promotion_date"]
+
 

@@ -38,6 +38,13 @@ class StaffProfile(models.Model):
     postal_code = models.CharField(max_length=15, blank=True)
     address_proof_type = models.CharField(max_length=60, blank=True)
     address_proof = models.FileField(upload_to=staff_document_path, blank=True, validators=document_validators)
+    photo = models.FileField(
+    upload_to=staff_document_path,
+    blank=True,
+    null=True,
+    validators=[FileExtensionValidator(["jpg", "jpeg", "png"]), validate_document_size]
+)
+
     is_active = models.BooleanField(default=True)
 
     class Meta:

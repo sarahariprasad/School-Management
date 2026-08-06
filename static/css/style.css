@@ -85,7 +85,7 @@ main{
 
 .nav-link{
 
-    color:white !important;
+    color:hsl(45, 92%, 44%) !important;
 
     font-weight:500;
 
@@ -534,4 +534,783 @@ footer{
 
     }
 
+}
+
+/*==================================================
+            HOME PAGE (BEFORE LOGIN)
+==================================================*/
+
+.hero-section{
+    background:
+        linear-gradient(rgba(15,118,110,.90),rgba(15,118,110,.90)),
+        url("../images/school_pattern.jpg") center center/cover no-repeat;
+    border-radius:20px;
+    padding:60px 45px;
+    color:#fff;
+    overflow:hidden;
+}
+
+.hero-title{
+    font-size:2.8rem;
+    font-weight:700;
+    margin-bottom:20px;
+}
+
+.hero-title span{
+    color:#ffd54f;
+}
+
+.hero-text{
+    font-size:1rem;
+    line-height:1.8;
+    color:#eef7f7;
+    margin-bottom:18px;
+}
+
+.hero-btn{
+    padding:12px 30px;
+    border-radius:10px;
+    font-weight:600;
+    transition:.3s;
+}
+
+.hero-btn:hover{
+    transform:translateY(-3px);
+}
+
+.hero-image{
+    width:100%;
+    max-height:380px;
+    object-fit:cover;
+    border-radius:18px;
+    box-shadow:0 15px 35px rgba(0,0,0,.25);
+}
+
+
+/*==================================================
+            DASHBOARD
+==================================================*/
+
+.dashboard-section{
+    padding:5px 0 20px;
+}
+
+.dashboard-header{
+    margin-bottom:25px;
+}
+
+.dashboard-header h2{
+    font-weight:700;
+    color:#1f2937;
+}
+
+.dashboard-header p{
+    color:#6b7280;
+    margin-bottom:0;
+}
+
+
+/*==================================================
+        STATISTICS CARDS
+==================================================*/
+
+.stats-card{
+
+    position:relative;
+
+    display:flex;
+
+    align-items:center;
+
+    gap:20px;
+
+    overflow:hidden;
+
+    border-radius:18px;
+
+    padding:28px;
+
+    color:#fff;
+
+    box-shadow:0 12px 28px rgba(0,0,0,.12);
+
+    transition:.35s;
+
+    min-height:160px;
+
+}
+
+.stats-card:hover{
+
+    transform:translateY(-8px);
+
+    box-shadow:0 18px 40px rgba(0,0,0,.18);
+
+}
+
+.stats-card::before{
+
+    content:"";
+
+    position:absolute;
+
+    width:130px;
+
+    height:130px;
+
+    border-radius:50%;
+
+    background:rgba(255,255,255,.10);
+
+    right:-40px;
+
+    top:-40px;
+
+}
+
+.stats-card::after{
+
+    content:"";
+
+    position:absolute;
+
+    width:90px;
+
+    height:90px;
+
+    border-radius:50%;
+
+    background:rgba(255,255,255,.08);
+
+    right:20px;
+
+    bottom:-30px;
+
+}
+
+
+/*==================================================
+        CARD COLORS
+==================================================*/
+
+.branches-card{
+
+    background:linear-gradient(135deg,#0f766e,#14b8a6);
+
+}
+
+.staff-card{
+
+    background:linear-gradient(135deg,#2563eb,#3b82f6);
+
+}
+
+.student-card{
+
+    background:linear-gradient(135deg,#7c3aed,#8b5cf6);
+
+}
+
+
+/*==================================================
+        ICON
+==================================================*/
+
+.stats-icon{
+
+    width:75px;
+
+    height:75px;
+
+    min-width:75px;
+
+    border-radius:50%;
+
+    background:rgba(255,255,255,.18);
+
+    display:flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+    font-size:32px;
+
+}
+
+.stats-icon i{
+
+    color:#fff;
+
+}
+
+
+/*==================================================
+        CONTENT
+==================================================*/
+
+.stats-content{
+
+    z-index:2;
+
+}
+
+.stats-content h6{
+
+    margin-bottom:8px;
+
+    text-transform:uppercase;
+
+    letter-spacing:1px;
+
+    font-size:14px;
+
+    opacity:.9;
+
+}
+
+.stats-content h2{
+
+    margin:0;
+
+    font-size:2.4rem;
+
+    font-weight:700;
+
+}
+
+.stats-content small{
+
+    opacity:.85;
+
+    font-size:13px;
+
+}
+
+
+/*==================================================
+        RESPONSIVE
+==================================================*/
+
+@media (max-width:991px){
+
+.hero-section{
+
+    padding:40px 25px;
+
+    text-align:center;
+
+}
+
+.hero-title{
+
+    font-size:2.2rem;
+
+}
+
+.hero-image{
+
+    margin-bottom:25px;
+
+    max-height:280px;
+
+}
+
+.stats-card{
+
+    min-height:140px;
+
+}
+
+}
+
+
+@media (max-width:768px){
+
+.hero-title{
+
+    font-size:1.9rem;
+
+}
+
+.hero-text{
+
+    font-size:.95rem;
+
+}
+
+.stats-card{
+
+    padding:22px;
+
+}
+
+.stats-icon{
+
+    width:60px;
+
+    height:60px;
+
+    min-width:60px;
+
+    font-size:26px;
+
+}
+
+.stats-content h2{
+
+    font-size:1.9rem;
+
+}
+
+}
+
+
+@media (max-width:576px){
+
+.hero-section{
+
+    padding:25px 18px;
+
+}
+
+.hero-title{
+
+    font-size:1.7rem;
+
+}
+
+.stats-card{
+
+    flex-direction:column;
+
+    text-align:center;
+
+    gap:15px;
+
+}
+
+.stats-content h2{
+
+    font-size:1.8rem;
+
+}
+
+}
+/* ==========================================================
+   STAFF CREATE PAGE
+========================================================== */
+
+.page-title h2{
+    color:#0f172a;
+    font-weight:700;
+}
+
+.page-title p{
+    color:#6b7280;
+}
+
+/* ==========================================================
+   MAIN FORM
+========================================================== */
+
+.erp-form{
+    background:#ffffff;
+    border-radius:18px;
+    padding:25px;
+    box-shadow:0 8px 25px rgba(0,0,0,.08);
+}
+
+/* ==========================================================
+   TABS
+========================================================== */
+
+.erp-tabs{
+    display:flex;
+    gap:12px;
+    border:none;
+    margin-bottom:25px;
+}
+
+.erp-tabs .nav-item{
+    flex:1;
+}
+
+.erp-tabs .nav-link{
+
+    width:100%;
+
+    border:none !important;
+
+    border-radius:12px !important;
+
+    background:#eef4ff;
+
+    color:#334155;
+
+    padding:14px;
+
+    font-weight:600;
+
+    transition:.3s;
+
+}
+
+.erp-tabs .nav-link:hover{
+
+    background:#2563eb;
+
+    color:#654904;
+
+}
+
+.erp-tabs .nav-link.active{
+
+    background:linear-gradient(135deg,#0f766e,#14b8a6) !important;
+
+    color:#7d7304 !important;
+
+    box-shadow:0 5px 15px rgba(20,184,166,.35);
+
+}
+
+/* ==========================================================
+   CARDS
+========================================================== */
+
+.erp-card{
+
+    border:none;
+
+    border-radius:16px;
+
+    overflow:hidden;
+
+    margin-bottom:25px;
+
+    box-shadow:0 6px 18px rgba(0,0,0,.08);
+
+}
+
+.erp-card .card-header{
+
+    background:linear-gradient(135deg,#0f766e,#14b8a6);
+
+    color:#fff;
+
+    padding:15px 20px;
+
+    border:none;
+
+}
+
+.erp-card .card-header h5{
+
+    margin:0;
+
+    font-size:18px;
+
+    font-weight:600;
+
+}
+
+.erp-card .card-body{
+
+    padding:25px;
+
+    background:#fff;
+
+}
+
+/* ==========================================================
+   LABELS
+========================================================== */
+
+.erp-card label{
+
+    font-weight:600;
+
+    color:#334155;
+
+    margin-bottom:8px;
+
+    display:block;
+
+}
+
+/* ==========================================================
+   INPUTS
+========================================================== */
+
+.erp-card input[type=text],
+.erp-card input[type=email],
+.erp-card input[type=password],
+.erp-card input[type=date],
+.erp-card input[type=number],
+.erp-card input[type=file],
+.erp-card select,
+.erp-card textarea{
+
+    width:100%;
+
+    min-height:46px;
+
+    border:1px solid #d1d5db;
+
+    border-radius:10px;
+
+    padding:10px 14px;
+
+    background:#fff;
+
+    transition:.3s;
+
+    font-size:15px;
+
+}
+
+.erp-card textarea{
+
+    min-height:120px;
+
+    resize:vertical;
+
+}
+
+.erp-card input:focus,
+.erp-card select:focus,
+.erp-card textarea:focus{
+
+    border-color:#14b8a6;
+
+    box-shadow:0 0 0 .2rem rgba(20,184,166,.18);
+
+    outline:none;
+
+}
+
+/* ==========================================================
+   FILE INPUT
+========================================================== */
+
+input[type=file]{
+
+    padding:9px;
+
+}
+
+/* ==========================================================
+   MULTI SELECT
+========================================================== */
+
+select[multiple]{
+
+    min-height:120px;
+
+}
+
+/* ==========================================================
+   CHECKBOX
+========================================================== */
+
+.form-check{
+
+    padding-top:10px;
+
+}
+
+.form-check input{
+
+    margin-right:8px;
+
+}
+
+/* ==========================================================
+   BUTTONS
+========================================================== */
+
+.erp-footer{
+
+    display:flex;
+
+    justify-content:flex-end;
+
+    gap:15px;
+
+    margin-top:25px;
+
+}
+
+.erp-footer .btn{
+
+    min-width:150px;
+
+    border-radius:10px;
+
+    padding:10px 22px;
+
+    font-weight:600;
+
+}
+
+/* ==========================================================
+   FORMSET SPACING
+========================================================== */
+
+.tab-pane .erp-card{
+
+    animation:fadeIn .25s ease;
+
+}
+
+@keyframes fadeIn{
+
+    from{
+
+        opacity:0;
+
+        transform:translateY(10px);
+
+    }
+
+    to{
+
+        opacity:1;
+
+        transform:none;
+
+    }
+
+}
+
+/* ==========================================================
+   RESPONSIVE
+========================================================== */
+
+@media (max-width:992px){
+
+    .erp-tabs{
+
+        flex-wrap:wrap;
+
+    }
+
+    .erp-tabs .nav-item{
+
+        flex:0 0 calc(50% - 6px);
+
+    }
+
+}
+
+@media (max-width:768px){
+
+    .erp-form{
+
+        padding:18px;
+
+    }
+
+    .erp-card .card-body{
+
+        padding:18px;
+
+    }
+
+    .erp-footer{
+
+        flex-direction:column;
+
+    }
+
+    .erp-footer .btn{
+
+        width:100%;
+
+    }
+
+}
+
+@media (max-width:576px){
+
+    .erp-tabs .nav-item{
+
+        flex:0 0 100%;
+
+    }
+
+    .erp-tabs .nav-link{
+
+        font-size:14px;
+
+        padding:12px;
+
+    }
+
+    .page-title h2{
+
+        font-size:24px;
+
+    }
+
+}
+
+/* General form styling */
+.erp-form {
+  background-color: #fff;
+  border-radius: 0.5rem;
+}
+
+/* Tabs */
+.nav-tabs .nav-link {
+  font-weight: 500;
+  color: #495057;
+}
+.nav-tabs .nav-link.active {
+  background-color: #0d6efd;
+  color: #fff;
+  border-radius: 0.5rem 0.5rem 0 0;
+}
+
+/* Card headers */
+.card-header {
+  background-color: #f8f9fa;
+  font-weight: 600;
+  font-size: 1rem;
+}
+
+/* Form labels */
+.form-label {
+  font-weight: 500;
+  margin-bottom: 0.25rem;
+}
+
+/* File inputs */
+input[type="file"].form-control {
+  padding: 0.375rem;
+}
+
+/* Buttons */
+.btn-primary {
+  background-color: #0d6efd;
+  border-color: #0d6efd;
+}
+.btn-primary:hover {
+  background-color: #0b5ed7;
+  border-color: #0a58ca;
+}
+.btn-secondary {
+  background-color: #6c757d;
+  border-color: #6c757d;
+}
+.btn-secondary:hover {
+  background-color: #5c636a;
+  border-color: #565e64;
+}
+
+/* Responsive spacing */
+@media (max-width: 768px) {
+  .card-body .row > div {
+    margin-bottom: 1rem;
+  }
 }
