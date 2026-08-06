@@ -1,78 +1,163 @@
 {% extends "base.html" %}
 {% load static %}
+
+{% block title %}NOWMI CGC{% endblock %}
+
 {% block content %}
 
 {% if not user.is_authenticated %}
-<!-- Hero Section -->
-<section class="card shadow-sm p-4 mb-4">
-  <div class="row align-items-center">
-    <div class="col-md-7">
-      <h1 class="mb-3">Welcome to School ERP</h1>
-      <p class="lead bright-text">
-  Beyond technology and management, our school is deeply committed to nurturing
-  every child with care and patience. We believe that true learning happens when
-  children are encouraged to explore, ask questions, and understand concepts in
-  their own unique way. By creating a safe and supportive environment, we help
-  kids grow with confidence, curiosity, and a love for learning that lasts a
-  lifetime.
-</p>
 
-      <p class="lead bright-text">
-  Our School ERP system helps administrators, teachers, and staff manage
-  branches, students, and resources with ease. It streamlines daily operations
-  like admissions, attendance, and staff management, while providing secure
-  role‑based access for different users. With responsive design and modern
-  dashboards, the ERP ensures that principals, teachers, and parents can access
-  important information anytime, anywhere. The goal is to reduce paperwork,
-  improve communication, and give schools a centralized platform to grow
-  efficiently.
-</p>
+<section class="hero-section">
 
-      <a class="btn btn-primary btn-lg mt-3" href="{% url 'login' %}">Login to Continue</a>
+    <div class="container">
+
+        <div class="row align-items-center">
+
+            <div class="col-lg-6 order-2 order-lg-1">
+
+                <h1 class="hero-title">
+                    Welcome to
+                    <span>NOWMI School ERP</span>
+                </h1>
+
+                <p class="hero-text">
+
+                    Beyond technology and management, our school is deeply
+                    committed to nurturing every child with care and patience.
+                    We believe true learning happens when children are
+                    encouraged to explore, ask questions and understand
+                    concepts in their own unique way.
+
+                </p>
+
+                <p class="hero-text">
+
+                    Our ERP simplifies admissions, staff management,
+                    attendance, academics and administration through one
+                    centralized platform that can be accessed anytime,
+                    anywhere.
+
+                </p>
+
+                <a href="{% url 'login' %}"
+                   class="btn btn-primary btn-lg hero-btn">
+
+                    Login to Continue
+
+                </a>
+
+            </div>
+
+            <div class="col-lg-6 text-center order-1 order-lg-2 mb-4 mb-lg-0">
+
+                <img src="{% static 'images/school_building.jpg' %}"
+                     class="img-fluid hero-image"
+                     alt="School">
+
+            </div>
+
+        </div>
+
     </div>
-    <div class="col-md-5 text-center">
-      <img src="{% static 'images/school_building.jpg' %}" alt="School Illustration"
-           class="img-fluid rounded" style="max-height: 250px;">
-    </div>
-  </div>
+
 </section>
-{% else %}
-<!-- Dashboard Section -->
-<section class="card shadow-sm p-4">
-  <h2 class="mb-3">School ERP Dashboard</h2>
-  <p class="text-muted">
-    Signed in as <strong>{{ user_role }}</strong>
-    {% if user_branch %}
-      · <span class="fw-semibold">{{ user_branch.name }}</span>
-    {% endif %}
-  </p>
 
-  <div class="row text-center mt-4">
-    <div class="col-md-4 mb-3">
-      <div class="card border-0 shadow-sm">
-        <div class="card-body">
-          <h5 class="card-title">Total Branches</h5>
-          <p class="display-6 fw-bold text-success">{{ total_branches }}</p>
-        </div>
-      </div>
+{% else %}
+
+<!-- Dashboard Section -->
+<section class="dashboard-section">
+
+    <div class="dashboard-header mb-4">
+
+        <h2 class="fw-bold">Dashboard</h2>
+
+        <p class="text-muted mb-0">
+            Welcome,
+            <strong>{{ user_role }}</strong>
+
+            {% if user_branch %}
+                | {{ user_branch.name }}
+            {% endif %}
+        </p>
+
     </div>
-    <div class="col-md-4 mb-3">
-      <div class="card border-0 shadow-sm">
-        <div class="card-body">
-          <h5 class="card-title">Total Staff</h5>
-          <p class="display-6 fw-bold text-primary">{{ total_staff }}</p>
+
+    <div class="row g-4">
+
+        <!-- Branches -->
+
+        <div class="col-lg-4 col-md-6">
+
+            <div class="stats-card branches-card">
+
+                <div class="stats-icon">
+                    <i class="bi bi-building"></i>
+                </div>
+
+                <div class="stats-content">
+
+                    <h6>Branches</h6>
+
+                    <h2>{{ total_branches }}</h2>
+
+                    <small>Total Branches</small>
+
+                </div>
+
+            </div>
+
         </div>
-      </div>
-    </div>
-    <div class="col-md-4 mb-3">
-      <div class="card border-0 shadow-sm">
-        <div class="card-body">
-          <h5 class="card-title">Total Students</h5>
-          <p class="display-6 fw-bold text-info">{{ total_students }}</p>
+
+        <!-- Staff -->
+
+        <div class="col-lg-4 col-md-6">
+
+            <div class="stats-card staff-card">
+
+                <div class="stats-icon">
+                    <i class="bi bi-people-fill"></i>
+                </div>
+
+                <div class="stats-content">
+
+                    <h6>Staff</h6>
+
+                    <h2>{{ total_staff }}</h2>
+
+                    <small>Total Staff Members</small>
+
+                </div>
+
+            </div>
+
         </div>
-      </div>
+
+        <!-- Students -->
+
+        <div class="col-lg-4 col-md-12">
+
+            <div class="stats-card student-card">
+
+                <div class="stats-icon">
+                    <i class="bi bi-mortarboard-fill"></i>
+                </div>
+
+                <div class="stats-content">
+
+                    <h6>Students</h6>
+
+                    <h2>{{ total_students }}</h2>
+
+                    <small>Total Students</small>
+
+                </div>
+
+            </div>
+
+        </div>
+
     </div>
-  </div>
+
 </section>
 {% endif %}
 

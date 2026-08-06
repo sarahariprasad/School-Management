@@ -64,32 +64,49 @@
           <table class="table table-hover align-middle mb-0">
             <thead class="table-light">
               <tr>
+                <th>Photo</th>
                 <th>ID</th>
-                <th>Name</th>
-                <th>Department</th>
+                <th>First Name</th>
+                <th>Last Name</th>
+                <th>Email</th>
                 <th>Branch</th>
-                <th>Status</th>
+                <th>Department</th>
                 <th>Current Role</th>
-                
+                <th>Phone</th>
                 <th class="text-center">Actions</th>
               </tr>
             </thead>
             <tbody>
               {% for person in staff %}
               <tr>
-                <td>{{ person.employee_id }}</td>
-                <td>{{ person.user.get_full_name|default:person.user.email }}</td>
-                <td>{{ person.get_department_display }}</td>
-                <td>{{ person.user.branch.name|default:"—" }}</td>
+                <!-- Photo -->
                 <td>
-                  {% if person.is_active %}
-                    <span class="badge bg-success">Active</span>
+                  {% if person.photo %}
+                    <img src="{{ person.photo.url }}" alt="Photo" class="rounded-circle" width="40" height="40">
                   {% else %}
-                    <span class="badge bg-secondary">
-                      Left {{ person.leaving_date|date:"d M Y" }}
-                    </span>
+                    <i class="bi bi-person-circle fs-3 text-muted"></i>
                   {% endif %}
                 </td>
+
+                <!-- Employee ID -->
+                <td>{{ person.employee_id }}</td>
+
+                <!-- First Name -->
+                <td>{{ person.user.first_name|default:"—" }}</td>
+
+                <!-- Last Name -->
+                <td>{{ person.user.last_name|default:"—" }}</td>
+
+                <!-- Email -->
+                <td>{{ person.user.email }}</td>
+
+                <!-- Branch -->
+                <td>{{ person.user.branch.name|default:"—" }}</td>
+
+                <!-- Department -->
+                <td>{{ person.get_department_display }}</td>
+
+                <!-- Current Role -->
                 <td>
                   {% if person.promotions.last %}
                     {{ person.promotions.last.new_designation }}
@@ -97,23 +114,39 @@
                     {{ person.designation }}
                   {% endif %}
                 </td>
-                <td>
-                  <div class="d-flex flex-wrap gap-2">
-                    {% if user.is_system_admin or user.role == 'BRANCH_ADMIN' %}
-                      <a href="{% url 'staff_edit' person.pk %}" class="btn btn-sm btn-outline-primary">Edit</a>
-                      <a href="{% url 'staff_documents' person.pk %}" class="btn btn-sm btn-outline-info">Documents</a>
-                      {% if person.is_active %}
-                        <a href="{% url 'staff_deactivate' person.pk %}" class="btn btn-sm btn-outline-warning">Mark Left</a>
-                      {% endif %}
-                    {% endif %}
-                    
-                  </div>
-                </td>
+
+                <!-- Phone -->
+                <td>{{ person.phone|default:"—" }}</td>
+
+                
+               <!-- Actions -->
+<td class="text-center">
+  <div class="d-flex flex-wrap gap-2 justify-content-center">
+    {% if user.is_system_admin or user.role == 'BRANCH_ADMIN' %}
+      <!-- Edit -->
+      <a href="{% url 'staff_edit' person.pk %}" class="btn btn-sm btn-outline-primary" title="Edit">
+        <i class="bi bi-pencil-square"></i>
+      </a>
+
+      <!-- Documents -->
+      <a href="{% url 'staff_documents' person.pk %}" class="btn btn-sm btn-outline-info" title="Documents">
+        <i class="bi bi-file-earmark-text"></i>
+      </a>
+
+      <!-- Mark Left -->
+      {% if person.is_active %}
+        <a href="{% url 'staff_deactivate' person.pk %}" class="btn btn-sm btn-outline-warning" title="Mark Left">
+          <i class="bi bi-person-dash"></i>
+        </a>
+      {% endif %}
+    {% endif %}
+  </div>
+</td>
 
               </tr>
               {% empty %}
               <tr>
-                <td colspan="8" class="text-center text-muted py-4">
+                <td colspan="10" class="text-center text-muted py-4">
                   {% if search %}
                     No staff found matching "<strong>{{ search }}</strong>".
                   {% else %}

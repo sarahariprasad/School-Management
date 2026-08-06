@@ -1,43 +1,307 @@
 {% extends "base.html" %}
+{% load static %}
+
+{% block title %}{{ title }}{% endblock %}
+
 {% block content %}
-<div class="container my-5">
-  <h2>{{ title }}</h2>
 
-  <ul class="nav nav-tabs" id="staffTab" role="tablist">
-    <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#profile">Profile</button></li>
-    <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#education">Education</button></li>
-    <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#documents">Documents</button></li>
-    <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#salary">Salary</button></li>
-  </ul>
+<div class="container-fluid py-4">
+  <div class="row justify-content-center">
+    <div class="col-xl-11">
 
-  <form method="post" enctype="multipart/form-data" class="card p-4 shadow-sm">
-    {% csrf_token %}
-    <div class="tab-content mt-3">
-      <div class="tab-pane fade show active" id="profile">
-        {{ profile_form.as_p }}
+      <!-- Page Title -->
+      <div class="page-title mb-4">
+        <h2 class="fw-bold">{{ title }}</h2>
+        <p class="text-muted mb-0">Fill the staff profile details.</p>
       </div>
-      <div class="tab-pane fade" id="education">
-        {{ education_formset.management_form }}
-        {% for form in education_formset %}
-          <div class="border p-2 mb-2">{{ form.as_p }}</div>
-        {% endfor %}
-      </div>
-      <div class="tab-pane fade" id="documents">
-        {{ document_formset.management_form }}
-        {% for form in document_formset %}
-          <div class="border p-2 mb-2">{{ form.as_p }}</div>
-        {% endfor %}
-      </div>
-      <div class="tab-pane fade" id="salary">
-        {{ salary_formset.management_form }}
-        {% for form in salary_formset %}
-          <div class="border p-2 mb-2">{{ form.as_p }}</div>
-        {% endfor %}
-      </div>
+
+      <!-- Form -->
+      <form method="post" enctype="multipart/form-data" class="erp-form">
+        {% csrf_token %}
+
+        <!-- Tabs -->
+        <ul class="nav nav-pills erp-tabs mb-4">
+          <li class="nav-item">
+            <button class="nav-link active" type="button" data-bs-toggle="tab" data-bs-target="#profile">
+              <i class="bi bi-person-fill me-2"></i> Profile
+            </button>
+          </li>
+          <li class="nav-item">
+            <button class="nav-link" type="button" data-bs-toggle="tab" data-bs-target="#education">
+              <i class="bi bi-mortarboard-fill me-2"></i> Education
+            </button>
+          </li>
+          <li class="nav-item">
+            <button class="nav-link" type="button" data-bs-toggle="tab" data-bs-target="#documents">
+              <i class="bi bi-file-earmark-text-fill me-2"></i> Documents
+            </button>
+          </li>
+          <li class="nav-item">
+            <button class="nav-link" type="button" data-bs-toggle="tab" data-bs-target="#salary">
+              <i class="bi bi-cash-stack me-2"></i> Salary
+            </button>
+          </li>
+        </ul>
+
+        <div class="tab-content">
+
+          <!-- PROFILE TAB -->
+          <div class="tab-pane fade show active" id="profile">
+            <div class="card erp-card">
+              <div class="card-header">
+                <h5 class="mb-0">Personal Information</h5>
+              </div>
+              <div class="card-body">
+                <div class="row">
+
+                  <!-- Profile Photo -->
+                  <div class="col-md-4 mb-3 text-center">
+                    <label class="form-label d-block">Profile Photo</label>
+                    {{ profile_form.photo }}
+                    {% if profile_form.instance.photo %}
+                      <div class="mt-2">
+                        <img src="{{ profile_form.instance.photo.url }}"
+                             alt="Profile Photo"
+                             class="rounded-circle shadow-sm"
+                             width="100" height="100">
+                      </div>
+                    {% endif %}
+                  </div>
+
+                  <div class="col-md-4 mb-3">
+                    <label class="form-label">Employee ID</label>
+                    {{ profile_form.employee_id }}
+                  </div>
+
+                  <div class="col-md-4 mb-3">
+                    <label class="form-label">First Name</label>
+                    {{ profile_form.first_name }}
+                  </div>
+
+                  <div class="col-md-4 mb-3">
+                    <label class="form-label">Last Name</label>
+                    {{ profile_form.last_name }}
+                  </div>
+
+                  <div class="col-md-6 mb-3">
+                    <label class="form-label">Email</label>
+                    {{ profile_form.email }}
+                  </div>
+
+                  <div class="col-md-6 mb-3">
+                    <label class="form-label">Password</label>
+                    {{ profile_form.password }}
+                  </div>
+
+                  <div class="col-md-4 mb-3">
+                    <label class="form-label">Role</label>
+                    {{ profile_form.role }}
+                  </div>
+
+                  <div class="col-md-4 mb-3">
+                    <label class="form-label">Department</label>
+                    {{ profile_form.department }}
+                  </div>
+
+                  <div class="col-md-4 mb-3">
+                    <label class="form-label">Designation</label>
+                    {{ profile_form.designation }}
+                  </div>
+
+                  <div class="col-md-4 mb-3">
+                    <label class="form-label">Joining Date</label>
+                    {{ profile_form.joining_date }}
+                  </div>
+
+                  <div class="col-md-4 mb-3">
+                    <label class="form-label">Phone</label>
+                    {{ profile_form.phone }}
+                  </div>
+
+                  <div class="col-md-4 mb-3">
+                    <label class="form-label">Status</label>
+                    <div class="form-check mt-2">
+                      {{ profile_form.is_active }}
+                      <label class="form-check-label">Active Staff</label>
+                    </div>
+                  </div>
+
+                  <div class="col-md-6 mb-3">
+                    <label class="form-label">Primary Branch</label>
+                    {{ profile_form.primary_branch }}
+                  </div>
+
+                  <div class="col-md-6 mb-3">
+                    <label class="form-label">Accessible Branches</label>
+                    {{ profile_form.accessible_branches }}
+                  </div>
+
+                  <div class="col-md-4 mb-3">
+                    <label class="form-label">City</label>
+                    {{ profile_form.city }}
+                  </div>
+
+                  <div class="col-md-4 mb-3">
+                    <label class="form-label">State</label>
+                    {{ profile_form.state }}
+                  </div>
+
+                  <div class="col-md-4 mb-3">
+                    <label class="form-label">Postal Code</label>
+                    {{ profile_form.postal_code }}
+                  </div>
+
+                  <div class="col-12 mb-3">
+                    <label class="form-label">Address</label>
+                    {{ profile_form.address }}
+                  </div>
+
+                  <div class="col-md-6 mb-3">
+                    <label class="form-label">Address Proof Type</label>
+                    {{ profile_form.address_proof_type }}
+                  </div>
+
+                  <div class="col-md-6 mb-3">
+                    <label class="form-label">Upload Address Proof</label>
+                    {{ profile_form.address_proof }}
+                  </div>
+
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- EDUCATION TAB -->
+          <div class="tab-pane fade" id="education">
+            {{ education_formset.management_form }}
+            {% for form in education_formset %}
+              <div class="card erp-card mb-4">
+                <div class="card-header">
+                  <h5 class="mb-0">Education {{ forloop.counter }}</h5>
+                </div>
+                <div class="card-body">
+                  <div class="row">
+                    <div class="col-md-4 mb-3">
+                      <label class="form-label">Qualification</label>
+                      {{ form.qualification }}
+                    </div>
+                    <div class="col-md-5 mb-3">
+                      <label class="form-label">Institution</label>
+                      {{ form.institution }}
+                    </div>
+                    <div class="col-md-3 mb-3">
+                      <label class="form-label">Passing Year</label>
+                      {{ form.passing_year }}
+                    </div>
+                    <div class="col-md-8 mb-3">
+                      <label class="form-label">Certificate</label>
+                      {{ form.certificate }}
+                    </div>
+                    {% if form.instance.pk %}
+                      <div class="col-md-4 mb-3 d-flex align-items-end">
+                        <div class="form-check">
+                          {{ form.DELETE }}
+                          <label class="form-check-label">Delete Record</label>
+                        </div>
+                      </div>
+                    {% endif %}
+                  </div>
+                </div>
+              </div>
+            {% endfor %}
+          </div>
+
+          <!-- DOCUMENTS TAB -->
+          <div class="tab-pane fade" id="documents">
+            {{ document_formset.management_form }}
+            {% for form in document_formset %}
+              <div class="card erp-card mb-4">
+                <div class="card-header">
+                  <h5 class="mb-0">Document {{ forloop.counter }}</h5>
+                </div>
+                <div class="card-body">
+                  <div class="row">
+                    <div class="col-md-4 mb-3">
+                      <label class="form-label">Document Title</label>
+                      {{ form.title }}
+                    </div>
+                    <div class="col-md-4 mb-3">
+                      <label class="form-label">Document Type</label>
+                      {{ form.document_type }}
+                    </div>
+                    <div class="col-md-4 mb-3">
+                      <label class="form-label">Upload File</label>
+                      {{ form.file }}
+                    </div>
+                    {% if form.instance.pk %}
+                      <div class="col-md-4">
+                        <div class="form-check mt-3">
+                          {{ form.DELETE }}
+                          <label class="form-check-label">Delete Document</label>
+                        </div>
+                      </div>
+                    {% endif %}
+                  </div>
+                </div>
+              </div>
+            {% endfor %}
+          </div>
+
+                   <!-- SALARY TAB -->
+          <div class="tab-pane fade" id="salary">
+            {{ salary_formset.management_form }}
+            {% for form in salary_formset %}
+              <div class="card erp-card mb-4">
+                <div class="card-header">
+                  <h5 class="mb-0">Salary {{ forloop.counter }}</h5>
+                </div>
+                <div class="card-body">
+                  <div class="row">
+                    <div class="col-md-3 mb-3">
+                      <label class="form-label">Year</label>
+                      {{ form.year }}
+                    </div>
+                    <div class="col-md-3 mb-3">
+                      <label class="form-label">Base Salary</label>
+                      {{ form.base_salary }}
+                    </div>
+                    <div class="col-md-3 mb-3">
+                      <label class="form-label">Increment</label>
+                      {{ form.increment_amount }}
+                    </div>
+                    <div class="col-md-3 mb-3">
+                      <label class="form-label">New Salary</label>
+                      {{ form.new_salary }}
+                    </div>
+                    {% if form.instance.pk %}
+                      <div class="col-md-4">
+                        <div class="form-check mt-3">
+                          {{ form.DELETE }}
+                          <label class="form-check-label">Delete Record</label>
+                        </div>
+                      </div>
+                    {% endif %}
+                  </div>
+                </div>
+              </div>
+            {% endfor %}
+          </div>
+
+        </div> <!-- end tab-content -->
+
+        <!-- Footer Buttons -->
+        <div class="erp-footer mt-4">
+          <button type="submit" class="btn btn-success btn-lg">
+            <i class="bi bi-check-circle me-2"></i> Save Staff
+          </button>
+          <a href="{% url 'staff_list' %}" class="btn btn-outline-secondary btn-lg">
+            Cancel
+          </a>
+        </div>
+
+      </form>
     </div>
-
-    <button type="submit" class="btn btn-primary mt-3">Save Staff</button>
-    <a href="{% url 'staff_list' %}" class="btn btn-secondary mt-3">Cancel</a>
-  </form>
+  </div>
 </div>
+
 {% endblock %}

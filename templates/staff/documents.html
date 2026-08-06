@@ -1,121 +1,131 @@
 {% extends "base.html" %}
 {% block title %}Staff Documents{% endblock %}
 {% block content %}
-<div class="container my-5">
+<div class="container-fluid py-4">
+  <div class="row justify-content-center">
+    <div class="col-xl-11">
 
-  <!-- Toolbar -->
-  <div class="d-flex justify-content-between align-items-center mb-4">
-    <div>
-      <h1 class="h3 mb-1">Staff Documents</h1>
-      <p class="text-muted mb-0">{{ profile }} · {{ profile.user.email }}</p>
-    </div>
-    <a class="btn btn-secondary" href="{% url 'staff_list' %}">Back</a>
-  </div>
-
-  <!-- Address Proof -->
-  <div class="card shadow-sm mb-4">
-    <div class="card-body">
-      <h5 class="card-title">Address Proof</h5>
-      <p>
-        {{ profile.address_proof_type|default:"No proof type recorded" }}
-        {% if profile.address_proof %}
-          · <a href="{% url 'address_proof_download' profile.pk %}" class="btn btn-sm btn-outline-primary">Download</a>
-        {% endif %}
-      </p>
-    </div>
-  </div>
-
-  <!-- Education -->
-  <div class="card shadow-sm mb-4">
-    <div class="card-body">
-      <h5 class="card-title">Education</h5>
-      <div class="table-responsive mb-3">
-        <table class="table table-hover align-middle">
-          <thead class="table-light">
-            <tr><th>Qualification</th><th>Institution</th><th>Year</th><th>Certificate</th></tr>
-          </thead>
-          <tbody>
-            {% for item in profile.education_records.all %}
-            <tr>
-              <td>{{ item.qualification }}</td>
-              <td>{{ item.institution }}</td>
-              <td>{{ item.passing_year }}</td>
-              <td>
-                {% if item.certificate %}
-                  <a href="{% url 'education_download' profile.pk item.pk %}" class="btn btn-sm btn-outline-primary">Download</a>
-                {% else %}—{% endif %}
-              </td>
-            </tr>
-            {% empty %}
-            <tr><td colspan="4" class="text-center text-muted">No education records.</td></tr>
-            {% endfor %}
-          </tbody>
-        </table>
+      <!-- Page Title -->
+      <div class="page-title mb-4 d-flex justify-content-between align-items-center">
+        <div>
+          <h2 class="fw-bold">Staff Documents</h2>
+          <p class="text-muted mb-0">{{ profile }} · {{ profile.user.email }}</p>
+        </div>
+        <a class="btn btn-outline-secondary" href="{% url 'staff_list' %}">
+          <i class="bi bi-arrow-left me-2"></i> Back
+        </a>
       </div>
 
-      <!-- Add Education Form -->
-      <form method="post" action="{% url 'education_add' profile.pk %}" enctype="multipart/form-data" class="row g-3">
-        {% csrf_token %}
-        {% for field in education_form %}
-          <div class="col-md-6">
-            <label class="form-label">{{ field.label }}</label>
-            {{ field }}
-            {% if field.errors %}
-              <div class="text-danger small">{{ field.errors }}</div>
+      <!-- Address Proof -->
+      <div class="card erp-card mb-4 shadow-sm">
+        <div class="card-header"><h5 class="mb-0">Address Proof</h5></div>
+        <div class="card-body">
+          <p class="mb-0">
+            {{ profile.address_proof_type|default:"No proof type recorded" }}
+            {% if profile.address_proof %}
+              · <a href="{% url 'address_proof_download' profile.pk %}" class="btn btn-sm btn-outline-primary">Download</a>
             {% endif %}
-          </div>
-        {% endfor %}
-        <div class="col-12">
-          <button class="btn btn-primary">Add Education</button>
+          </p>
         </div>
-      </form>
-    </div>
-  </div>
-
-  <!-- Supporting Documents -->
-  <div class="card shadow-sm mb-4">
-    <div class="card-body">
-      <h5 class="card-title">Supporting Documents</h5>
-      <div class="table-responsive mb-3">
-        <table class="table table-hover align-middle">
-          <thead class="table-light">
-            <tr><th>Title</th><th>Type</th><th>Uploaded</th><th></th></tr>
-          </thead>
-          <tbody>
-            {% for item in profile.documents.all %}
-            <tr>
-              <td>{{ item.title }}</td>
-              <td>{{ item.document_type|default:"—" }}</td>
-              <td>{{ item.uploaded_at|date:"d M Y" }}</td>
-              <td>
-                <a href="{% url 'staff_document_download' profile.pk item.pk %}" class="btn btn-sm btn-outline-primary">Download</a>
-              </td>
-            </tr>
-            {% empty %}
-            <tr><td colspan="4" class="text-center text-muted">No supporting documents.</td></tr>
-            {% endfor %}
-          </tbody>
-        </table>
       </div>
 
-      <!-- Upload Document Form -->
-      <form method="post" action="{% url 'document_add' profile.pk %}" enctype="multipart/form-data" class="row g-3">
-        {% csrf_token %}
-        {% for field in document_form %}
-          <div class="col-md-6">
-            <label class="form-label">{{ field.label }}</label>
-            {{ field }}
-            {% if field.errors %}
-              <div class="text-danger small">{{ field.errors }}</div>
-            {% endif %}
+      <!-- Education -->
+      <div class="card erp-card mb-4 shadow-sm">
+        <div class="card-header"><h5 class="mb-0">Education</h5></div>
+        <div class="card-body">
+          <div class="table-responsive mb-3">
+            <table class="table table-hover align-middle">
+              <thead class="table-light">
+                <tr><th>Qualification</th><th>Institution</th><th>Year</th><th>Certificate</th></tr>
+              </thead>
+              <tbody>
+                {% for item in profile.education_records.all %}
+                <tr>
+                  <td>{{ item.qualification }}</td>
+                  <td>{{ item.institution }}</td>
+                  <td>{{ item.passing_year }}</td>
+                  <td>
+                    {% if item.certificate %}
+                      <a href="{% url 'education_download' profile.pk item.pk %}" class="btn btn-sm btn-outline-primary">Download</a>
+                    {% else %}—{% endif %}
+                  </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="4" class="text-center text-muted">No education records.</td></tr>
+                {% endfor %}
+              </tbody>
+            </table>
           </div>
-        {% endfor %}
-        <div class="col-12">
-          <button class="btn btn-primary">Upload Document</button>
+
+          <!-- Add Education Form -->
+          <form method="post" action="{% url 'education_add' profile.pk %}" enctype="multipart/form-data" class="row g-3">
+            {% csrf_token %}
+            {% for field in education_form %}
+              <div class="col-md-6">
+                <label class="form-label">{{ field.label }}</label>
+                {{ field }}
+                {% if field.errors %}
+                  <div class="text-danger small">{{ field.errors }}</div>
+                {% endif %}
+              </div>
+            {% endfor %}
+            <div class="col-12">
+              <button class="btn btn-success">
+                <i class="bi bi-plus-circle me-2"></i> Add Education
+              </button>
+            </div>
+          </form>
         </div>
-      </form>
+      </div>
+
+      <!-- Supporting Documents -->
+      <div class="card erp-card mb-4 shadow-sm">
+        <div class="card-header"><h5 class="mb-0">Supporting Documents</h5></div>
+        <div class="card-body">
+          <div class="table-responsive mb-3">
+            <table class="table table-hover align-middle">
+              <thead class="table-light">
+                <tr><th>Title</th><th>Type</th><th>Uploaded</th><th></th></tr>
+              </thead>
+              <tbody>
+                {% for item in profile.documents.all %}
+                <tr>
+                  <td>{{ item.title }}</td>
+                  <td>{{ item.document_type|default:"—" }}</td>
+                  <td>{{ item.uploaded_at|date:"d M Y" }}</td>
+                  <td>
+                    <a href="{% url 'staff_document_download' profile.pk item.pk %}" class="btn btn-sm btn-outline-primary">Download</a>
+                  </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="4" class="text-center text-muted">No supporting documents.</td></tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Upload Document Form -->
+          <form method="post" action="{% url 'document_add' profile.pk %}" enctype="multipart/form-data" class="row g-3">
+            {% csrf_token %}
+            {% for field in document_form %}
+              <div class="col-md-6">
+                <label class="form-label">{{ field.label }}</label>
+                {{ field }}
+                {% if field.errors %}
+                  <div class="text-danger small">{{ field.errors }}</div>
+                {% endif %}
+              </div>
+            {% endfor %}
+            <div class="col-12">
+              <button class="btn btn-success">
+                <i class="bi bi-upload me-2"></i> Upload Document
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+
     </div>
   </div>
-
 </div>
 {% endblock %}

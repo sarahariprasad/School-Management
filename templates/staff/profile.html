@@ -29,47 +29,64 @@
     <div class="tab-pane fade show active" id="profile">
       <div class="card shadow-sm mb-3">
         <div class="card-body">
-          <dl class="row">
-            <dt class="col-sm-3">Name</dt>
-            <dd class="col-sm-9">{{ profile.user.get_full_name|default:profile.user.username }}</dd>
-
-            <dt class="col-sm-3">Email</dt>
-            <dd class="col-sm-9">{{ profile.user.email }}</dd>
-
-            <dt class="col-sm-3">Phone</dt>
-            <dd class="col-sm-9">{{ profile.phone }}</dd>
-
-            <dt class="col-sm-3">Address</dt>
-            <dd class="col-sm-9">{{ profile.address }}</dd>
-
-            <dt class="col-sm-3">Branch</dt>
-            <dd class="col-sm-9">{{ profile.user.branch.name }}</dd>
-
-            <dt class="col-sm-3">Designation</dt>
-            <dd class="col-sm-9">{{ profile.designation }}</dd>
-
-            <dt class="col-sm-3">Joining Date</dt>
-            <dd class="col-sm-9">{{ profile.joining_date }}</dd>
-
-            <dt class="col-sm-3">Status</dt>
-            <dd class="col-sm-9">
-              {% if profile.is_active %}
-                <span class="badge bg-success">Active</span>
+          <div class="row">
+            <!-- Photo Column -->
+            <div class="col-md-4 text-center mb-3">
+              {% if profile.photo %}
+                <img src="{{ profile.photo.url }}"
+                     alt="Profile Photo"
+                     class="rounded-circle shadow-sm mb-2"
+                     width="120" height="120">
               {% else %}
-                <span class="badge bg-secondary">Inactive</span>
+                <div class="text-muted">No photo uploaded</div>
               {% endif %}
-            </dd>
-          </dl>
-          <!-- Trigger Modal (only on your own profile — this always edits the logged-in user) -->
-          {% if is_self %}
-            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#editContactModal">
-              <i class="bi bi-pencil-square"></i> Edit Address / Phone
-            </button>
-          {% else %}
-            <a href="{% url 'staff_edit' profile.pk %}" class="btn btn-primary">
-              <i class="bi bi-pencil-square"></i> Edit Staff Details
-            </a>
-          {% endif %}
+            </div>
+
+            <!-- Details Column -->
+            <div class="col-md-8">
+              <dl class="row">
+                <dt class="col-sm-4">Name</dt>
+                <dd class="col-sm-8">{{ profile.user.get_full_name|default:profile.user.username }}</dd>
+
+                <dt class="col-sm-4">Email</dt>
+                <dd class="col-sm-8">{{ profile.user.email }}</dd>
+
+                <dt class="col-sm-4">Phone</dt>
+                <dd class="col-sm-8">{{ profile.phone }}</dd>
+
+                <dt class="col-sm-4">Address</dt>
+                <dd class="col-sm-8">{{ profile.address }}</dd>
+
+                <dt class="col-sm-4">Branch</dt>
+                <dd class="col-sm-8">{{ profile.user.branch.name }}</dd>
+
+                <dt class="col-sm-4">Designation</dt>
+                <dd class="col-sm-8">{{ profile.designation }}</dd>
+
+                <dt class="col-sm-4">Joining Date</dt>
+                <dd class="col-sm-8">{{ profile.joining_date }}</dd>
+
+                <dt class="col-sm-4">Status</dt>
+                <dd class="col-sm-8">
+                  {% if profile.is_active %}
+                    <span class="badge bg-success">Active</span>
+                  {% else %}
+                    <span class="badge bg-secondary">Inactive</span>
+                  {% endif %}
+                </dd>
+              </dl>
+              <!-- Edit Button -->
+              {% if is_self %}
+                <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#editContactModal">
+                  <i class="bi bi-pencil-square"></i> Edit Address / Phone
+                </button>
+              {% else %}
+                <a href="{% url 'staff_edit' profile.pk %}" class="btn btn-primary">
+                  <i class="bi bi-pencil-square"></i> Edit Staff Details
+                </a>
+              {% endif %}
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -230,9 +247,8 @@
 
   </div>
 </div>
-
 {% if is_self %}
-<!-- Modal for Editing Address/Phone (self-service only) -->
+<!-- Modal for Editing Address/Phone -->
 <div class="modal fade" id="editContactModal" tabindex="-1" aria-labelledby="editContactModalLabel" aria-hidden="true">
   <div class="modal-dialog">
     <div class="modal-content">
@@ -243,7 +259,7 @@
           <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
         </div>
         <div class="modal-body">
-          {{ form.as_p }}  <!-- StaffSelfEditForm with only address & phone -->
+          {{ form.as_p }}
         </div>
         <div class="modal-footer">
           <button type="submit" class="btn btn-primary">Save Changes</button>
