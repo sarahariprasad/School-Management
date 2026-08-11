@@ -1,0 +1,57 @@
+{% extends 'base.html' %}
+
+{% block title %}{% if object %}Edit{% else %}Record{% endif %} Payment | NOWMI CGC{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-6">
+        <div class="card shadow-sm">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0">
+                    <i class="bi bi-cash-stack"></i> {% if object %}Edit{% else %}Record{% endif %} Payment
+                </h5>
+            </div>
+            <div class="card-body">
+                <form method="post" novalidate>
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label class="form-label">Installment <span class="text-danger">*</span></label>
+                        {{ form.installment }}
+                        <div class="form-text">Select the installment to pay against. Only pending installments are shown.</div>
+                        {% if form.installment.errors %}<div class="text-danger small mt-1">{{ form.installment.errors.0 }}</div>{% endif %}
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Amount Paid (₹) <span class="text-danger">*</span></label>
+                        {{ form.amount_paid }}
+                        <div class="form-text">Cannot exceed the remaining balance of the selected installment.</div>
+                        {% if form.amount_paid.errors %}<div class="text-danger small mt-1">{{ form.amount_paid.errors.0 }}</div>{% endif %}
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Payment Mode <span class="text-danger">*</span></label>
+                            {{ form.mode }}
+                            {% if form.mode.errors %}<div class="text-danger small mt-1">{{ form.mode.errors.0 }}</div>{% endif %}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Transaction Ref</label>
+                            {{ form.transaction_ref }}
+                            {% if form.transaction_ref.errors %}<div class="text-danger small mt-1">{{ form.transaction_ref.errors.0 }}</div>{% endif %}
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Remarks</label>
+                        {{ form.remarks }}
+                        {% if form.remarks.errors %}<div class="text-danger small mt-1">{{ form.remarks.errors.0 }}</div>{% endif %}
+                    </div>
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-success">
+                            <i class="bi bi-check-lg"></i> {% if object %}Update{% else %}Record Payment{% endif %}
+                        </button>
+                        <a href="{% url 'fee_payment:fee_payment_list' %}" class="btn btn-outline-secondary">Cancel</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

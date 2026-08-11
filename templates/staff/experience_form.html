@@ -1,13 +1,35 @@
 {% extends "base.html" %}
-{% block title %}Add Experience{% endblock %}
+{% block title %}Add Experience | School ERP{% endblock %}
+
 {% block content %}
-<h2>Add Experience for {{ profile.user.get_full_name }}</h2>
-<div class="card">
-  <form method="post">
-    {% csrf_token %}
-    {{ form.as_p }}
-    <button type="submit" class="btn">Save</button>
-    <a href="{% url 'staff_profile_admin_view' profile.pk %}" class="btn secondary">Cancel</a>
-  </form>
+<div class="container py-5">
+  <div class="row justify-content-center">
+    <div class="col-12 col-md-8 col-lg-5">
+
+      <div class="card shadow-sm">
+        <div class="card-header bg-primary text-white">
+          <h5 class="mb-0"><i class="bi bi-briefcase-fill me-2"></i>Add Experience</h5>
+        </div>
+        <div class="card-body">
+          <p class="text-muted small">For: <strong>{{ profile.full_name }}</strong></p>
+          <form method="post" novalidate>
+            {% csrf_token %}
+            {% for field in form %}
+              <div class="mb-3">
+                <label class="form-label fw-semibold">{{ field.label }}</label>
+                {{ field }}
+                {% if field.errors %}<div class="text-danger small mt-1">{{ field.errors|striptags }}</div>{% endif %}
+              </div>
+            {% endfor %}
+            <div class="d-flex flex-column flex-sm-row gap-2">
+              <button type="submit" class="btn btn-success"><i class="bi bi-check-lg me-1"></i>Save</button>
+              <a href="{% url 'staff_profile_admin_view' profile.pk %}" class="btn btn-outline-secondary">Cancel</a>
+            </div>
+          </form>
+        </div>
+      </div>
+
+    </div>
+  </div>
 </div>
 {% endblock %}

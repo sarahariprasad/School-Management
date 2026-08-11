@@ -1,42 +1,49 @@
 {% extends "base.html" %}
-{% block title %}Mark Staff Member as Left{% endblock %}
-{% block content %}
-<div class="container-fluid py-4">
-  <div class="row justify-content-center">
-    <div class="col-lg-8 col-xl-6">
+{% block title %}Deactivate Staff | School ERP{% endblock %}
 
-      <!-- Card -->
-      <div class="card erp-card shadow-sm">
-        <div class="card-header">
-          <h5 class="mb-0">Mark Staff Member as Left</h5>
+{% block content %}
+<div class="container py-5">
+  <div class="row justify-content-center">
+    <div class="col-12 col-md-8 col-lg-5">
+
+      <div class="card border-danger shadow-sm">
+        <div class="card-header bg-danger text-white">
+          <h5 class="mb-0"><i class="bi bi-person-x-fill me-2"></i>Deactivate Staff Member</h5>
         </div>
         <div class="card-body">
-          <p class="mb-4">
-            <strong>{{ profile }}</strong> will no longer be able to sign in.
-            Their employment record remains available for reporting.
-          </p>
+          <div class="d-flex align-items-center mb-3">
+            {% if profile.photo %}
+              <img src="{{ profile.photo.url }}" class="rounded-circle me-3" width="50" height="50" style="object-fit:cover;">
+            {% else %}
+              <div class="bg-secondary text-white rounded-circle d-flex align-items-center justify-content-center me-3" style="width:50px;height:50px;font-size:20px;">
+                {{ profile.user.first_name|default:"?"|first|upper }}
+              </div>
+            {% endif %}
+            <div>
+              <h6 class="mb-0 fw-bold">{{ profile.full_name }}</h6>
+              <code class="small text-muted">{{ profile.employee_id }}</code>
+            </div>
+          </div>
 
-          <!-- Form -->
-          <form method="post" class="row g-3">
+          <div class="alert alert-warning">
+            <i class="bi bi-exclamation-triangle-fill me-2"></i>
+            <strong>Warning:</strong> This staff member will no longer be able to sign in. Their record remains for reporting.
+          </div>
+
+          <form method="post" novalidate>
             {% csrf_token %}
             {% for field in form %}
-              <div class="col-12">
-                <label class="form-label">{{ field.label }}</label>
+              <div class="mb-3">
+                <label class="form-label fw-semibold">{{ field.label }}</label>
                 {{ field }}
-                {% if field.errors %}
-                  <div class="text-danger small">{{ field.errors }}</div>
-                {% endif %}
+                {% if field.errors %}<div class="text-danger small mt-1">{{ field.errors|striptags }}</div>{% endif %}
               </div>
             {% endfor %}
-
-            <!-- Actions -->
-            <div class="d-flex justify-content-between mt-4">
+            <div class="d-flex flex-column flex-sm-row gap-2">
               <button type="submit" class="btn btn-danger">
-                <i class="bi bi-person-x me-2"></i> Deactivate Account
+                <i class="bi bi-person-x me-2"></i>Deactivate Account
               </button>
-              <a href="{% url 'staff_list' %}" class="btn btn-outline-secondary">
-                Cancel
-              </a>
+              <a href="{% url 'staff_list' %}" class="btn btn-outline-secondary">Cancel</a>
             </div>
           </form>
         </div>

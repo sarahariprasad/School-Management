@@ -1,0 +1,54 @@
+{% extends 'base.html' %}
+
+{% block title %}{% if object %}Edit{% else %}Add{% endif %} Installment | NOWMI CGC{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-6">
+        <div class="card shadow-sm">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">
+                    <i class="bi bi-calendar-check"></i> {% if object %}Edit{% else %}Add{% endif %} Installment
+                </h5>
+            </div>
+            <div class="card-body">
+                <form method="post" novalidate>
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label class="form-label">Assignment <span class="text-danger">*</span></label>
+                        {{ form.assignment }}
+                        {% if form.assignment.errors %}<div class="text-danger small mt-1">{{ form.assignment.errors.0 }}</div>{% endif %}
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Installment Number <span class="text-danger">*</span></label>
+                            {{ form.installment_number }}
+                            {% if form.installment_number.errors %}<div class="text-danger small mt-1">{{ form.installment_number.errors.0 }}</div>{% endif %}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Due Date <span class="text-danger">*</span></label>
+                            {{ form.due_date }}
+                            {% if form.due_date.errors %}<div class="text-danger small mt-1">{{ form.due_date.errors.0 }}</div>{% endif %}
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Amount Due (₹) <span class="text-danger">*</span></label>
+                        {{ form.amount_due }}
+                        {% if form.amount_due.errors %}<div class="text-danger small mt-1">{{ form.amount_due.errors.0 }}</div>{% endif %}
+                    </div>
+                    <div class="mb-3 form-check">
+                        {{ form.is_fully_paid }}
+                        <label class="form-check-label">Fully Paid</label>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-check-lg"></i> Save
+                        </button>
+                        <a href="{% url 'fee_payment:fee_installment_list' %}" class="btn btn-outline-secondary">Cancel</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

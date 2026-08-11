@@ -1,0 +1,106 @@
+{% extends 'base.html' %}
+
+{% load fee_extras %}
+
+{% block title %}Receipt {{ payment.receipt_no }} | NOWMI CGC{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-6">
+        <div class="card shadow border-2">
+            <div class="card-body p-4">
+                <!-- Receipt Header -->
+                <div class="text-center border-bottom pb-3 mb-3">
+                    <h4 class="mb-1">NOWMI CGC</h4>
+                    <p class="text-muted small mb-0">Fee Payment Receipt</p>
+                </div>
+
+                <!-- Receipt Info -->
+                <div class="d-flex justify-content-between mb-3">
+                    <div>
+                        <small class="text-muted">Receipt No</small>
+                        <p class="fw-bold mb-0">{{ payment.receipt_no }}</p>
+                    </div>
+                    <div class="text-end">
+                        <small class="text-muted">Date</small>
+                        <p class="fw-bold mb-0">{{ payment.paid_on|date:"d M Y" }}</p>
+                    </div>
+                </div>
+
+                <!-- Student Info -->
+                <div class="bg-light p-3 rounded mb-3">
+                    <div class="row g-2">
+                        <div class="col-6">
+                            <small class="text-muted">Student Name</small>
+                            <p class="fw-semibold mb-0">{{ payment.installment.assignment.student.name }}</p>
+                        </div>
+                        <div class="col-6">
+                            <small class="text-muted">Roll No</small>
+                            <p class="fw-semibold mb-0">{{ payment.installment.assignment.student|student_id }}</p>
+                        </div>
+                        <div class="col-6">
+                            <small class="text-muted">Class</small>
+                            <p class="fw-semibold mb-0">{{ payment.installment.assignment.fee_structure.class_name.name|default:"—" }}</p>
+                        </div>
+                        <div class="col-6">
+                            <small class="text-muted">Branch</small>
+                            <p class="fw-semibold mb-0">{{ payment.installment.assignment.fee_structure.branch.name|default:"—" }}</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Payment Details -->
+                <table class="table table-borderless mb-3">
+                    <tbody>
+                        <tr>
+                            <td class="text-muted">Fee Category</td>
+                            <td class="text-end fw-semibold">{{ payment.installment.assignment.fee_structure.category.name }}</td>
+                        </tr>
+                        <tr>
+                            <td class="text-muted">Installment</td>
+                            <td class="text-end fw-semibold">#{{ payment.installment.installment_number }}</td>
+                        </tr>
+                        <tr>
+                            <td class="text-muted">Payment Mode</td>
+                            <td class="text-end fw-semibold">{{ payment.get_mode_display }}</td>
+                        </tr>
+                        {% if payment.transaction_ref %}
+                        <tr>
+                            <td class="text-muted">Transaction Ref</td>
+                            <td class="text-end fw-semibold">{{ payment.transaction_ref }}</td>
+                        </tr>
+                        {% endif %}
+                        <tr class="border-top">
+                            <td class="fs-5 fw-bold">Amount Paid</td>
+                            <td class="text-end fs-5 fw-bold text-success">₹{{ payment.amount_paid }}</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                {% if payment.remarks %}
+                <div class="border-top pt-2 mb-3">
+                    <small class="text-muted">Remarks:</small>
+                    <p class="small mb-0">{{ payment.remarks }}</p>
+                </div>
+                {% endif %}
+
+                <!-- Footer -->
+                <div class="border-top pt-3 text-center">
+                    <small class="text-muted">Recorded by: {{ payment.paid_by_staff|default:"—" }} on {{ payment.paid_on|date:"d M Y, h:i A" }}</small>
+                    <p class="small text-muted mt-2 mb-0">This is a computer generated receipt.</p>
+                </div>
+
+                <!-- Print Button -->
+                <div class="text-center mt-3 d-print-none">
+                    <button onclick="window.print()" class="btn btn-primary">
+                        <i class="bi bi-printer"></i> Print
+                    </button>
+                    <a href="{% url 'fee_payment:fee_payment_list' %}" class="btn btn-outline-secondary">
+                        <i class="bi bi-arrow-left"></i> Back
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

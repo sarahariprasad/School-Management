@@ -1,98 +1,109 @@
 {% extends "base.html" %}
+{% load static %}
+
+{% block title %}{{ title }}{% endblock %}
+
 {% block content %}
 <div class="container-fluid py-4">
   <div class="row justify-content-center">
-    <div class="col-xl-11">
+    <div class="col-xl-10">
 
-      <!-- Page Title -->
-      <div class="page-title mb-4">
-        <h2 class="fw-bold">{{ title }}</h2>
-        <p class="text-muted mb-0">Edit staff profile details.</p>
+      <!-- Header -->
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+          <h2 class="fw-bold mb-1">{{ title }}</h2>
+          <p class="text-muted mb-0">Update staff details below.</p>
+        </div>
+        <a href="{% url 'staff_list' %}" class="btn btn-outline-secondary">
+          <i class="bi bi-arrow-left me-1"></i> Back
+        </a>
       </div>
 
-      <!-- Form -->
-      <form method="post" enctype="multipart/form-data" class="erp-form">
+      <!-- Messages -->
+      {% if messages %}
+        {% for message in messages %}
+        <div class="alert alert-{{ message.tags|default:'danger' }} alert-dismissible fade show">
+          {{ message }}
+          <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+        {% endfor %}
+      {% endif %}
+
+      <form method="post" enctype="multipart/form-data" novalidate>
         {% csrf_token %}
 
         <!-- Tabs -->
-        <ul class="nav nav-pills erp-tabs mb-4">
-          <li class="nav-item"><button class="nav-link active" type="button" data-bs-toggle="tab" data-bs-target="#profile"><i class="bi bi-person-fill me-2"></i> Profile</button></li>
-          <li class="nav-item"><button class="nav-link" type="button" data-bs-toggle="tab" data-bs-target="#education"><i class="bi bi-mortarboard-fill me-2"></i> Education</button></li>
-          <li class="nav-item"><button class="nav-link" type="button" data-bs-toggle="tab" data-bs-target="#documents"><i class="bi bi-file-earmark-text-fill me-2"></i> Documents</button></li>
-          <li class="nav-item"><button class="nav-link" type="button" data-bs-toggle="tab" data-bs-target="#salary"><i class="bi bi-cash-stack me-2"></i> Salary</button></li>
-          <li class="nav-item"><button class="nav-link" type="button" data-bs-toggle="tab" data-bs-target="#experience"><i class="bi bi-briefcase-fill me-2"></i> Experience</button></li>
-          <li class="nav-item"><button class="nav-link" type="button" data-bs-toggle="tab" data-bs-target="#promotions"><i class="bi bi-arrow-up-circle me-2"></i> Promotions</button></li>
+        <ul class="nav nav-pills mb-3" id="editTabs" role="tablist">
+          <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#profile" type="button"><i class="bi bi-person-fill me-1"></i> Profile</button></li>
+          <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#education" type="button"><i class="bi bi-mortarboard-fill me-1"></i> Education</button></li>
+          <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#documents" type="button"><i class="bi bi-file-earmark-text-fill me-1"></i> Documents</button></li>
+          <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#salary" type="button"><i class="bi bi-cash-stack me-1"></i> Salary</button></li>
+          <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#experience" type="button"><i class="bi bi-briefcase-fill me-1"></i> Experience</button></li>
+          <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#promotions" type="button"><i class="bi bi-arrow-up-circle me-1"></i> Promotions</button></li>
         </ul>
 
-        <div class="tab-content">
+        <div class="tab-content" id="editTabsContent">
 
-          <!-- Profile -->
+          <!-- PROFILE TAB -->
           <div class="tab-pane fade show active" id="profile">
-            <div class="card erp-card">
-              <div class="card-header"><h5 class="mb-0">Personal Information</h5></div>
+            <div class="card shadow-sm">
+              <div class="card-header bg-light"><h5 class="mb-0"><i class="bi bi-person-fill me-2"></i>Personal Information</h5></div>
               <div class="card-body">
                 <div class="row g-3">
-                  <div class="col-md-4">
+                  <div class="col-md-3">
                     <label class="form-label">Employee ID</label>
                     {{ profile_form.employee_id }}
+                    {% if profile_form.employee_id.errors %}<div class="text-danger small">{{ profile_form.employee_id.errors|striptags }}</div>{% endif %}
                   </div>
-                  <div class="col-md-4">
-  <label class="form-label">First Name</label>
-  {{ profile_form.first_name }}
-  {% if profile_form.first_name.errors %}
-    <div class="text-danger small">{{ profile_form.first_name.errors }}</div>
-  {% endif %}
-</div>
-
-<div class="col-md-4">
-  <label class="form-label">Last Name</label>
-  {{ profile_form.last_name }}
-  {% if profile_form.last_name.errors %}
-    <div class="text-danger small">{{ profile_form.last_name.errors }}</div>
-  {% endif %}
-</div>
-
-                  <div class="col-md-6">
+                  <div class="col-md-3">
+                    <label class="form-label">First Name</label>
+                    {{ profile_form.first_name }}
+                    {% if profile_form.first_name.errors %}<div class="text-danger small">{{ profile_form.first_name.errors|striptags }}</div>{% endif %}
+                  </div>
+                  <div class="col-md-3">
+                    <label class="form-label">Last Name</label>
+                    {{ profile_form.last_name }}
+                  </div>
+                  <div class="col-md-3">
                     <label class="form-label">Email</label>
                     {{ profile_form.email }}
+                    {% if profile_form.email.errors %}<div class="text-danger small">{{ profile_form.email.errors|striptags }}</div>{% endif %}
                   </div>
-                  <div class="col-md-6">
-                    <label class="form-label">Password</label>
-                    {{ profile_form.password }}
+                  <div class="col-md-3">
+                    <label class="form-label">Gender</label>
+                    {{ profile_form.gender }}
                   </div>
-                  <div class="col-md-4">
-                    <label class="form-label">Role</label>
-                    {{ profile_form.role }}
+                  <div class="col-md-3">
+                    <label class="form-label">Date of Birth</label>
+                    {{ profile_form.date_of_birth }}
                   </div>
-                  <div class="col-md-4">
+                  <div class="col-md-3">
                     <label class="form-label">Department</label>
                     {{ profile_form.department }}
                   </div>
-                  <div class="col-md-4">
+                  <div class="col-md-3">
                     <label class="form-label">Designation</label>
                     {{ profile_form.designation }}
                   </div>
-                  <div class="col-md-4">
+                  <div class="col-md-3">
                     <label class="form-label">Joining Date</label>
                     {{ profile_form.joining_date }}
                   </div>
-                  <div class="col-md-4">
+                  <div class="col-md-3">
                     <label class="form-label">Phone</label>
                     {{ profile_form.phone }}
                   </div>
-                  <div class="col-md-4">
-                    <div class="form-check mt-4">
-                      {{ profile_form.is_active }}
-                      <label class="form-check-label">Active Staff</label>
-                    </div>
+                  <div class="col-md-3">
+                    <label class="form-label">Emergency Contact</label>
+                    {{ profile_form.emergency_contact }}
                   </div>
-                  <div class="col-md-6">
-                    <label class="form-label">Primary Branch</label>
-                    {{ profile_form.primary_branch }}
+                  <div class="col-md-3">
+                    <label class="form-label">Emergency Name</label>
+                    {{ profile_form.emergency_contact_name }}
                   </div>
-                  <div class="col-md-6">
-                    <label class="form-label">Accessible Branches</label>
-                    {{ profile_form.accessible_branches }}
+                  <div class="col-12">
+                    <label class="form-label">Address</label>
+                    {{ profile_form.address }}
                   </div>
                   <div class="col-md-4">
                     <label class="form-label">City</label>
@@ -106,10 +117,6 @@
                     <label class="form-label">Postal Code</label>
                     {{ profile_form.postal_code }}
                   </div>
-                  <div class="col-12">
-                    <label class="form-label">Address</label>
-                    {{ profile_form.address }}
-                  </div>
                   <div class="col-md-6">
                     <label class="form-label">Address Proof Type</label>
                     {{ profile_form.address_proof_type }}
@@ -117,101 +124,150 @@
                   <div class="col-md-6">
                     <label class="form-label">Upload Address Proof</label>
                     {{ profile_form.address_proof }}
+                    {% if profile_form.instance.address_proof %}
+                      <div class="mt-1"><a href="{% url 'address_proof_download' profile.pk %}" class="btn btn-sm btn-outline-primary"><i class="bi bi-download"></i> Current File</a></div>
+                    {% endif %}
                   </div>
-                  <div class="col-md-6 text-center">
-  <label class="form-label d-block">Profile Photo</label>
-  {{ profile_form.photo }}
-  {% if profile_form.instance.photo %}
-    <div class="mt-2">
-      <img src="{{ profile_form.instance.photo.url }}"
-           alt="Profile Photo"
-           class="rounded-circle shadow-sm"
-           width="100" height="100">
-    </div>
-  {% endif %}
-</div>
-
+                  <div class="col-md-6">
+                    <label class="form-label">Profile Photo</label>
+                    {{ profile_form.photo }}
+                    {% if profile_form.instance.photo %}
+                      <div class="mt-2"><img src="{{ profile_form.instance.photo.url }}" class="rounded-circle" width="80" height="80" style="object-fit:cover;"></div>
+                    {% endif %}
+                  </div>
+                  <div class="col-md-6">
+                    <div class="form-check mt-4">
+                      {{ profile_form.is_active }}
+                      <label class="form-check-label fw-semibold">Active Staff</label>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
 
-          <!-- Education -->
+          <!-- EDUCATION TAB -->
           <div class="tab-pane fade" id="education">
             {{ education_formset.management_form }}
             {% for form in education_formset %}
-              <div class="card erp-card mb-3">
-                <div class="card-header">Education {{ forloop.counter }}</div>
-                <div class="card-body">
-                  <div class="row g-3">{{ form.as_p }}</div>
+            <div class="card shadow-sm mb-3">
+              <div class="card-header bg-light d-flex justify-content-between">
+                <span class="fw-semibold">Education {{ forloop.counter }}</span>
+                {% if form.instance.pk %}
+                <div class="form-check">{{ form.DELETE }} <label class="form-check-label text-danger small">Delete</label></div>
+                {% endif %}
+              </div>
+              <div class="card-body">
+                <div class="row g-3">
+                  <div class="col-md-4"><label class="form-label">Qualification</label>{{ form.qualification }}</div>
+                  <div class="col-md-5"><label class="form-label">Institution</label>{{ form.institution }}</div>
+                  <div class="col-md-3"><label class="form-label">Passing Year</label>{{ form.passing_year }}</div>
+                  <div class="col-md-6"><label class="form-label">Certificate</label>{{ form.certificate }}</div>
                 </div>
               </div>
+            </div>
             {% endfor %}
           </div>
 
-          <!-- Documents -->
+          <!-- DOCUMENTS TAB -->
           <div class="tab-pane fade" id="documents">
             {{ document_formset.management_form }}
             {% for form in document_formset %}
-              <div class="card erp-card mb-3">
-                <div class="card-header">Document {{ forloop.counter }}</div>
-                <div class="card-body">
-                  <div class="row g-3">{{ form.as_p }}</div>
+            <div class="card shadow-sm mb-3">
+              <div class="card-header bg-light d-flex justify-content-between">
+                <span class="fw-semibold">Document {{ forloop.counter }}</span>
+                {% if form.instance.pk %}
+                <div class="form-check">{{ form.DELETE }} <label class="form-check-label text-danger small">Delete</label></div>
+                {% endif %}
+              </div>
+              <div class="card-body">
+                <div class="row g-3">
+                  <div class="col-md-4"><label class="form-label">Title</label>{{ form.title }}</div>
+                  <div class="col-md-4"><label class="form-label">Type</label>{{ form.document_type }}</div>
+                  <div class="col-md-4"><label class="form-label">File</label>{{ form.file }}</div>
                 </div>
               </div>
+            </div>
             {% endfor %}
           </div>
 
-          <!-- Salary -->
+          <!-- SALARY TAB -->
           <div class="tab-pane fade" id="salary">
             {{ salary_formset.management_form }}
             {% for form in salary_formset %}
-              <div class="card erp-card mb-3">
-                <div class="card-header">Salary {{ forloop.counter }}</div>
-                <div class="card-body">
-                  <div class="row g-3">{{ form.as_p }}</div>
+            <div class="card shadow-sm mb-3">
+              <div class="card-header bg-light d-flex justify-content-between">
+                <span class="fw-semibold">Salary {{ forloop.counter }}</span>
+                {% if form.instance.pk %}
+                <div class="form-check">{{ form.DELETE }} <label class="form-check-label text-danger small">Delete</label></div>
+                {% endif %}
+              </div>
+              <div class="card-body">
+                <div class="row g-3">
+                  <div class="col-md-3"><label class="form-label">Year</label>{{ form.year }}</div>
+                  <div class="col-md-3"><label class="form-label">Base Salary</label>{{ form.base_salary }}</div>
+                  <div class="col-md-3"><label class="form-label">Increment</label>{{ form.increment_amount }}</div>
+                  <div class="col-md-3"><label class="form-label">New Salary</label>{{ form.new_salary }}</div>
                 </div>
               </div>
+            </div>
             {% endfor %}
           </div>
 
-          <!-- Experience -->
+          <!-- EXPERIENCE TAB -->
           <div class="tab-pane fade" id="experience">
             {{ experience_formset.management_form }}
             {% for form in experience_formset %}
-              <div class="card erp-card mb-3">
-                <div class="card-header">Experience {{ forloop.counter }}</div>
-                <div class="card-body">
-                  <div class="row g-3">{{ form.as_p }}</div>
+            <div class="card shadow-sm mb-3">
+              <div class="card-header bg-light d-flex justify-content-between">
+                <span class="fw-semibold">Experience {{ forloop.counter }}</span>
+                {% if form.instance.pk %}
+                <div class="form-check">{{ form.DELETE }} <label class="form-check-label text-danger small">Delete</label></div>
+                {% endif %}
+              </div>
+              <div class="card-body">
+                <div class="row g-3">
+                  <div class="col-md-4"><label class="form-label">Organization</label>{{ form.organization }}</div>
+                  <div class="col-md-4"><label class="form-label">Role</label>{{ form.role }}</div>
+                  <div class="col-md-2"><label class="form-label">Start</label>{{ form.start_date }}</div>
+                  <div class="col-md-2"><label class="form-label">End</label>{{ form.end_date }}</div>
                 </div>
               </div>
+            </div>
             {% endfor %}
           </div>
-          <!-- Promotions -->
-<div class="tab-pane fade" id="promotions">
-  {{ promotion_formset.management_form }}
-  {% for form in promotion_formset %}
-    <div class="card erp-card mb-3">
-      <div class="card-header">Promotion {{ forloop.counter }}</div>
-      <div class="card-body">
-        <div class="row g-3">{{ form.as_p }}</div>
-      </div>
-    </div>
-  {% endfor %}
-</div>
+
+          <!-- PROMOTIONS TAB -->
+          <div class="tab-pane fade" id="promotions">
+            {{ promotion_formset.management_form }}
+            {% for form in promotion_formset %}
+            <div class="card shadow-sm mb-3">
+              <div class="card-header bg-light d-flex justify-content-between">
+                <span class="fw-semibold">Promotion {{ forloop.counter }}</span>
+                {% if form.instance.pk %}
+                <div class="form-check">{{ form.DELETE }} <label class="form-check-label text-danger small">Delete</label></div>
+                {% endif %}
+              </div>
+              <div class="card-body">
+                <div class="row g-3">
+                  <div class="col-md-4"><label class="form-label">Old Designation</label>{{ form.old_designation }}</div>
+                  <div class="col-md-4"><label class="form-label">New Designation</label>{{ form.new_designation }}</div>
+                  <div class="col-md-2"><label class="form-label">Date</label>{{ form.promotion_date }}</div>
+                  <div class="col-md-2"><label class="form-label">Remarks</label>{{ form.remarks }}</div>
+                </div>
+              </div>
+            </div>
+            {% endfor %}
+          </div>
 
         </div>
 
-        <!-- Buttons -->
-        <div class="erp-footer mt-4">
-          <button type="submit" class="btn btn-success btn-lg">
-            <i class="bi bi-check-circle me-2"></i> Save Changes
-          </button>
-          <a href="{% url 'staff_list' %}" class="btn btn-outline-secondary btn-lg">
-            Cancel
-          </a>
+        <div class="d-flex flex-column flex-sm-row gap-2 mt-4">
+          <button type="submit" class="btn btn-success btn-lg"><i class="bi bi-check-circle me-2"></i> Save Changes</button>
+          <a href="{% url 'staff_list' %}" class="btn btn-outline-secondary btn-lg">Cancel</a>
         </div>
       </form>
+
     </div>
   </div>
 </div>

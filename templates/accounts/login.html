@@ -1,147 +1,86 @@
 {% extends "base.html" %}
 {% load static %}
 
-{% block title %}Sign In | NOWMI CGC{% endblock %}
+{% block title %}Sign In | School ERP{% endblock %}
 
 {% block content %}
+<div class="d-flex justify-content-center align-items-center min-vh-100 bg-light">
+  <div class="container">
+    <div class="row justify-content-center">
+      <div class="col-12 col-sm-10 col-md-8 col-lg-5 col-xl-4">
 
-<div class="login-wrapper">
+        <div class="card shadow-lg border-0">
+          <div class="card-body p-4 p-lg-5">
 
-    <div class="container">
-
-        <div class="row justify-content-center">
-
-            <div class="col-xl-4 col-lg-5 col-md-7 col-sm-10">
-
-                <div class="card login-card shadow-lg">
-
-                    <div class="card-body p-4 p-lg-5">
-
-                        <div class="text-center mb-4">
-
-                            <img src="{% static 'images/cgc.jpg' %}"
-                                 class="login-logo mb-3"
-                                 alt="CGC Logo">
-
-                            <h3 class="fw-bold">
-                                Welcome Back
-                            </h3>
-
-                            <p class="text-muted mb-0">
-                                Sign in to continue
-                            </p>
-
-                        </div>
-
-                        <form method="post" novalidate>
-
-                            {% csrf_token %}
-
-                            {% if form.non_field_errors %}
-                            <div class="alert alert-danger">
-                                {{ form.non_field_errors }}
-                            </div>
-                            {% endif %}
-
-                            <!-- Username -->
-
-                            <div class="mb-4">
-
-                                <label class="form-label login-label">
-                                    Username
-                                </label>
-
-                                <div class="input-group login-group">
-
-                                    <span class="input-group-text">
-                                        <i class="bi bi-person-fill"></i>
-                                    </span>
-
-                                    <input
-                                        type="text"
-                                        name="username"
-                                        id="id_username"
-                                        class="form-control login-control"
-                                        placeholder="Enter your username"
-                                        value="{{ form.username.value|default:'' }}"
-                                        autocomplete="username"
-                                        required>
-
-                                </div>
-
-                                {% if form.username.errors %}
-                                <div class="text-danger small mt-2">
-                                    {{ form.username.errors }}
-                                </div>
-                                {% endif %}
-
-                            </div>
-
-                            <!-- Password -->
-
-                            <div class="mb-3">
-
-                                <label class="form-label login-label">
-                                    Password
-                                </label>
-
-                                <div class="input-group login-group">
-
-                                    <span class="input-group-text">
-                                        <i class="bi bi-lock-fill"></i>
-                                    </span>
-
-                                    <input
-                                        type="password"
-                                        name="password"
-                                        id="id_password"
-                                        class="form-control login-control"
-                                        placeholder="Enter your password"
-                                        autocomplete="current-password"
-                                        required>
-
-                                </div>
-
-                                {% if form.password.errors %}
-                                <div class="text-danger small mt-2">
-                                    {{ form.password.errors }}
-                                </div>
-                                {% endif %}
-
-                            </div>
-
-                            <div class="text-end mb-4">
-
-                                <a href="{% url 'password_reset' %}"
-                                   class="forgot-link">
-
-                                    Forgot Password?
-
-                                </a>
-
-                            </div>
-
-                            <button type="submit"
-                                    class="btn btn-primary login-btn w-100">
-
-                                <i class="bi bi-box-arrow-in-right me-2"></i>
-
-                                Sign In
-
-                            </button>
-
-                        </form>
-
-                    </div>
-
-                </div>
-
+            <!-- Logo / Brand -->
+            <div class="text-center mb-4">
+              <img src="{% static 'images/cgc.jpg' %}" class="mb-3 rounded-circle" width="72" height="72" alt="Logo">
+              <h3 class="fw-bold mb-1">Welcome Back</h3>
+              <p class="text-muted mb-0">Sign in to your account</p>
             </div>
 
+            <form method="post" novalidate>
+              {% csrf_token %}
+
+              <!-- Non-field errors -->
+              {% if form.non_field_errors %}
+              <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                {{ form.non_field_errors|striptags }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+              </div>
+              {% endif %}
+
+              <!-- Email -->
+              <div class="mb-3">
+                <label for="id_username" class="form-label fw-semibold">
+                  Email Address
+                </label>
+                <div class="input-group">
+                  <span class="input-group-text"><i class="bi bi-envelope-fill"></i></span>
+                  {{ form.username }}
+                </div>
+                {% if form.username.errors %}
+                <div class="text-danger small mt-1">{{ form.username.errors|striptags }}</div>
+                {% endif %}
+              </div>
+
+              <!-- Password -->
+              <div class="mb-3">
+                <label for="id_password" class="form-label fw-semibold">
+                  Password
+                </label>
+                <div class="input-group">
+                  <span class="input-group-text"><i class="bi bi-lock-fill"></i></span>
+                  {{ form.password }}
+                </div>
+                {% if form.password.errors %}
+                <div class="text-danger small mt-1">{{ form.password.errors|striptags }}</div>
+                {% endif %}
+              </div>
+
+              <!-- Forgot password -->
+              <div class="d-flex justify-content-end mb-4">
+                <a href="{% url 'accounts:password_reset' %}" class="text-decoration-none small">
+                  Forgot Password?
+                </a>
+              </div>
+
+              <!-- Submit -->
+              <button type="submit" class="btn btn-primary w-100 py-2 fw-semibold">
+                <i class="bi bi-box-arrow-in-right me-2"></i>Sign In
+              </button>
+            </form>
+
+          </div>
         </div>
 
+        <!-- Footer -->
+        <p class="text-center text-muted small mt-4">
+          &copy; {% now "Y" %} School ERP. All rights reserved.
+        </p>
+
+      </div>
     </div>
-
+  </div>
 </div>
-
 {% endblock %}

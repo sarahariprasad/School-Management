@@ -1,0 +1,141 @@
+{% extends 'base.html' %}
+
+{% load fee_extras %}
+
+{% block title %}Fee Installments | NOWMI CGC{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h4 class="mb-0"><i class="bi bi-calendar-check"></i> Fee Installments</h4>
+    <a href="{% url 'fee_payment:fee_installment_create' %}" class="btn btn-primary">
+        <i class="bi bi-plus-lg"></i> New Installment
+    </a>
+</div>
+
+<!-- Filters -->
+<div class="card shadow-sm mb-4">
+    <div class="card-body">
+        <form method="get" class="row g-3 align-items-end">
+            <div class="col-md-3">
+                <label class="form-label">Search</label>
+                <input type="text" name="q" class="form-control" placeholder="Student name or roll no..." value="{{ request.GET.q }}">
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">Status</label>
+                <select name="status" class="form-select">
+                    <option value="">All</option>
+                    <option value="paid" {% if request.GET.status == 'paid' %}selected{% endif %}>Paid</option>
+                    <option value="pending" {% if request.GET.status == 'pending' %}selected{% endif %}>Pending</option>
+                    <option value="overdue" {% if request.GET.status == 'overdue' %}selected{% endif %}>Overdue</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">Due From</label>
+                <input type="date" name="due_from" class="form-control" value="{{ request.GET.due_from }}">
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">Due To</label>
+                <input type="date" name="due_to" class="form-control" value="{{ request.GET.due_to }}">
+            </div>
+            <div class="col-md-3">
+                <button type="submit" class="btn btn-outline-primary">
+                    <i class="bi bi-funnel"></i> Filter
+                </button>
+                <a href="{% url 'fee_payment:fee_installment_list' %}" class="btn btn-outline-secondary">
+                    <i class="bi bi-x-lg"></i> Reset
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card shadow-sm">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th>Student</th>
+                    <th>Category</th>
+                    <th>Year</th>
+                    <th>#</th>
+                    <th>Due Date</th>
+                    <th class="text-end">Amount Due</th>
+                    <th class="text-end">Paid</th>
+                    <th class="text-end">Balance</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for inst in installments %}
+                <tr>
+                    <td>
+                        <div class="fw-semibold">{{ inst.assignment.student.name }}</div>
+                        <small class="text-muted">{{ inst.assignment.student|student_id }}</small>
+                    </td>
+                    <td>{{ inst.assignment.fee_structure.category.name }}</td>
+                    <td>{{ inst.assignment.fee_structure.academic_year }}</td>
+                    <td>{{ inst.installment_number }}</td>
+                    <td>
+                        {{ inst.due_date }}
+                        {% if inst.is_overdue %}
+                            <span class="badge bg-danger ms-1">Overdue</span>
+                        {% endif %}
+                    </td>
+                    <td class="text-end">₹{{ inst.amount_due }}</td>
+                    <td class="text-end text-success">₹{{ inst.total_paid }}</td>
+                    <td class="text-end">
+                        <span class="{% if inst.remaining_balance > 0 %}text-danger fw-bold{% else %}text-success{% endif %}">
+                            ₹{{ inst.remaining_balance }}
+                        </span>
+                    </td>
+                    <td>
+                        {% if inst.is_fully_paid %}
+                            <span class="badge bg-success">Paid</span>
+                        {% else %}
+                            <span class="badge bg-warning text-dark">Pending</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <a href="{% url 'fee_payment:fee_payment_create' %}?installment={{ inst.pk }}"
+                           class="btn btn-sm btn-success {% if inst.is_fully_paid %}disabled{% endif %}">
+                            <i class="bi bi-cash-stack"></i> Pay
+                        </a>
+                        <a href="{% url 'fee_payment:fee_installment_update' inst.pk %}" class="btn btn-sm btn-warning">
+                            <i class="bi bi-pencil"></i>
+                        </a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="10" class="text-center text-muted py-5">
+                        <i class="bi bi-inbox fs-1 d-block mb-2"></i>
+                        No installments found.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% if is_paginated %}
+<nav class="mt-3">
+    <ul class="pagination justify-content-center">
+        {% if page_obj.has_previous %}
+        <li class="page-item">
+            <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% for k,v in request.GET.items %}{% if k != 'page' %}&{{ k }}={{ v }}{% endif %}{% endfor %}">Previous</a>
+        </li>
+        {% endif %}
+        <li class="page-item active">
+            <span class="page-link">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+        </li>
+        {% if page_obj.has_next %}
+        <li class="page-item">
+            <a class="page-link" href="?page={{ page_obj.next_page_number }}{% for k,v in request.GET.items %}{% if k != 'page' %}&{{ k }}={{ v }}{% endif %}{% endfor %}">Next</a>
+        </li>
+        {% endif %}
+    </ul>
+</nav>
+{% endif %}
+{% endblock %}

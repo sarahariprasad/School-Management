@@ -12,15 +12,20 @@ urlpatterns = [
     path("<int:pk>/documents/download/address/", views.staff_file_download, {"kind": "address"}, name="address_proof_download"),
     path("<int:pk>/documents/download/education/<int:document_pk>/", views.staff_file_download, {"kind": "education"}, name="education_download"),
     path("<int:pk>/documents/download/file/<int:document_pk>/", views.staff_file_download, {"kind": "document"}, name="staff_document_download"),
+
+    # Profile
     path("profile/", views.staff_profile_view, name="staff_profile"),
     path("profile/edit/", views.staff_profile_edit, name="staff_profile_edit"),
+
+    # Admin profile view
+    path("profile/<int:pk>/", views.staff_profile_admin_view, name="staff_profile_admin_view"),
 
     # History management
     path("profile/<int:pk>/experience/add/", views.experience_add, name="experience_add"),
     path("profile/<int:pk>/promotion/add/", views.promotion_add, name="promotion_add"),
     path("profile/<int:pk>/salary/add/", views.salary_increment_add, name="salary_increment_add"),
 
-    # Admin profile view
-    path("profile/<int:pk>/", views.staff_profile_admin_view, name="staff_profile_admin_view"),
+    # Excel Exports (NEW)
+    path("export/excel/", views.staff_export_excel, name="staff_export_excel"),
+    path("<int:pk>/export/excel/", views.staff_export_single_excel, name="staff_export_single_excel"),
 ]
-

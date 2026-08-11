@@ -1,0 +1,195 @@
+{% extends "base.html" %}
+{% load fee_extras %}
+
+{% block content %}
+<div class="container-fluid py-4">
+
+  <!-- Page Header -->
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+      <h2 class="mb-1">Send Due Reminders</h2>
+      <p class="text-muted mb-0">
+        Showing installments due on or before <strong>{{ reminder_window_date|default:"7 days from today" }}</strong>
+      </p>
+    </div>
+    <a href="{% url 'fee_payment:fee_payment_list' %}" class="btn btn-outline-secondary">
+      ← Back to Payments
+    </a>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- STUDENT OVERDUE SUMMARY (NEW)                                -->
+  <!-- Aggregates total overdue amount PER STUDENT                  -->
+  <!-- ============================================================ -->
+  <div class="card mb-4 border-warning shadow-sm">
+    <div class="card-header bg-warning text-dark d-flex justify-content-between align-items-center">
+      <h5 class="mb-0"><i class="bi bi-exclamation-triangle-fill me-2"></i>Student Overdue Summary</h5>
+      <span class="badge bg-dark fs-6">
+        Grand Total: ₹{{ grand_total_overdue|default:"0.00" }}
+      </span>
+    </div>
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table class="table table-sm table-hover mb-0 align-middle">
+          <thead class="table-light">
+            <tr>
+              <th class="ps-3">#</th>
+              <th>Student Name</th>
+              <th>{{ student_id_field|default:"ID"|title }}</th>
+              <th class="text-center">Pending Installments</th>
+              <th class="text-end pe-3">Total Overdue (₹)</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for item in student_summary %}
+            <tr>
+              <td class="ps-3 text-muted">{{ forloop.counter }}</td>
+              <td class="fw-semibold">{{ item.student }}</td>
+              <td><code class="text-dark">{{ item.student_display_id }}</code></td>
+              <td class="text-center">
+                <span class="badge bg-secondary">{{ item.installment_count }}</span>
+              </td>
+              <td class="text-end pe-3 fw-bold text-danger">₹{{ item.total_overdue }}</td>
+            </tr>
+            {% empty %}
+            <tr>
+              <td colspan="5" class="text-center text-muted py-4">
+                <i class="bi bi-check-circle-fill text-success fs-4 d-block mb-2"></i>
+                No overdue fees found. All students are up to date!
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+          {% if student_summary %}
+          <tfoot class="table-group-divider">
+            <tr class="table-dark">
+              <th colspan="4" class="ps-3">Grand Total Overdue</th>
+              <th class="text-end pe-3">₹{{ grand_total_overdue }}</th>
+            </tr>
+          </tfoot>
+          {% endif %}
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- BULK SEND FORM                                               -->
+  <!-- ============================================================ -->
+  <div class="card mb-4 border-primary shadow-sm">
+    <div class="card-body d-flex justify-content-between align-items-center">
+      <div>
+        <h5 class="mb-1">Bulk Reminder Action</h5>
+        <p class="text-muted mb-0">
+          {{ pending_installments|length }} installment(s) ready to receive reminders.
+        </p>
+      </div>
+      <form method="post" class="m-0" onsubmit="return confirm('Are you sure you want to send reminders to all listed parents?');">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-primary btn-lg">
+          <i class="bi bi-send-fill me-2"></i>Send All Reminders
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- PENDING INSTALLMENTS DETAIL LIST                             -->
+  <!-- ============================================================ -->
+  <div class="card shadow-sm">
+    <div class="card-header bg-light d-flex justify-content-between align-items-center">
+      <h5 class="mb-0">Pending / Overdue Installments Detail</h5>
+      <span class="badge bg-primary">{{ page_obj.paginator.count }} total</span>
+    </div>
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table class="table table-striped table-hover mb-0 align-middle">
+          <thead class="table-dark">
+            <tr>
+              <th class="ps-3">#</th>
+              <th>Student</th>
+              <th>{{ student_id_field|default:"ID"|title }}</th>
+              <th>Category</th>
+              <th>Installment #</th>
+              <th>Due Date</th>
+              <th class="text-end">Amount Due (₹)</th>
+              <th class="text-end">Paid (₹)</th>
+              <th class="text-end pe-3">Balance (₹)</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for inst in pending_installments %}
+            <tr>
+              <td class="ps-3 text-muted">{{ forloop.counter0|add:page_obj.start_index }}</td>
+              <td class="fw-semibold">{{ inst.assignment.student }}</td>
+              <td><code>{{ inst.assignment.student|student_id }}</code></td>
+              <td>{{ inst.assignment.fee_structure.category }}</td>
+              <td class="text-center">#{{ inst.installment_number }}</td>
+              <td>
+                {% if inst.due_date < today %}
+                  <span class="text-danger fw-bold">{{ inst.due_date|date:"d M Y" }}</span>
+                {% else %}
+                  {{ inst.due_date|date:"d M Y" }}
+                {% endif %}
+              </td>
+              <td class="text-end">₹{{ inst.amount_due }}</td>
+              <td class="text-end text-success">₹{{ inst.total_paid }}</td>
+              <td class="text-end pe-3 fw-bold text-danger">₹{{ inst.remaining_balance }}</td>
+              <td>
+                {% if inst.due_date < today %}
+                  <span class="badge bg-danger">Overdue</span>
+                {% else %}
+                  <span class="badge bg-warning text-dark">Pending</span>
+                {% endif %}
+              </td>
+            </tr>
+            {% empty %}
+            <tr>
+              <td colspan="10" class="text-center text-muted py-5">
+                <i class="bi bi-inbox fs-1 d-block mb-2"></i>
+                No pending or overdue installments found.
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Pagination -->
+    {% if is_paginated %}
+    <div class="card-footer bg-light">
+      <nav aria-label="Page navigation">
+        <ul class="pagination justify-content-center mb-0">
+          {% if page_obj.has_previous %}
+          <li class="page-item">
+            <a class="page-link" href="?page={{ page_obj.previous_page_number }}">← Previous</a>
+          </li>
+          {% else %}
+          <li class="page-item disabled"><span class="page-link">← Previous</span></li>
+          {% endif %}
+
+          {% for num in page_obj.paginator.page_range %}
+            {% if page_obj.number == num %}
+            <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+            {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+            <li class="page-item"><a class="page-link" href="?page={{ num }}">{{ num }}</a></li>
+            {% endif %}
+          {% endfor %}
+
+          {% if page_obj.has_next %}
+          <li class="page-item">
+            <a class="page-link" href="?page={{ page_obj.next_page_number }}">Next →</a>
+          </li>
+          {% else %}
+          <li class="page-item disabled"><span class="page-link">Next →</span></li>
+          {% endif %}
+        </ul>
+      </nav>
+    </div>
+    {% endif %}
+  </div>
+
+</div>
+{% endblock %}

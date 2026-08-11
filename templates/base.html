@@ -7,50 +7,79 @@
 
     <title>{% block title %}NOWMI CGC{% endblock %}</title>
 
-    <!-- Bootstrap -->
+    <!-- Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
 
     <!-- Bootstrap Icons -->
-    <link rel="stylesheet"
-          href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
 
     <!-- Google Font -->
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 
     <!-- Custom CSS -->
     <link href="{% static 'css/style.css' %}" rel="stylesheet">
+
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            padding-top: 70px; /* Space for fixed navbar */
+            background-color: #f8f9fa;
+        }
+        .bg-primary-custom {
+            background-color: #0d6efd !important;
+        }
+        .navbar-brand img.logo {
+            height: 36px;
+            width: 36px;
+            object-fit: cover;
+            border-radius: 50%;
+        }
+        footer {
+            margin-top: 3rem;
+            padding: 1.5rem 0;
+            background-color: #fff;
+            border-top: 1px solid #dee2e6;
+            color: #6c757d;
+            font-size: 0.875rem;
+        }
+        .dropdown-item i {
+            width: 1.2rem;
+            display: inline-block;
+        }
+        /* Print styles for receipt */
+        @media print {
+            .navbar, footer, .d-print-none {
+                display: none !important;
+            }
+            body {
+                padding-top: 0;
+                background-color: #fff;
+            }
+            .card {
+                border: none !important;
+                box-shadow: none !important;
+            }
+        }
+    </style>
+    {% block extra_css %}{% endblock %}
 </head>
 
 <body>
 
+<!-- Navbar -->
 <nav class="navbar navbar-expand-lg navbar-dark fixed-top bg-primary-custom">
-
     <div class="container">
-
-        <a class="navbar-brand d-flex align-items-center"
-           href="{% url 'dashboard' %}">
-
-            <img src="{% static 'images/cgc.jpg' %}"
-                 class="logo me-2"
-                 alt="Logo">
-
+        <a class="navbar-brand d-flex align-items-center" href="{% url 'dashboard' %}">
+            <img src="{% static 'images/cgc.jpg' %}" class="logo me-2" alt="Logo">
             <span>NOWMI CGC</span>
-
         </a>
 
         {% if user.is_authenticated %}
-
-        <button class="navbar-toggler"
-                type="button"
-                data-bs-toggle="collapse"
-                data-bs-target="#navbarERP">
-
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarERP">
             <span class="navbar-toggler-icon"></span>
-
         </button>
 
         <div class="collapse navbar-collapse" id="navbarERP">
-
             <ul class="navbar-nav ms-auto align-items-lg-center">
 
                 <li class="nav-item">
@@ -71,82 +100,135 @@
                     </a>
                 </li>
 
+                <!-- Fees Dropdown -->
                 <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">
+                        <i class="bi bi-credit-card"></i> Fees
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-end">
+                        <li>
+                            <a class="dropdown-item" href="{% url 'fee_payment:fee_category_list' %}">
+                                <i class="bi bi-tags"></i> Categories
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item" href="{% url 'fee_payment:fee_structure_list' %}">
+                                <i class="bi bi-cash-stack"></i> Fee Structures
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item" href="{% url 'fee_payment:student_fee_assignment_list' %}">
+                                <i class="bi bi-person-check"></i> Assign Fees
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item" href="{% url 'fee_payment:fee_installment_list' %}">
+                                <i class="bi bi-calendar-check"></i> Installments
+                            </a>
+                        </li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li>
+                            <a class="dropdown-item" href="{% url 'fee_payment:fee_payment_list' %}">
+                                <i class="bi bi-wallet2"></i> Record Payments
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item" href="{% url 'fee_payment:send_due_reminders' %}">
+                                <i class="bi bi-bell"></i> Send Reminders
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item" href="{% url 'fee_payment:daily_collection_report' %}">
+                                <i class="bi bi-graph-up-arrow"></i> Daily Collection Report
+                            </a>
+                        </li>
+                    </ul>
+                </li>
 
-                    <a class="nav-link dropdown-toggle"
-                       href="#"
-                       data-bs-toggle="dropdown">
+                <!-- Reports Dropdown (NEW) -->
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">
+                        <i class="bi bi-file-earmark-bar-graph"></i> Reports
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-end">
+                        <li>
+                            <a class="dropdown-item" href="{% url 'fee_payment:daily_collection_report' %}">
+                                <i class="bi bi-graph-up-arrow"></i> Daily Collection
+                            </a>
+                        </li>
+                        <!-- Add more report links here as needed -->
+                    </ul>
+                </li>
 
+                <!-- User Dropdown -->
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">
                         <i class="bi bi-person-circle"></i>
-
                         {% if user.get_full_name %}
                             {{ user.get_full_name }}
-                        {% elif user.username %}
-                            {{ user.username }}
                         {% else %}
                             {{ user.email }}
                         {% endif %}
-
                     </a>
-
                     <ul class="dropdown-menu dropdown-menu-end">
-
                         <li>
-                            <a class="dropdown-item"
-                               href="{% url 'staff_profile' %}">
-                                My Profile
+                            <a class="dropdown-item" href="{% url 'accounts:profile' %}">
+                                <i class="bi bi-person"></i> My Profile
                             </a>
                         </li>
-
-                        <li><hr class="dropdown-divider"></li>
-
                         <li>
-
-                            <form method="post"
-                                  action="{% url 'logout' %}">
+                            <a class="dropdown-item" href="{% url 'accounts:password_change' %}">
+                                <i class="bi bi-key"></i> Change Password
+                            </a>
+                        </li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li>
+                            <form method="post" action="{% url 'accounts:logout' %}">
                                 {% csrf_token %}
                                 <button class="dropdown-item text-danger">
-                                    Logout
+                                    <i class="bi bi-box-arrow-right"></i> Logout
                                 </button>
                             </form>
-
                         </li>
-
                     </ul>
-
                 </li>
 
             </ul>
-
         </div>
-
         {% endif %}
-
     </div>
-
 </nav>
 
+<!-- Django Messages -->
+{% if messages %}
+<div class="container mt-3">
+    {% for message in messages %}
+    <div class="alert alert-{{ message.tags|default:'info' }} alert-dismissible fade show" role="alert">
+        {{ message }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+
+<!-- Main Content -->
 <main class="container py-4">
-
-    {% block content %}
-
-    {% endblock %}
-
+    {% block content %}{% endblock %}
 </main>
 
+<!-- Footer -->
 <footer>
-
     <div class="container text-center">
-
-        © {{ year }} <strong>TECH TROT VAJRA PVT LTD</strong> |
-        School ERP Management System
-
+        © {% now "Y" %} <strong>TECH TROT VAJRA PVT LTD</strong> | School ERP Management System
     </div>
-
 </footer>
 
+<!-- Bootstrap 5 JS Bundle -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+<!-- Custom JS -->
 <script src="{% static 'js/script.js' %}"></script>
 
+{% block extra_js %}{% endblock %}
 </body>
 </html>

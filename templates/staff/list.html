@@ -1,168 +1,235 @@
 {% extends "base.html" %}
 {% load static %}
+
 {% block title %}Staff List | School ERP{% endblock %}
+
 {% block content %}
+<div class="container-fluid py-4">
 
-<div class="d-flex flex-column min-vh-100 staff-background">
-  <div class="container my-5">
-
-    <!-- Toolbar -->
-    <div class="d-flex flex-wrap justify-content-between align-items-center mb-4">
-      <h1 class="fw-bold mb-0">Staff</h1>
-      <div class="d-flex gap-2">
-        {% if user.is_system_admin or user.role == 'BRANCH_ADMIN' %}
-          <a class="btn btn-primary" href="{% url 'staff_create' %}">
-            <i class="bi bi-person-plus"></i> Add Staff
-          </a>
-        {% endif %}
-      </div>
+  <!-- Header -->
+  <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-4 gap-2">
+    <div>
+      <h2 class="fw-bold mb-1">Staff</h2>
+      <p class="text-muted mb-0">Total: <strong>{{ total_count }}</strong> staff member(s)</p>
     </div>
+    <div class="d-flex flex-wrap gap-2">
+      <a href="{% url 'staff_export_excel' %}" class="btn btn-success">
+        <i class="bi bi-file-earmark-excel me-1"></i> Export Excel
+      </a>
+      {% if user.is_system_admin or user.is_branch_admin %}
+      <a href="{% url 'staff_create' %}" class="btn btn-primary">
+        <i class="bi bi-person-plus me-1"></i> Add Staff
+      </a>
+      {% endif %}
+    </div>
+  </div>
 
-    <!-- Staff Table Card -->
-    <div class="card shadow-lg">
+  <!-- Messages -->
+  {% if messages %}
+    {% for message in messages %}
+    <div class="alert alert-{{ message.tags|default:'info' }} alert-dismissible fade show" role="alert">
+      {{ message }}
+      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+    {% endfor %}
+  {% endif %}
 
-      <!-- Search Bar -->
-      <div class="card-header bg-white">
-        <form method="get">
-          <div class="row g-2 align-items-center">
-            <div class="col-md-6">
-              <input
-                type="text"
-                name="search"
-                class="form-control"
-                placeholder="Search by Employee ID, Name, Email, Phone, Department..."
-                value="{{ search }}"
-              >
+  <!-- Search Bar -->
+  <div class="card shadow-sm mb-4">
+    <div class="card-body">
+      <form method="get" class="row g-2 align-items-end">
+        <div class="col-12 col-md-6 col-lg-4">
+          <label class="form-label small text-muted">Search</label>
+          <input type="text" name="search" class="form-control"
+                 placeholder="Employee ID, Name, Email, Phone, Department..."
+                 value="{{ search }}">
+        </div>
+        <div class="col-auto">
+          <button type="submit" class="btn btn-primary">
+            <i class="bi bi-search me-1"></i> Search
+          </button>
+        </div>
+        {% if search %}
+        <div class="col-auto">
+          <a href="{% url 'staff_list' %}" class="btn btn-outline-secondary">
+            <i class="bi bi-x-circle me-1"></i> Clear
+          </a>
+        </div>
+        {% endif %}
+      </form>
+    </div>
+  </div>
+
+  <!-- Desktop Table -->
+  <div class="card shadow-sm d-none d-md-block">
+    <div class="table-responsive">
+      <table class="table table-hover table-striped mb-0 align-middle">
+        <thead class="table-dark">
+          <tr>
+            <th class="ps-3">#</th>
+            <th>Photo</th>
+            <th>Employee ID</th>
+            <th>Name</th>
+            <th>Email</th>
+            <th>Branch</th>
+            <th>Department</th>
+            <th>Designation</th>
+            <th>Phone</th>
+            <th>Status</th>
+            <th class="text-end pe-3">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for person in staff %}
+          <tr>
+            <td class="ps-3 text-muted">{{ forloop.counter0|add:staff.start_index }}</td>
+            <td>
+              {% if person.photo %}
+                <img src="{{ person.photo.url }}" alt="Photo" class="rounded-circle" width="40" height="40" style="object-fit:cover;">
+              {% else %}
+                <div class="bg-secondary text-white rounded-circle d-flex align-items-center justify-content-center" style="width:40px;height:40px;font-size:14px;">
+                  {{ person.user.first_name|default:"?"|first|upper }}
+                </div>
+              {% endif %}
+            </td>
+            <td><code class="fw-semibold">{{ person.employee_id }}</code></td>
+            <td class="fw-semibold">{{ person.full_name }}</td>
+            <td class="small">{{ person.user.email }}</td>
+            <td>{{ person.user.branch.name|default:"—" }}</td>
+            <td>{{ person.get_department_display }}</td>
+            <td>{{ person.current_designation }}</td>
+            <td>{{ person.phone|default:"—" }}</td>
+            <td>
+              {% if person.is_active %}
+                <span class="badge bg-success">Active</span>
+              {% else %}
+                <span class="badge bg-secondary">Inactive</span>
+              {% endif %}
+            </td>
+            <td class="text-end pe-3">
+              <div class="btn-group">
+                <a href="{% url 'staff_profile_admin_view' person.pk %}" class="btn btn-sm btn-outline-info" title="View">
+                  <i class="bi bi-eye"></i>
+                </a>
+                {% if user.is_system_admin or user.is_branch_admin %}
+                <a href="{% url 'staff_edit' person.pk %}" class="btn btn-sm btn-outline-primary" title="Edit">
+                  <i class="bi bi-pencil-square"></i>
+                </a>
+                <a href="{% url 'staff_documents' person.pk %}" class="btn btn-sm btn-outline-secondary" title="Documents">
+                  <i class="bi bi-file-earmark-text"></i>
+                </a>
+                <a href="{% url 'staff_export_single_excel' person.pk %}" class="btn btn-sm btn-outline-success" title="Export Excel">
+                  <i class="bi bi-file-earmark-excel"></i>
+                </a>
+                {% if person.is_active %}
+                <a href="{% url 'staff_deactivate' person.pk %}" class="btn btn-sm btn-outline-warning" title="Deactivate">
+                  <i class="bi bi-person-dash"></i>
+                </a>
+                {% endif %}
+                {% endif %}
+              </div>
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="11" class="text-center text-muted py-5">
+              <i class="bi bi-people fs-1 d-block mb-2 text-secondary"></i>
+              {% if search %}No staff found matching "<strong>{{ search }}</strong>".{% else %}No staff members yet.{% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Mobile Cards -->
+  <div class="d-md-none">
+    {% for person in staff %}
+    <div class="card mb-3 shadow-sm">
+      <div class="card-body">
+        <div class="d-flex align-items-start mb-2">
+          {% if person.photo %}
+            <img src="{{ person.photo.url }}" class="rounded-circle me-3" width="50" height="50" style="object-fit:cover;">
+          {% else %}
+            <div class="bg-secondary text-white rounded-circle d-flex align-items-center justify-content-center me-3" style="width:50px;height:50px;font-size:18px;">
+              {{ person.user.first_name|default:"?"|first|upper }}
             </div>
-
-            <div class="col-auto">
-              <button type="submit" class="btn btn-primary">
-                <i class="bi bi-search"></i> Search
-              </button>
-            </div>
-
-            {% if search %}
-            <div class="col-auto">
-              <a href="{% url 'staff_list' %}" class="btn btn-outline-secondary">
-                <i class="bi bi-x-circle"></i> Clear
-              </a>
-            </div>
-            {% endif %}
-
-            <div class="col text-end">
-              <small class="text-muted">
-                Total Staff: <strong>{{ staff.count }}</strong>
-              </small>
+          {% endif %}
+          <div class="flex-grow-1">
+            <h6 class="mb-0 fw-bold">{{ person.full_name }}</h6>
+            <code class="small text-muted">{{ person.employee_id }}</code>
+            <div class="mt-1">
+              {% if person.is_active %}
+                <span class="badge bg-success">Active</span>
+              {% else %}
+                <span class="badge bg-secondary">Inactive</span>
+              {% endif %}
             </div>
           </div>
-        </form>
-      </div>
-
-      <!-- Table -->
-      <div class="card-body p-0">
-        <div class="table-responsive">
-          <table class="table table-hover align-middle mb-0">
-            <thead class="table-light">
-              <tr>
-                <th>Photo</th>
-                <th>ID</th>
-                <th>First Name</th>
-                <th>Last Name</th>
-                <th>Email</th>
-                <th>Branch</th>
-                <th>Department</th>
-                <th>Current Role</th>
-                <th>Phone</th>
-                <th class="text-center">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {% for person in staff %}
-              <tr>
-                <!-- Photo -->
-                <td>
-                  {% if person.photo %}
-                    <img src="{{ person.photo.url }}" alt="Photo" class="rounded-circle" width="40" height="40">
-                  {% else %}
-                    <i class="bi bi-person-circle fs-3 text-muted"></i>
-                  {% endif %}
-                </td>
-
-                <!-- Employee ID -->
-                <td>{{ person.employee_id }}</td>
-
-                <!-- First Name -->
-                <td>{{ person.user.first_name|default:"—" }}</td>
-
-                <!-- Last Name -->
-                <td>{{ person.user.last_name|default:"—" }}</td>
-
-                <!-- Email -->
-                <td>{{ person.user.email }}</td>
-
-                <!-- Branch -->
-                <td>{{ person.user.branch.name|default:"—" }}</td>
-
-                <!-- Department -->
-                <td>{{ person.get_department_display }}</td>
-
-                <!-- Current Role -->
-                <td>
-                  {% if person.promotions.last %}
-                    {{ person.promotions.last.new_designation }}
-                  {% else %}
-                    {{ person.designation }}
-                  {% endif %}
-                </td>
-
-                <!-- Phone -->
-                <td>{{ person.phone|default:"—" }}</td>
-
-                
-               <!-- Actions -->
-<td class="text-center">
-  <div class="d-flex flex-wrap gap-2 justify-content-center">
-    {% if user.is_system_admin or user.role == 'BRANCH_ADMIN' %}
-      <!-- Edit -->
-      <a href="{% url 'staff_edit' person.pk %}" class="btn btn-sm btn-outline-primary" title="Edit">
-        <i class="bi bi-pencil-square"></i>
-      </a>
-
-      <!-- Documents -->
-      <a href="{% url 'staff_documents' person.pk %}" class="btn btn-sm btn-outline-info" title="Documents">
-        <i class="bi bi-file-earmark-text"></i>
-      </a>
-
-      <!-- Mark Left -->
-      {% if person.is_active %}
-        <a href="{% url 'staff_deactivate' person.pk %}" class="btn btn-sm btn-outline-warning" title="Mark Left">
-          <i class="bi bi-person-dash"></i>
-        </a>
-      {% endif %}
-    {% endif %}
-  </div>
-</td>
-
-              </tr>
-              {% empty %}
-              <tr>
-                <td colspan="10" class="text-center text-muted py-4">
-                  {% if search %}
-                    No staff found matching "<strong>{{ search }}</strong>".
-                  {% else %}
-                    No staff members yet.
-                  {% endif %}
-                </td>
-              </tr>
-              {% endfor %}
-            </tbody>
-          </table>
+        </div>
+        <p class="mb-1 small"><strong>Dept:</strong> {{ person.get_department_display }} | <strong>Desig:</strong> {{ person.current_designation }}</p>
+        <p class="mb-1 small"><strong>Branch:</strong> {{ person.user.branch.name|default:"—" }}</p>
+        <p class="mb-2 small"><strong>Phone:</strong> {{ person.phone|default:"—" }}</p>
+        <div class="d-flex flex-wrap gap-1">
+          <a href="{% url 'staff_profile_admin_view' person.pk %}" class="btn btn-sm btn-outline-info">
+            <i class="bi bi-eye"></i> View
+          </a>
+          {% if user.is_system_admin or user.is_branch_admin %}
+          <a href="{% url 'staff_edit' person.pk %}" class="btn btn-sm btn-outline-primary">
+            <i class="bi bi-pencil-square"></i> Edit
+          </a>
+          <a href="{% url 'staff_documents' person.pk %}" class="btn btn-sm btn-outline-secondary">
+            <i class="bi bi-file-earmark-text"></i> Docs
+          </a>
+          <a href="{% url 'staff_export_single_excel' person.pk %}" class="btn btn-sm btn-outline-success">
+            <i class="bi bi-file-earmark-excel"></i> Excel
+          </a>
+          {% if person.is_active %}
+          <a href="{% url 'staff_deactivate' person.pk %}" class="btn btn-sm btn-outline-warning">
+            <i class="bi bi-person-dash"></i> Deactivate
+          </a>
+          {% endif %}
+          {% endif %}
         </div>
       </div>
-
     </div>
-
+    {% empty %}
+    <div class="card text-center py-5">
+      <div class="card-body">
+        <i class="bi bi-people fs-1 text-secondary mb-2"></i>
+        <p class="text-muted mb-0">{% if search %}No results for "{{ search }}".{% else %}No staff members yet.{% endif %}</p>
+      </div>
+    </div>
+    {% endfor %}
   </div>
-</div>
 
+  <!-- Pagination -->
+  {% if staff.has_other_pages %}
+  <nav class="mt-4" aria-label="Staff pagination">
+    <ul class="pagination justify-content-center flex-wrap">
+      {% if staff.has_previous %}
+      <li class="page-item"><a class="page-link" href="?page={{ staff.previous_page_number }}{% if search %}&search={{ search }}{% endif %}">← Prev</a></li>
+      {% else %}
+      <li class="page-item disabled"><span class="page-link">← Prev</span></li>
+      {% endif %}
+
+      {% for num in staff.paginator.page_range %}
+        {% if staff.number == num %}
+        <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+        {% elif num > staff.number|add:'-3' and num < staff.number|add:'3' %}
+        <li class="page-item"><a class="page-link" href="?page={{ num }}{% if search %}&search={{ search }}{% endif %}">{{ num }}</a></li>
+        {% endif %}
+      {% endfor %}
+
+      {% if staff.has_next %}
+      <li class="page-item"><a class="page-link" href="?page={{ staff.next_page_number }}{% if search %}&search={{ search }}{% endif %}">Next →</a></li>
+      {% else %}
+      <li class="page-item disabled"><span class="page-link">Next →</span></li>
+      {% endif %}
+    </ul>
+  </nav>
+  {% endif %}
+
+</div>
 {% endblock %}

@@ -7,158 +7,177 @@
 
 {% if not user.is_authenticated %}
 
+<!-- Public Landing Page -->
 <section class="hero-section">
-
     <div class="container">
-
         <div class="row align-items-center">
 
             <div class="col-lg-6 order-2 order-lg-1">
-
                 <h1 class="hero-title">
                     Welcome to
                     <span>NOWMI School ERP</span>
                 </h1>
 
                 <p class="hero-text">
-
                     Beyond technology and management, our school is deeply
                     committed to nurturing every child with care and patience.
                     We believe true learning happens when children are
                     encouraged to explore, ask questions and understand
                     concepts in their own unique way.
-
                 </p>
 
                 <p class="hero-text">
-
                     Our ERP simplifies admissions, staff management,
                     attendance, academics and administration through one
                     centralized platform that can be accessed anytime,
                     anywhere.
-
                 </p>
 
-                <a href="{% url 'login' %}"
+                <a href="{% url 'accounts:login' %}"
                    class="btn btn-primary btn-lg hero-btn">
-
+                    <i class="bi bi-box-arrow-in-right me-2"></i>
                     Login to Continue
-
                 </a>
-
             </div>
 
             <div class="col-lg-6 text-center order-1 order-lg-2 mb-4 mb-lg-0">
-
                 <img src="{% static 'images/school_building.jpg' %}"
-                     class="img-fluid hero-image"
-                     alt="School">
-
+                     class="img-fluid hero-image rounded shadow"
+                     alt="School Building">
             </div>
 
         </div>
-
     </div>
-
 </section>
 
 {% else %}
 
-<!-- Dashboard Section -->
+<!-- Dashboard -->
 <section class="dashboard-section">
-
     <div class="dashboard-header mb-4">
-
-        <h2 class="fw-bold">Dashboard</h2>
-
+        <h2 class="fw-bold mb-1">Dashboard</h2>
         <p class="text-muted mb-0">
-            Welcome,
-            <strong>{{ user_role }}</strong>
-
-            {% if user_branch %}
-                | {{ user_branch.name }}
-            {% endif %}
+            Welcome, <strong>{{ user.get_role_display }}</strong>
+            {% if user.branch %}| {{ user.branch.name }}{% endif %}
         </p>
-
     </div>
 
-    <div class="row g-4">
+    <!-- Quick Access Links with Totals -->
+    <div class="row g-3">
 
         <!-- Branches -->
-
-        <div class="col-lg-4 col-md-6">
-
-            <div class="stats-card branches-card">
-
-                <div class="stats-icon">
-                    <i class="bi bi-building"></i>
+        <div class="col-6 col-md-4 col-lg-3">
+            <a href="{% url 'branch_list' %}" class="card text-decoration-none border-0 shadow-sm h-100 text-center p-3 hover-shadow transition-all">
+                <div class="mb-2">
+                    <i class="bi bi-building fs-1 text-primary"></i>
                 </div>
-
-                <div class="stats-content">
-
-                    <h6>Branches</h6>
-
-                    <h2>{{ total_branches }}</h2>
-
-                    <small>Total Branches</small>
-
-                </div>
-
-            </div>
-
+                <h6 class="fw-semibold text-dark mb-1">Branches</h6>
+                <span class="badge bg-primary fs-6">{{ total_branches|default:"0" }}</span>
+            </a>
         </div>
 
         <!-- Staff -->
-
-        <div class="col-lg-4 col-md-6">
-
-            <div class="stats-card staff-card">
-
-                <div class="stats-icon">
-                    <i class="bi bi-people-fill"></i>
+        <div class="col-6 col-md-4 col-lg-3">
+            <a href="{% url 'staff_list' %}" class="card text-decoration-none border-0 shadow-sm h-100 text-center p-3 hover-shadow transition-all">
+                <div class="mb-2">
+                    <i class="bi bi-people fs-1 text-success"></i>
                 </div>
-
-                <div class="stats-content">
-
-                    <h6>Staff</h6>
-
-                    <h2>{{ total_staff }}</h2>
-
-                    <small>Total Staff Members</small>
-
-                </div>
-
-            </div>
-
+                <h6 class="fw-semibold text-dark mb-1">Staff</h6>
+                <span class="badge bg-success fs-6">{{ total_staff|default:"0" }}</span>
+            </a>
         </div>
 
         <!-- Students -->
-
-        <div class="col-lg-4 col-md-12">
-
-            <div class="stats-card student-card">
-
-                <div class="stats-icon">
-                    <i class="bi bi-mortarboard-fill"></i>
+        <div class="col-6 col-md-4 col-lg-3">
+            <a href="{% url 'student_list' %}" class="card text-decoration-none border-0 shadow-sm h-100 text-center p-3 hover-shadow transition-all">
+                <div class="mb-2">
+                    <i class="bi bi-mortarboard fs-1 text-info"></i>
                 </div>
+                <h6 class="fw-semibold text-dark mb-1">Students</h6>
+                <span class="badge bg-info fs-6">{{ total_students|default:"0" }}</span>
+            </a>
+        </div>
 
-                <div class="stats-content">
-
-                    <h6>Students</h6>
-
-                    <h2>{{ total_students }}</h2>
-
-                    <small>Total Students</small>
-
+        <!-- Fee Categories -->
+        <div class="col-6 col-md-4 col-lg-3">
+            <a href="{% url 'fee_payment:fee_category_list' %}" class="card text-decoration-none border-0 shadow-sm h-100 text-center p-3 hover-shadow transition-all">
+                <div class="mb-2">
+                    <i class="bi bi-tags fs-1 text-warning"></i>
                 </div>
+                <h6 class="fw-semibold text-dark mb-1">Fee Categories</h6>
+                <span class="badge bg-warning text-dark fs-6">{{ total_fee_categories|default:"0" }}</span>
+            </a>
+        </div>
 
-            </div>
+        <!-- Fee Structures -->
+        <div class="col-6 col-md-4 col-lg-3">
+            <a href="{% url 'fee_payment:fee_structure_list' %}" class="card text-decoration-none border-0 shadow-sm h-100 text-center p-3 hover-shadow transition-all">
+                <div class="mb-2">
+                    <i class="bi bi-cash-stack fs-1 text-danger"></i>
+                </div>
+                <h6 class="fw-semibold text-dark mb-1">Fee Structures</h6>
+                <span class="badge bg-danger fs-6">{{ total_fee_structures|default:"0" }}</span>
+            </a>
+        </div>
 
+        <!-- Fee Assignments -->
+        <div class="col-6 col-md-4 col-lg-3">
+            <a href="{% url 'fee_payment:student_fee_assignment_list' %}" class="card text-decoration-none border-0 shadow-sm h-100 text-center p-3 hover-shadow transition-all">
+                <div class="mb-2">
+                    <i class="bi bi-person-check fs-1 text-secondary"></i>
+                </div>
+                <h6 class="fw-semibold text-dark mb-1">Fee Assignments</h6>
+                <span class="badge bg-secondary fs-6">{{ total_fee_assignments|default:"0" }}</span>
+            </a>
+        </div>
+
+        <!-- Installments -->
+        <div class="col-6 col-md-4 col-lg-3">
+            <a href="{% url 'fee_payment:fee_installment_list' %}" class="card text-decoration-none border-0 shadow-sm h-100 text-center p-3 hover-shadow transition-all">
+                <div class="mb-2">
+                    <i class="bi bi-calendar-check fs-1 text-primary"></i>
+                </div>
+                <h6 class="fw-semibold text-dark mb-1">Installments</h6>
+                <span class="badge bg-primary fs-6">{{ total_installments|default:"0" }}</span>
+            </a>
+        </div>
+
+        <!-- Payments -->
+        <div class="col-6 col-md-4 col-lg-3">
+            <a href="{% url 'fee_payment:fee_payment_list' %}" class="card text-decoration-none border-0 shadow-sm h-100 text-center p-3 hover-shadow transition-all">
+                <div class="mb-2">
+                    <i class="bi bi-wallet2 fs-1 text-success"></i>
+                </div>
+                <h6 class="fw-semibold text-dark mb-1">Payments</h6>
+                <span class="badge bg-success fs-6">{{ total_payments|default:"0" }}</span>
+            </a>
+        </div>
+
+        <!-- Send Reminders -->
+        <div class="col-6 col-md-4 col-lg-3">
+            <a href="{% url 'fee_payment:send_due_reminders' %}" class="card text-decoration-none border-0 shadow-sm h-100 text-center p-3 hover-shadow transition-all">
+                <div class="mb-2">
+                    <i class="bi bi-bell fs-1 text-warning"></i>
+                </div>
+                <h6 class="fw-semibold text-dark mb-1">Send Reminders</h6>
+                <span class="badge bg-warning text-dark fs-6">{{ total_pending_reminders|default:"0" }}</span>
+            </a>
+        </div>
+
+        <!-- Daily Collection Report -->
+        <div class="col-6 col-md-4 col-lg-3">
+            <a href="{% url 'fee_payment:daily_collection_report' %}" class="card text-decoration-none border-0 shadow-sm h-100 text-center p-3 hover-shadow transition-all">
+                <div class="mb-2">
+                    <i class="bi bi-graph-up-arrow fs-1 text-info"></i>
+                </div>
+                <h6 class="fw-semibold text-dark mb-1">Daily Collection</h6>
+                <span class="badge bg-info fs-6">{{ today_collection|default:"0" }}</span>
+            </a>
         </div>
 
     </div>
-
 </section>
+
 {% endif %}
 
 {% endblock %}

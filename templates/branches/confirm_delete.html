@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container py-5">
+  <div class="row justify-content-center">
+    <div class="col-12 col-md-8 col-lg-5">
+
+      <div class="card border-danger shadow-sm">
+        <div class="card-header bg-danger text-white">
+          <h5 class="mb-0"><i class="bi bi-exclamation-triangle-fill me-2"></i>Confirm Deletion</h5>
+        </div>
+        <div class="card-body text-center py-4">
+          <i class="bi bi-building-x text-danger" style="font-size: 4rem;"></i>
+          <h5 class="mt-3 mb-2">Delete Branch?</h5>
+          <p class="text-muted mb-4">
+            Are you sure you want to delete <strong>"{{ branch.name }}"</strong>
+            (<code>{{ branch.code }}</code>)?
+            <br>This action <span class="text-danger fw-bold">cannot be undone</span>.
+          </p>
+
+          <form method="post" class="d-inline-block">
+            {% csrf_token %}
+            <div class="d-flex flex-column flex-sm-row gap-2 justify-content-center">
+              <button type="submit" class="btn btn-danger px-4">
+                <i class="bi bi-trash me-1"></i> Yes, Delete
+              </button>
+              <a href="{% url "branch_list" %}" class="btn btn-outline-secondary px-4">
+                Cancel
+              </a>
+            </div>
+          </form>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+{% endblock %}

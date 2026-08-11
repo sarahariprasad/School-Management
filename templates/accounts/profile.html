@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+
+{% block title %}My Profile{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>My Profile</h2>
+    <div class="card mt-3">
+        <div class="card-body">
+            <table class="table table-borderless">
+                <tr>
+                    <th style="width: 200px;">Name</th>
+                    <td>{{ user.get_full_name|default:user.email }}</td>
+                </tr>
+                <tr>
+                    <th>Email</th>
+                    <td>{{ user.email }}</td>
+                </tr>
+                <tr>
+                    <th>Role</th>
+                    <td>{{ user.get_role_display|default:user.role }}</td>
+                </tr>
+                <tr>
+                    <th>Branch</th>
+                    <td>{{ user.branch.name|default:"—" }}</td>
+                </tr>
+                <tr>
+                    <th>Managed Branches</th>
+                    <td>
+                        {% if managed_branches %}
+                            {{ managed_branches|join:", " }}
+                        {% else %}
+                            —
+                        {% endif %}
+                    </td>
+                </tr>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
