@@ -17,7 +17,7 @@
                     <div class="mb-3">
                         <label class="form-label">Installment <span class="text-danger">*</span></label>
                         {{ form.installment }}
-                        <div class="form-text">Select the installment to pay against. Only pending installments are shown.</div>
+                        <div class="form-text">Select the installment to pay against. Pending installments are shown; the current installment remains available when editing a payment.</div>
                         {% if form.installment.errors %}<div class="text-danger small mt-1">{{ form.installment.errors.0 }}</div>{% endif %}
                     </div>
                     <div class="mb-3">

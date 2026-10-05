@@ -9,12 +9,12 @@
     <div class="col-xl-10">
 
       <!-- Header -->
-      <div class="d-flex justify-content-between align-items-center mb-4">
+      <div class="page-header-bar">
         <div>
-          <h2 class="fw-bold mb-1">{{ title }}</h2>
-          <p class="text-muted mb-0">Update staff details below.</p>
+          <h2>{{ title }}</h2>
+          <p>Update staff details below.</p>
         </div>
-        <a href="{% url 'staff_list' %}" class="btn btn-outline-secondary">
+        <a href="{% url 'staff_list' %}" class="btn btn-outline-secondary btn-sm btn-back">
           <i class="bi bi-arrow-left me-1"></i> Back
         </a>
       </div>
@@ -22,253 +22,627 @@
       <!-- Messages -->
       {% if messages %}
         {% for message in messages %}
-        <div class="alert alert-{{ message.tags|default:'danger' }} alert-dismissible fade show">
+        <div class="alert alert-{{ message.tags|default:'danger' }} alert-dismissible fade show" role="alert">
           {{ message }}
-          <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>
         {% endfor %}
       {% endif %}
 
-      <form method="post" enctype="multipart/form-data" novalidate>
+      <!-- ═══════════════════════════════════════════════════════════ -->
+      <!-- GLOBAL ERROR SUMMARY — every error from every step         -->
+      <!-- ═══════════════════════════════════════════════════════════ -->
+      {% if profile_form.errors or education_formset.errors or document_formset.errors or salary_formset.errors or experience_formset.errors or promotion_formset.errors %}
+      <div class="alert alert-danger mb-4" role="alert">
+        <h6 class="alert-heading fw-bold"><i class="bi bi-exclamation-triangle-fill me-2"></i>Please correct the following errors:</h6>
+        <ul class="mb-0 small mt-2">
+          {% for error in profile_form.non_field_errors %}
+            <li><strong>Profile:</strong> {{ error }}</li>
+          {% endfor %}
+          {% for field, errors in profile_form.errors.items %}
+            {% if field != '__all__' %}
+            <li><strong>Profile › {{ field|title }}:</strong> {{ errors|striptags }}</li>
+            {% endif %}
+          {% endfor %}
+
+          {% for form in education_formset %}
+            {% for error in form.non_field_errors %}
+              <li><strong>Education #{{ forloop.parentloop.counter }}:</strong> {{ error }}</li>
+            {% endfor %}
+            {% for field, errors in form.errors.items %}
+              {% if field != 'id' and field != '__all__' %}
+              <li><strong>Education #{{ forloop.parentloop.counter }} › {{ field|title }}:</strong> {{ errors|striptags }}</li>
+              {% endif %}
+            {% endfor %}
+          {% endfor %}
+
+          {% for form in document_formset %}
+            {% for error in form.non_field_errors %}
+              <li><strong>Document #{{ forloop.parentloop.counter }}:</strong> {{ error }}</li>
+            {% endfor %}
+            {% for field, errors in form.errors.items %}
+              {% if field != 'id' and field != '__all__' %}
+              <li><strong>Document #{{ forloop.parentloop.counter }} › {{ field|title }}:</strong> {{ errors|striptags }}</li>
+              {% endif %}
+            {% endfor %}
+          {% endfor %}
+
+          {% for form in salary_formset %}
+            {% for error in form.non_field_errors %}
+              <li><strong>Salary #{{ forloop.parentloop.counter }}:</strong> {{ error }}</li>
+            {% endfor %}
+            {% for field, errors in form.errors.items %}
+              {% if field != 'id' and field != '__all__' %}
+              <li><strong>Salary #{{ forloop.parentloop.counter }} › {{ field|title }}:</strong> {{ errors|striptags }}</li>
+              {% endif %}
+            {% endfor %}
+          {% endfor %}
+
+          {% for form in experience_formset %}
+            {% for error in form.non_field_errors %}
+              <li><strong>Experience #{{ forloop.parentloop.counter }}:</strong> {{ error }}</li>
+            {% endfor %}
+            {% for field, errors in form.errors.items %}
+              {% if field != 'id' and field != '__all__' %}
+              <li><strong>Experience #{{ forloop.parentloop.counter }} › {{ field|title }}:</strong> {{ errors|striptags }}</li>
+              {% endif %}
+            {% endfor %}
+          {% endfor %}
+
+          {% for form in promotion_formset %}
+            {% for error in form.non_field_errors %}
+              <li><strong>Promotion #{{ forloop.parentloop.counter }}:</strong> {{ error }}</li>
+            {% endfor %}
+            {% for field, errors in form.errors.items %}
+              {% if field != 'id' and field != '__all__' %}
+              <li><strong>Promotion #{{ forloop.parentloop.counter }} › {{ field|title }}:</strong> {{ errors|striptags }}</li>
+              {% endif %}
+            {% endfor %}
+          {% endfor %}
+        </ul>
+      </div>
+      {% endif %}
+
+      <!-- Step Progress Bar -->
+      <div class="wizard-progress">
+        <ul class="wizard-steps" id="wizardSteps">
+          <li class="wizard-step-item active" data-step="0" data-has-error="{% if profile_form.errors %}1{% else %}0{% endif %}">
+            <div class="wizard-step-circle"><i class="bi bi-person-fill"></i></div>
+            <div class="wizard-step-label">Profile {% if profile_form.errors %}<i class="bi bi-exclamation-circle-fill"></i>{% endif %}</div>
+          </li>
+          <li class="wizard-step-item" data-step="1" data-has-error="{% if education_formset.errors %}1{% else %}0{% endif %}">
+            <div class="wizard-step-circle"><i class="bi bi-mortarboard-fill"></i></div>
+            <div class="wizard-step-label">Education {% if education_formset.errors %}<i class="bi bi-exclamation-circle-fill"></i>{% endif %}</div>
+          </li>
+          <li class="wizard-step-item" data-step="2" data-has-error="{% if document_formset.errors %}1{% else %}0{% endif %}">
+            <div class="wizard-step-circle"><i class="bi bi-file-earmark-text-fill"></i></div>
+            <div class="wizard-step-label">Documents {% if document_formset.errors %}<i class="bi bi-exclamation-circle-fill"></i>{% endif %}</div>
+          </li>
+          <li class="wizard-step-item" data-step="3" data-has-error="{% if salary_formset.errors %}1{% else %}0{% endif %}">
+            <div class="wizard-step-circle"><i class="bi bi-cash-stack"></i></div>
+            <div class="wizard-step-label">Salary {% if salary_formset.errors %}<i class="bi bi-exclamation-circle-fill"></i>{% endif %}</div>
+          </li>
+          <li class="wizard-step-item" data-step="4" data-has-error="{% if experience_formset.errors %}1{% else %}0{% endif %}">
+            <div class="wizard-step-circle"><i class="bi bi-briefcase-fill"></i></div>
+            <div class="wizard-step-label">Experience {% if experience_formset.errors %}<i class="bi bi-exclamation-circle-fill"></i>{% endif %}</div>
+          </li>
+          <li class="wizard-step-item" data-step="5" data-has-error="{% if promotion_formset.errors %}1{% else %}0{% endif %}">
+            <div class="wizard-step-circle"><i class="bi bi-arrow-up-circle"></i></div>
+            <div class="wizard-step-label">Promotions {% if promotion_formset.errors %}<i class="bi bi-exclamation-circle-fill"></i>{% endif %}</div>
+          </li>
+          <li class="wizard-step-item" data-step="6" data-has-error="0">
+            <div class="wizard-step-circle"><i class="bi bi-clock-history"></i></div>
+            <div class="wizard-step-label">Audit</div>
+          </li>
+        </ul>
+      </div>
+
+      <form method="post" enctype="multipart/form-data" novalidate id="staffEditWizardForm">
         {% csrf_token %}
 
-        <!-- Tabs -->
-        <ul class="nav nav-pills mb-3" id="editTabs" role="tablist">
-          <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#profile" type="button"><i class="bi bi-person-fill me-1"></i> Profile</button></li>
-          <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#education" type="button"><i class="bi bi-mortarboard-fill me-1"></i> Education</button></li>
-          <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#documents" type="button"><i class="bi bi-file-earmark-text-fill me-1"></i> Documents</button></li>
-          <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#salary" type="button"><i class="bi bi-cash-stack me-1"></i> Salary</button></li>
-          <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#experience" type="button"><i class="bi bi-briefcase-fill me-1"></i> Experience</button></li>
-          <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#promotions" type="button"><i class="bi bi-arrow-up-circle me-1"></i> Promotions</button></li>
-        </ul>
+        <!-- ═══════ STEP 1: PROFILE ═══════ -->
+        <div class="wizard-panel active" data-panel="0">
+          <div class="card staff-form-card">
+            <div class="card-header">
+              <h5><i class="bi bi-person-fill me-2"></i>Personal Information</h5>
+            </div>
+            <div class="card-body">
+              <div class="row g-3">
+                <div class="col-12 col-sm-6 col-lg-3">
+                  <label class="form-label">Employee ID <span class="text-danger">*</span></label>
+                  {{ profile_form.employee_id }}
+                  {% if profile_form.employee_id.errors %}<div class="text-danger small mt-1">{{ profile_form.employee_id.errors|striptags }}</div>{% endif %}
+                </div>
+                <div class="col-12 col-sm-6 col-lg-3">
+                  <label class="form-label">First Name <span class="text-danger">*</span></label>
+                  {{ profile_form.first_name }}
+                  {% if profile_form.first_name.errors %}<div class="text-danger small mt-1">{{ profile_form.first_name.errors|striptags }}</div>{% endif %}
+                </div>
+                <div class="col-12 col-sm-6 col-lg-3">
+                  <label class="form-label">Last Name</label>
+                  {{ profile_form.last_name }}
+                  {% if profile_form.last_name.errors %}<div class="text-danger small mt-1">{{ profile_form.last_name.errors|striptags }}</div>{% endif %}
+                </div>
+                <div class="col-12 col-sm-6 col-lg-3">
+                  <label class="form-label">Email <span class="text-danger">*</span></label>
+                  {{ profile_form.email }}
+                  {% if profile_form.email.errors %}<div class="text-danger small mt-1">{{ profile_form.email.errors|striptags }}</div>{% endif %}
+                </div>
 
-        <div class="tab-content" id="editTabsContent">
+                <div class="col-12 col-sm-6 col-lg-3">
+                  <label class="form-label">Gender</label>
+                  {{ profile_form.gender }}
+                  {% if profile_form.gender.errors %}<div class="text-danger small mt-1">{{ profile_form.gender.errors|striptags }}</div>{% endif %}
+                </div>
+                <div class="col-12 col-sm-6 col-lg-3">
+                  <label class="form-label">Date of Birth</label>
+                  {{ profile_form.date_of_birth }}
+                  {% if profile_form.date_of_birth.errors %}<div class="text-danger small mt-1">{{ profile_form.date_of_birth.errors|striptags }}</div>{% endif %}
+                </div>
+                <div class="col-12 col-sm-6 col-lg-3">
+                  <label class="form-label">Department</label>
+                  {{ profile_form.department }}
+                  {% if profile_form.department.errors %}<div class="text-danger small mt-1">{{ profile_form.department.errors|striptags }}</div>{% endif %}
+                </div>
+                <div class="col-12 col-sm-6 col-lg-3">
+                  <label class="form-label">Designation</label>
+                  {{ profile_form.designation }}
+                  {% if profile_form.designation.errors %}<div class="text-danger small mt-1">{{ profile_form.designation.errors|striptags }}</div>{% endif %}
+                </div>
 
-          <!-- PROFILE TAB -->
-          <div class="tab-pane fade show active" id="profile">
-            <div class="card shadow-sm">
-              <div class="card-header bg-light"><h5 class="mb-0"><i class="bi bi-person-fill me-2"></i>Personal Information</h5></div>
-              <div class="card-body">
-                <div class="row g-3">
-                  <div class="col-md-3">
-                    <label class="form-label">Employee ID</label>
-                    {{ profile_form.employee_id }}
-                    {% if profile_form.employee_id.errors %}<div class="text-danger small">{{ profile_form.employee_id.errors|striptags }}</div>{% endif %}
-                  </div>
-                  <div class="col-md-3">
-                    <label class="form-label">First Name</label>
-                    {{ profile_form.first_name }}
-                    {% if profile_form.first_name.errors %}<div class="text-danger small">{{ profile_form.first_name.errors|striptags }}</div>{% endif %}
-                  </div>
-                  <div class="col-md-3">
-                    <label class="form-label">Last Name</label>
-                    {{ profile_form.last_name }}
-                  </div>
-                  <div class="col-md-3">
-                    <label class="form-label">Email</label>
-                    {{ profile_form.email }}
-                    {% if profile_form.email.errors %}<div class="text-danger small">{{ profile_form.email.errors|striptags }}</div>{% endif %}
-                  </div>
-                  <div class="col-md-3">
-                    <label class="form-label">Gender</label>
-                    {{ profile_form.gender }}
-                  </div>
-                  <div class="col-md-3">
-                    <label class="form-label">Date of Birth</label>
-                    {{ profile_form.date_of_birth }}
-                  </div>
-                  <div class="col-md-3">
-                    <label class="form-label">Department</label>
-                    {{ profile_form.department }}
-                  </div>
-                  <div class="col-md-3">
-                    <label class="form-label">Designation</label>
-                    {{ profile_form.designation }}
-                  </div>
-                  <div class="col-md-3">
-                    <label class="form-label">Joining Date</label>
-                    {{ profile_form.joining_date }}
-                  </div>
-                  <div class="col-md-3">
-                    <label class="form-label">Phone</label>
-                    {{ profile_form.phone }}
-                  </div>
-                  <div class="col-md-3">
-                    <label class="form-label">Emergency Contact</label>
-                    {{ profile_form.emergency_contact }}
-                  </div>
-                  <div class="col-md-3">
-                    <label class="form-label">Emergency Name</label>
-                    {{ profile_form.emergency_contact_name }}
-                  </div>
-                  <div class="col-12">
-                    <label class="form-label">Address</label>
-                    {{ profile_form.address }}
-                  </div>
-                  <div class="col-md-4">
-                    <label class="form-label">City</label>
-                    {{ profile_form.city }}
-                  </div>
-                  <div class="col-md-4">
-                    <label class="form-label">State</label>
-                    {{ profile_form.state }}
-                  </div>
-                  <div class="col-md-4">
-                    <label class="form-label">Postal Code</label>
-                    {{ profile_form.postal_code }}
-                  </div>
-                  <div class="col-md-6">
-                    <label class="form-label">Address Proof Type</label>
-                    {{ profile_form.address_proof_type }}
-                  </div>
-                  <div class="col-md-6">
-                    <label class="form-label">Upload Address Proof</label>
-                    {{ profile_form.address_proof }}
-                    {% if profile_form.instance.address_proof %}
-                      <div class="mt-1"><a href="{% url 'address_proof_download' profile.pk %}" class="btn btn-sm btn-outline-primary"><i class="bi bi-download"></i> Current File</a></div>
-                    {% endif %}
-                  </div>
-                  <div class="col-md-6">
-                    <label class="form-label">Profile Photo</label>
-                    {{ profile_form.photo }}
-                    {% if profile_form.instance.photo %}
-                      <div class="mt-2"><img src="{{ profile_form.instance.photo.url }}" class="rounded-circle" width="80" height="80" style="object-fit:cover;"></div>
-                    {% endif %}
-                  </div>
-                  <div class="col-md-6">
-                    <div class="form-check mt-4">
-                      {{ profile_form.is_active }}
-                      <label class="form-check-label fw-semibold">Active Staff</label>
+                <div class="col-12 col-sm-6 col-lg-3">
+                  <label class="form-label">Joining Date</label>
+                  {{ profile_form.joining_date }}
+                  {% if profile_form.joining_date.errors %}<div class="text-danger small mt-1">{{ profile_form.joining_date.errors|striptags }}</div>{% endif %}
+                </div>
+                <div class="col-12 col-sm-6 col-lg-3">
+                  <label class="form-label">Phone</label>
+                  {{ profile_form.phone }}
+                  {% if profile_form.phone.errors %}<div class="text-danger small mt-1">{{ profile_form.phone.errors|striptags }}</div>{% endif %}
+                </div>
+                <div class="col-12 col-sm-6 col-lg-3">
+                  <label class="form-label">Emergency Contact</label>
+                  {{ profile_form.emergency_contact }}
+                  {% if profile_form.emergency_contact.errors %}<div class="text-danger small mt-1">{{ profile_form.emergency_contact.errors|striptags }}</div>{% endif %}
+                </div>
+                <div class="col-12 col-sm-6 col-lg-3">
+                  <label class="form-label">Emergency Name</label>
+                  {{ profile_form.emergency_contact_name }}
+                  {% if profile_form.emergency_contact_name.errors %}<div class="text-danger small mt-1">{{ profile_form.emergency_contact_name.errors|striptags }}</div>{% endif %}
+                </div>
+                <div class="col-12 col-sm-6 col-lg-3">
+                  <label class="form-label">Blood Group</label>
+                  {{ profile_form.blood_group }}
+                  {% if profile_form.blood_group.errors %}<div class="text-danger small mt-1">{{ profile_form.blood_group.errors|striptags }}</div>{% endif %}
+                </div>
+                <div class="col-12">
+                  <label class="form-label">Address</label>
+                  {{ profile_form.address }}
+                  {% if profile_form.address.errors %}<div class="text-danger small mt-1">{{ profile_form.address.errors|striptags }}</div>{% endif %}
+                </div>
+                <div class="col-12 col-sm-4">
+                  <label class="form-label">City</label>
+                  {{ profile_form.city }}
+                  {% if profile_form.city.errors %}<div class="text-danger small mt-1">{{ profile_form.city.errors|striptags }}</div>{% endif %}
+                </div>
+                <div class="col-12 col-sm-4">
+                  <label class="form-label">State</label>
+                  {{ profile_form.state }}
+                  {% if profile_form.state.errors %}<div class="text-danger small mt-1">{{ profile_form.state.errors|striptags }}</div>{% endif %}
+                </div>
+                <div class="col-12 col-sm-4">
+                  <label class="form-label">Postal Code</label>
+                  {{ profile_form.postal_code }}
+                  {% if profile_form.postal_code.errors %}<div class="text-danger small mt-1">{{ profile_form.postal_code.errors|striptags }}</div>{% endif %}
+                </div>
+
+                <div class="col-12 col-sm-6">
+                  <label class="form-label">Address Proof Type</label>
+                  {{ profile_form.address_proof_type }}
+                  {% if profile_form.address_proof_type.errors %}<div class="text-danger small mt-1">{{ profile_form.address_proof_type.errors|striptags }}</div>{% endif %}
+                </div>
+                <div class="col-12 col-sm-6">
+                  <label class="form-label">Upload Address Proof</label>
+                  {{ profile_form.address_proof }}
+                  {% if profile_form.address_proof.errors %}<div class="text-danger small mt-1">{{ profile_form.address_proof.errors|striptags }}</div>{% endif %}
+                  {% if profile_form.instance.address_proof %}
+                    <div class="mt-2">
+                      <a href="{% url 'address_proof_download' profile.pk %}" class="btn btn-sm btn-outline-primary btn-download">
+                        <i class="bi bi-download me-1"></i> Current File
+                      </a>
                     </div>
+                  {% endif %}
+                </div>
+
+                <div class="col-12 col-sm-6">
+                  <label class="form-label">Profile Photo</label>
+                  {{ profile_form.photo }}
+                  {% if profile_form.photo.errors %}<div class="text-danger small mt-1">{{ profile_form.photo.errors|striptags }}</div>{% endif %}
+                  {% if profile_form.instance.photo %}
+                    <div class="mt-2">
+                      <img src="{{ profile_form.instance.photo.url }}" class="photo-preview" width="80" height="80" alt="Profile Photo">
+                    </div>
+                  {% endif %}
+                </div>
+                <div class="col-12 col-sm-6 d-flex align-items-end">
+                  <div class="form-check form-switch">
+                    {{ profile_form.is_active }}
+                    <label class="form-check-label fw-semibold">Active Staff</label>
                   </div>
+                  {% if profile_form.is_active.errors %}<div class="text-danger small mt-1">{{ profile_form.is_active.errors|striptags }}</div>{% endif %}
                 </div>
               </div>
             </div>
           </div>
-
-          <!-- EDUCATION TAB -->
-          <div class="tab-pane fade" id="education">
-            {{ education_formset.management_form }}
-            {% for form in education_formset %}
-            <div class="card shadow-sm mb-3">
-              <div class="card-header bg-light d-flex justify-content-between">
-                <span class="fw-semibold">Education {{ forloop.counter }}</span>
-                {% if form.instance.pk %}
-                <div class="form-check">{{ form.DELETE }} <label class="form-check-label text-danger small">Delete</label></div>
-                {% endif %}
-              </div>
-              <div class="card-body">
-                <div class="row g-3">
-                  <div class="col-md-4"><label class="form-label">Qualification</label>{{ form.qualification }}</div>
-                  <div class="col-md-5"><label class="form-label">Institution</label>{{ form.institution }}</div>
-                  <div class="col-md-3"><label class="form-label">Passing Year</label>{{ form.passing_year }}</div>
-                  <div class="col-md-6"><label class="form-label">Certificate</label>{{ form.certificate }}</div>
-                </div>
-              </div>
-            </div>
-            {% endfor %}
-          </div>
-
-          <!-- DOCUMENTS TAB -->
-          <div class="tab-pane fade" id="documents">
-            {{ document_formset.management_form }}
-            {% for form in document_formset %}
-            <div class="card shadow-sm mb-3">
-              <div class="card-header bg-light d-flex justify-content-between">
-                <span class="fw-semibold">Document {{ forloop.counter }}</span>
-                {% if form.instance.pk %}
-                <div class="form-check">{{ form.DELETE }} <label class="form-check-label text-danger small">Delete</label></div>
-                {% endif %}
-              </div>
-              <div class="card-body">
-                <div class="row g-3">
-                  <div class="col-md-4"><label class="form-label">Title</label>{{ form.title }}</div>
-                  <div class="col-md-4"><label class="form-label">Type</label>{{ form.document_type }}</div>
-                  <div class="col-md-4"><label class="form-label">File</label>{{ form.file }}</div>
-                </div>
-              </div>
-            </div>
-            {% endfor %}
-          </div>
-
-          <!-- SALARY TAB -->
-          <div class="tab-pane fade" id="salary">
-            {{ salary_formset.management_form }}
-            {% for form in salary_formset %}
-            <div class="card shadow-sm mb-3">
-              <div class="card-header bg-light d-flex justify-content-between">
-                <span class="fw-semibold">Salary {{ forloop.counter }}</span>
-                {% if form.instance.pk %}
-                <div class="form-check">{{ form.DELETE }} <label class="form-check-label text-danger small">Delete</label></div>
-                {% endif %}
-              </div>
-              <div class="card-body">
-                <div class="row g-3">
-                  <div class="col-md-3"><label class="form-label">Year</label>{{ form.year }}</div>
-                  <div class="col-md-3"><label class="form-label">Base Salary</label>{{ form.base_salary }}</div>
-                  <div class="col-md-3"><label class="form-label">Increment</label>{{ form.increment_amount }}</div>
-                  <div class="col-md-3"><label class="form-label">New Salary</label>{{ form.new_salary }}</div>
-                </div>
-              </div>
-            </div>
-            {% endfor %}
-          </div>
-
-          <!-- EXPERIENCE TAB -->
-          <div class="tab-pane fade" id="experience">
-            {{ experience_formset.management_form }}
-            {% for form in experience_formset %}
-            <div class="card shadow-sm mb-3">
-              <div class="card-header bg-light d-flex justify-content-between">
-                <span class="fw-semibold">Experience {{ forloop.counter }}</span>
-                {% if form.instance.pk %}
-                <div class="form-check">{{ form.DELETE }} <label class="form-check-label text-danger small">Delete</label></div>
-                {% endif %}
-              </div>
-              <div class="card-body">
-                <div class="row g-3">
-                  <div class="col-md-4"><label class="form-label">Organization</label>{{ form.organization }}</div>
-                  <div class="col-md-4"><label class="form-label">Role</label>{{ form.role }}</div>
-                  <div class="col-md-2"><label class="form-label">Start</label>{{ form.start_date }}</div>
-                  <div class="col-md-2"><label class="form-label">End</label>{{ form.end_date }}</div>
-                </div>
-              </div>
-            </div>
-            {% endfor %}
-          </div>
-
-          <!-- PROMOTIONS TAB -->
-          <div class="tab-pane fade" id="promotions">
-            {{ promotion_formset.management_form }}
-            {% for form in promotion_formset %}
-            <div class="card shadow-sm mb-3">
-              <div class="card-header bg-light d-flex justify-content-between">
-                <span class="fw-semibold">Promotion {{ forloop.counter }}</span>
-                {% if form.instance.pk %}
-                <div class="form-check">{{ form.DELETE }} <label class="form-check-label text-danger small">Delete</label></div>
-                {% endif %}
-              </div>
-              <div class="card-body">
-                <div class="row g-3">
-                  <div class="col-md-4"><label class="form-label">Old Designation</label>{{ form.old_designation }}</div>
-                  <div class="col-md-4"><label class="form-label">New Designation</label>{{ form.new_designation }}</div>
-                  <div class="col-md-2"><label class="form-label">Date</label>{{ form.promotion_date }}</div>
-                  <div class="col-md-2"><label class="form-label">Remarks</label>{{ form.remarks }}</div>
-                </div>
-              </div>
-            </div>
-            {% endfor %}
-          </div>
-
         </div>
 
-        <div class="d-flex flex-column flex-sm-row gap-2 mt-4">
-          <button type="submit" class="btn btn-success btn-lg"><i class="bi bi-check-circle me-2"></i> Save Changes</button>
-          <a href="{% url 'staff_list' %}" class="btn btn-outline-secondary btn-lg">Cancel</a>
+        <!-- ═══════ STEP 2: EDUCATION ═══════ -->
+        <div class="wizard-panel" data-panel="1">
+          {{ education_formset.management_form }}
+          {% if education_formset.non_form_errors %}
+            <div class="alert alert-danger">{% for e in education_formset.non_form_errors %}<div>{{ e }}</div>{% endfor %}</div>
+          {% endif %}
+          {% for form in education_formset %}
+          <div class="card staff-form-card">
+            <div class="card-header">
+              <span class="fw-semibold text-primary">Education #{{ forloop.counter }}</span>
+              {% if form.instance.pk %}
+              <div class="form-check form-check-inline m-0">
+                {{ form.DELETE }}
+                <label class="form-check-label text-danger small" for="{{ form.DELETE.id_for_label }}">Delete</label>
+              </div>
+              {% endif %}
+            </div>
+            <div class="card-body">
+              {{ form.id.as_hidden }}
+              {% if form.non_field_errors %}<div class="alert alert-danger py-1 small">{% for e in form.non_field_errors %}{{ e }}{% endfor %}</div>{% endif %}
+              <div class="row g-3">
+                <div class="col-12 col-sm-6 col-lg-4">
+                  <label class="form-label">Qualification</label>
+                  {{ form.qualification }}
+                  {% if form.qualification.errors %}<div class="text-danger small mt-1">{{ form.qualification.errors|striptags }}</div>{% endif %}
+                </div>
+                <div class="col-12 col-sm-6 col-lg-5">
+                  <label class="form-label">Institution</label>
+                  {{ form.institution }}
+                  {% if form.institution.errors %}<div class="text-danger small mt-1">{{ form.institution.errors|striptags }}</div>{% endif %}
+                </div>
+                <div class="col-12 col-sm-6 col-lg-3">
+                  <label class="form-label">Passing Year</label>
+                  {{ form.passing_year }}
+                  {% if form.passing_year.errors %}<div class="text-danger small mt-1">{{ form.passing_year.errors|striptags }}</div>{% endif %}
+                </div>
+                <div class="col-12 col-sm-6">
+                  <label class="form-label">Certificate</label>
+                  {{ form.certificate }}
+                  {% if form.certificate.errors %}<div class="text-danger small mt-1">{{ form.certificate.errors|striptags }}</div>{% endif %}
+                </div>
+              </div>
+            </div>
+          </div>
+          {% endfor %}
         </div>
+
+        <!-- ═══════ STEP 3: DOCUMENTS ═══════ -->
+        <div class="wizard-panel" data-panel="2">
+          {{ document_formset.management_form }}
+          {% if document_formset.non_form_errors %}
+            <div class="alert alert-danger">{% for e in document_formset.non_form_errors %}<div>{{ e }}</div>{% endfor %}</div>
+          {% endif %}
+          {% for form in document_formset %}
+          <div class="card staff-form-card">
+            <div class="card-header">
+              <span class="fw-semibold text-primary">Document #{{ forloop.counter }}</span>
+              {% if form.instance.pk %}
+              <div class="form-check form-check-inline m-0">
+                {{ form.DELETE }}
+                <label class="form-check-label text-danger small" for="{{ form.DELETE.id_for_label }}">Delete</label>
+              </div>
+              {% endif %}
+            </div>
+            <div class="card-body">
+              {{ form.id.as_hidden }}
+              {% if form.non_field_errors %}<div class="alert alert-danger py-1 small">{% for e in form.non_field_errors %}{{ e }}{% endfor %}</div>{% endif %}
+              <div class="row g-3">
+                <div class="col-12 col-sm-4">
+                  <label class="form-label">Title</label>
+                  {{ form.title }}
+                  {% if form.title.errors %}<div class="text-danger small mt-1">{{ form.title.errors|striptags }}</div>{% endif %}
+                </div>
+                <div class="col-12 col-sm-4">
+                  <label class="form-label">Type</label>
+                  {{ form.document_type }}
+                  {% if form.document_type.errors %}<div class="text-danger small mt-1">{{ form.document_type.errors|striptags }}</div>{% endif %}
+                </div>
+                <div class="col-12 col-sm-4">
+                  <label class="form-label">File</label>
+                  {{ form.file }}
+                  {% if form.file.errors %}<div class="text-danger small mt-1">{{ form.file.errors|striptags }}</div>{% endif %}
+                </div>
+              </div>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+
+        <!-- ═══════ STEP 4: SALARY ═══════ -->
+        <div class="wizard-panel" data-panel="3">
+          {{ salary_formset.management_form }}
+          {% if salary_formset.non_form_errors %}
+            <div class="alert alert-danger">{% for e in salary_formset.non_form_errors %}<div>{{ e }}</div>{% endfor %}</div>
+          {% endif %}
+          {% for form in salary_formset %}
+          <div class="card staff-form-card">
+            <div class="card-header">
+              <span class="fw-semibold text-primary">Salary #{{ forloop.counter }}</span>
+              {% if form.instance.pk %}
+              <div class="form-check form-check-inline m-0">
+                {{ form.DELETE }}
+                <label class="form-check-label text-danger small" for="{{ form.DELETE.id_for_label }}">Delete</label>
+              </div>
+              {% endif %}
+            </div>
+            <div class="card-body">
+              {{ form.id.as_hidden }}
+              {% if form.non_field_errors %}<div class="alert alert-danger py-1 small">{% for e in form.non_field_errors %}{{ e }}{% endfor %}</div>{% endif %}
+              <div class="row g-3">
+                <div class="col-12 col-sm-6 col-lg-3">
+                  <label class="form-label">Year</label>
+                  {{ form.year }}
+                  {% if form.year.errors %}<div class="text-danger small mt-1">{{ form.year.errors|striptags }}</div>{% endif %}
+                </div>
+                <div class="col-12 col-sm-6 col-lg-3">
+                  <label class="form-label">Base Salary</label>
+                  {{ form.base_salary }}
+                  {% if form.base_salary.errors %}<div class="text-danger small mt-1">{{ form.base_salary.errors|striptags }}</div>{% endif %}
+                </div>
+                <div class="col-12 col-sm-6 col-lg-3">
+                  <label class="form-label">Increment</label>
+                  {{ form.increment_amount }}
+                  {% if form.increment_amount.errors %}<div class="text-danger small mt-1">{{ form.increment_amount.errors|striptags }}</div>{% endif %}
+                </div>
+                <div class="col-12 col-sm-6 col-lg-3">
+                  <label class="form-label">New Salary</label>
+                  {{ form.new_salary }}
+                  {% if form.new_salary.errors %}<div class="text-danger small mt-1">{{ form.new_salary.errors|striptags }}</div>{% endif %}
+                </div>
+              </div>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+
+        <!-- ═══════ STEP 5: EXPERIENCE ═══════ -->
+        <div class="wizard-panel" data-panel="4">
+          {{ experience_formset.management_form }}
+          {% if experience_formset.non_form_errors %}
+            <div class="alert alert-danger">{% for e in experience_formset.non_form_errors %}<div>{{ e }}</div>{% endfor %}</div>
+          {% endif %}
+          {% for form in experience_formset %}
+          <div class="card staff-form-card">
+            <div class="card-header">
+              <span class="fw-semibold text-primary">Experience #{{ forloop.counter }}</span>
+              {% if form.instance.pk %}
+              <div class="form-check form-check-inline m-0">
+                {{ form.DELETE }}
+                <label class="form-check-label text-danger small" for="{{ form.DELETE.id_for_label }}">Delete</label>
+              </div>
+              {% endif %}
+            </div>
+            <div class="card-body">
+              {{ form.id.as_hidden }}
+              {% if form.non_field_errors %}<div class="alert alert-danger py-1 small">{% for e in form.non_field_errors %}{{ e }}{% endfor %}</div>{% endif %}
+              <div class="row g-3">
+                <div class="col-12 col-sm-6 col-lg-4">
+                  <label class="form-label">Organization</label>
+                  {{ form.organization }}
+                  {% if form.organization.errors %}<div class="text-danger small mt-1">{{ form.organization.errors|striptags }}</div>{% endif %}
+                </div>
+                <div class="col-12 col-sm-6 col-lg-4">
+                  <label class="form-label">Role</label>
+                  {{ form.role }}
+                  {% if form.role.errors %}<div class="text-danger small mt-1">{{ form.role.errors|striptags }}</div>{% endif %}
+                </div>
+                <div class="col-6 col-lg-2">
+                  <label class="form-label">Start</label>
+                  {{ form.start_date }}
+                  {% if form.start_date.errors %}<div class="text-danger small mt-1">{{ form.start_date.errors|striptags }}</div>{% endif %}
+                </div>
+                <div class="col-6 col-lg-2">
+                  <label class="form-label">End</label>
+                  {{ form.end_date }}
+                  {% if form.end_date.errors %}<div class="text-danger small mt-1">{{ form.end_date.errors|striptags }}</div>{% endif %}
+                </div>
+              </div>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+
+        <!-- ═══════ STEP 6: PROMOTIONS ═══════ -->
+        <div class="wizard-panel" data-panel="5">
+          {{ promotion_formset.management_form }}
+          {% if promotion_formset.non_form_errors %}
+            <div class="alert alert-danger">{% for e in promotion_formset.non_form_errors %}<div>{{ e }}</div>{% endfor %}</div>
+          {% endif %}
+          {% for form in promotion_formset %}
+          <div class="card staff-form-card">
+            <div class="card-header">
+              <span class="fw-semibold text-primary">Promotion #{{ forloop.counter }}</span>
+              {% if form.instance.pk %}
+              <div class="form-check form-check-inline m-0">
+                {{ form.DELETE }}
+                <label class="form-check-label text-danger small" for="{{ form.DELETE.id_for_label }}">Delete</label>
+              </div>
+              {% endif %}
+            </div>
+            <div class="card-body">
+              {{ form.id.as_hidden }}
+              {% if form.non_field_errors %}<div class="alert alert-danger py-1 small">{% for e in form.non_field_errors %}{{ e }}{% endfor %}</div>{% endif %}
+              <div class="row g-3">
+                <div class="col-12 col-sm-6 col-lg-4">
+                  <label class="form-label">Old Designation</label>
+                  {{ form.old_designation }}
+                  {% if form.old_designation.errors %}<div class="text-danger small mt-1">{{ form.old_designation.errors|striptags }}</div>{% endif %}
+                </div>
+                <div class="col-12 col-sm-6 col-lg-4">
+                  <label class="form-label">New Designation</label>
+                  {{ form.new_designation }}
+                  {% if form.new_designation.errors %}<div class="text-danger small mt-1">{{ form.new_designation.errors|striptags }}</div>{% endif %}
+                </div>
+                <div class="col-6 col-lg-2">
+                  <label class="form-label">Date</label>
+                  {{ form.promotion_date }}
+                  {% if form.promotion_date.errors %}<div class="text-danger small mt-1">{{ form.promotion_date.errors|striptags }}</div>{% endif %}
+                </div>
+                <div class="col-6 col-lg-2">
+                  <label class="form-label">Remarks</label>
+                  {{ form.remarks }}
+                  {% if form.remarks.errors %}<div class="text-danger small mt-1">{{ form.remarks.errors|striptags }}</div>{% endif %}
+                </div>
+              </div>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+
+        <!-- ═══════ STEP 7: AUDIT HISTORY (read-only) ═══════ -->
+        <div class="wizard-panel" data-panel="6">
+          <div class="card staff-form-card">
+            <div class="card-header">
+              <h5><i class="bi bi-clock-history me-2"></i>Change History</h5>
+            </div>
+            <div class="card-body">
+              {% if audit_logs %}
+              <div class="audit-timeline">
+                {% for log in audit_logs %}
+                <div class="audit-item">
+                  <div class="audit-dot {% if log.action == 'CREATE' %}create{% elif log.action == 'UPDATE' %}update{% else %}delete{% endif %}"></div>
+                  <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                      <span class="badge bg-{% if log.action == 'CREATE' %}success{% elif log.action == 'UPDATE' %}warning text-dark{% else %}danger{% endif %} me-2">
+                        <i class="bi {{ log.action_icon }} me-1"></i>{{ log.get_action_display }}
+                      </span>
+                      <strong class="text-dark">{{ log.object_repr }}</strong>
+                    </div>
+                    <small class="text-muted text-nowrap ms-2">{{ log.action_time|date:"d M Y, h:i A" }}</small>
+                  </div>
+                  <div class="small text-muted mb-1">
+                    by <strong>{{ log.user_display }}</strong>
+                  </div>
+                  {% if log.field_changes %}
+                  <div class="bg-light rounded p-2 small mt-2">
+                    {% for field, change in log.field_changes.items %}
+                    <div class="mb-1">
+                      <strong class="text-dark">{{ field|title }}</strong>:
+                      <span class="text-decoration-line-through text-danger">{{ change.old|default:"empty" }}</span>
+                      <i class="bi bi-arrow-right text-muted mx-1"></i>
+                      <span class="text-success fw-semibold">{{ change.new|default:"empty" }}</span>
+                    </div>
+                    {% endfor %}
+                  </div>
+                  {% endif %}
+                </div>
+                {% endfor %}
+              </div>
+              {% else %}
+              <div class="text-center text-muted py-5">
+                <i class="bi bi-clock-history fs-1 d-block mb-2 text-secondary"></i>
+                No audit history found for this staff member.
+              </div>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+
+        <!-- Wizard Navigation -->
+        <div class="wizard-nav">
+          <button type="button" class="btn btn-outline-secondary" id="wizardPrev">
+            <i class="bi bi-arrow-left me-1"></i> Back
+          </button>
+          <div class="spacer"></div>
+          <button type="button" class="btn btn-primary" id="wizardNext">
+            Next <i class="bi bi-arrow-right ms-1"></i>
+          </button>
+          <button type="submit" class="btn btn-success px-4" id="wizardSubmit" style="display:none;">
+            <i class="bi bi-check-circle me-2"></i> Save Changes
+          </button>
+        </div>
+
       </form>
-
     </div>
   </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    const stepItems = Array.from(document.querySelectorAll('.wizard-step-item'));
+    const panels = Array.from(document.querySelectorAll('.wizard-panel'));
+    const prevBtn = document.getElementById('wizardPrev');
+    const nextBtn = document.getElementById('wizardNext');
+    const submitBtn = document.getElementById('wizardSubmit');
+    const totalSteps = panels.length;
+    let currentStep = 0;
+
+    function showStep(index) {
+      currentStep = index;
+
+      panels.forEach(function (panel) {
+        panel.classList.toggle('active', parseInt(panel.dataset.panel) === index);
+      });
+
+      stepItems.forEach(function (item) {
+        const stepNum = parseInt(item.dataset.step);
+        item.classList.toggle('active', stepNum === index);
+        item.classList.toggle('completed', stepNum < index);
+      });
+
+      prevBtn.style.visibility = index === 0 ? 'hidden' : 'visible';
+      nextBtn.style.display = index === totalSteps - 1 ? 'none' : 'inline-block';
+      submitBtn.style.display = index === totalSteps - 1 ? 'inline-block' : 'none';
+
+      window.scrollTo({ top: document.querySelector('.wizard-progress').offsetTop - 20, behavior: 'smooth' });
+    }
+
+    function currentPanelFields() {
+      const panel = panels[currentStep];
+      return Array.from(panel.querySelectorAll('input, select, textarea')).filter(function (el) {
+        return el.type !== 'hidden' && !el.disabled;
+      });
+    }
+
+    function validateCurrentStep() {
+      const fields = currentPanelFields();
+      for (const field of fields) {
+        if (!field.checkValidity()) {
+          field.reportValidity();
+          return false;
+        }
+      }
+      return true;
+    }
+
+    nextBtn.addEventListener('click', function () {
+      if (!validateCurrentStep()) return;
+      if (currentStep < totalSteps - 1) showStep(currentStep + 1);
+    });
+
+    prevBtn.addEventListener('click', function () {
+      if (currentStep > 0) showStep(currentStep - 1);
+    });
+
+    stepItems.forEach(function (item) {
+      item.addEventListener('click', function () {
+        const target = parseInt(item.dataset.step);
+        if (target <= currentStep) showStep(target);
+      });
+    });
+
+    // Jump straight to the first step that has server-side errors (after a failed submit)
+    const errorStep = stepItems.find(function (item) { return item.dataset.hasError === '1'; });
+    showStep(errorStep ? parseInt(errorStep.dataset.step) : 0);
+  });
+</script>
 {% endblock %}

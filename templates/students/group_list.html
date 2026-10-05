@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+{% block title %}Groups | School ERP{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row justify-content-center">
+        <div class="col-xl-10">
+
+            <div class="page-hero">
+                <div>
+                    <h2><i class="bi bi-diagram-3-fill me-2"></i>Groups</h2>
+                    <p>Manage Red / Green / Orange groups and their assigned staff</p>
+                </div>
+                <div class="page-hero-actions">
+                    <a href="{% url 'student_list' %}" class="btn btn-outline-light"><i class="bi bi-arrow-left me-1"></i>Back to Students</a>
+                </div>
+            </div>
+
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags|default:'info' }} alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+
+            <div class="row g-3">
+                {% for group in groups %}
+                <div class="col-12 col-sm-6 col-lg-4">
+                    <div class="card detail-card h-100 mb-0">
+                        <div class="card-body">
+                            <span class="badge mb-2
+                                {% if group.name == 'RED' %}group-badge-red
+                                {% elif group.name == 'GREEN' %}group-badge-green
+                                {% else %}group-badge-orange{% endif %}"
+                                style="font-size:0.85rem; padding: 0.45em 0.9em;">
+                                {{ group.get_name_display }}
+                            </span>
+                            <p class="text-muted small mb-3">{{ group.description|default:"No description yet." }}</p>
+
+                            <div class="d-flex justify-content-between text-muted small mb-3">
+                                <span><i class="bi bi-people me-1"></i><strong class="text-dark">{{ group.students.count }}</strong> student(s)</span>
+                                <span>
+                                    <i class="bi bi-person-badge me-1"></i>
+                                    {% with staff_count=group.staff_assignments.all|length %}
+                                        <strong class="text-dark">{{ staff_count }}</strong> staff
+                                    {% endwith %}
+                                </span>
+                            </div>
+
+                            <a href="{% url 'group_detail' group.pk %}" class="btn btn-primary w-100">
+                                <i class="bi bi-eye me-1"></i>View & manage
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="col-12">
+                    <div class="empty-state">
+                        <i class="bi bi-diagram-3 fs-1 d-block mb-2"></i>
+                        No groups have been created yet.
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

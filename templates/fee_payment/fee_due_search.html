@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+
+{% block title %}Fee Due Search{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h3 class="mb-0"><i class="bi bi-search"></i> Fee Due Search</h3>
+  <a href="{% url 'fee_payment:fee_due_search_export' %}?{{ request.GET.urlencode }}"
+     class="btn btn-outline-success">
+    <i class="bi bi-file-earmark-excel"></i> Export to Excel
+  </a>
+</div>
+
+<div class="card mb-3">
+  <div class="card-body">
+    <form method="get" class="row g-3 align-items-end">
+      <div class="col-md-4">
+        <label class="form-label">Search (name / student ID)</label>
+        <input type="text" name="q" value="{{ q }}" class="form-control"
+               placeholder="e.g. Rahul or roll number">
+      </div>
+      <div class="col-md-3">
+        <label class="form-label">Due date from</label>
+        <input type="date" name="due_from" value="{{ due_from }}" class="form-control">
+      </div>
+      <div class="col-md-3">
+        <label class="form-label">Due date to</label>
+        <input type="date" name="due_to" value="{{ due_to }}" class="form-control">
+      </div>
+      <div class="col-md-2 form-check ms-2 mb-2">
+        <input type="checkbox" name="overdue_only" value="1" id="overdueOnly"
+               class="form-check-input" {% if overdue_only %}checked{% endif %}>
+        <label class="form-check-label" for="overdueOnly">Overdue only</label>
+      </div>
+      <div class="col-12">
+        <button type="submit" class="btn btn-primary">
+          <i class="bi bi-funnel"></i> Filter
+        </button>
+        <a href="{% url 'fee_payment:fee_due_search' %}" class="btn btn-outline-secondary">Clear</a>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="card mb-3">
+  <div class="card-body d-flex justify-content-between align-items-center">
+    <span class="text-muted">{{ page_obj.paginator.count|default:student_summary|length }} student(s) with outstanding balance</span>
+    <span class="fs-5">
+      Total Outstanding:
+      <strong class="text-danger">₹{{ grand_total_outstanding|floatformat:2 }}</strong>
+    </span>
+  </div>
+</div>
+
+<div class="card">
+  <div class="table-responsive">
+    <table class="table table-hover table-striped mb-0 align-middle">
+      <thead class="table-light">
+        <tr>
+          <th>Student</th>
+          <th>{{ student_id_field|default:"Student ID" }}</th>
+          <th class="text-center">Pending Installments</th>
+          <th class="text-end">Total Overdue (₹)</th>
+          <th class="text-end">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in student_summary %}
+        <tr>
+          <td>{{ row.student|default:"Unknown student" }}</td>
+          <td>{{ row.student_display_id }}</td>
+          <td class="text-center">
+            <span class="badge bg-warning text-dark">{{ row.installment_count }}</span>
+          </td>
+          <td class="text-end fw-semibold text-danger">₹{{ row.total_overdue|floatformat:2 }}</td>
+          <td class="text-end">
+            {% if row.student %}
+            <a href="{% url 'fee_payment:student_fee_assignment_list' %}?q={{ row.student_display_id|default:row.student }}"
+               class="btn btn-sm btn-outline-primary">
+              <i class="bi bi-eye"></i> View
+            </a>
+            {% endif %}
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="5" class="text-center text-muted py-4">
+            No outstanding fee dues match this filter.
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{% include "fee_payment/_pagination.html" %}
+{% endblock %}

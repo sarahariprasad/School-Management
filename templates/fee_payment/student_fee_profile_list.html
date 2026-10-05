@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% block title %}Student Fee Profiles{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+  <h3>Student Fee Profiles</h3>
+  <p class="text-muted">Only active students appear here. Inactive students' fee profiles are hidden until they're reactivated.</p>
+
+  <form method="get" class="row g-2 mb-3">
+    <div class="col-auto">
+      <input type="text" name="q" value="{{ request.GET.q }}" class="form-control"
+             placeholder="Search by name or student ID">
+    </div>
+    <div class="col-auto">
+      <button type="submit" class="btn btn-primary">Search</button>
+    </div>
+  </form>
+
+  <table class="table table-hover">
+    <thead>
+      <tr>
+        <th>Student ID</th>
+        <th>Name</th>
+        <th>Group</th>
+        <th>Branch</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for student in students %}
+      <tr>
+        <td>{{ student.student_id }}</td>
+        <td>{{ student.name }}</td>
+        <td>{{ student.group.get_name_display|default:"—" }}</td>
+        <td>{{ student.student_branch|default:"—" }}</td>
+        <td>
+          <a href="{% url 'fee_payment:student_fee_profile' student.pk %}" class="btn btn-sm btn-outline-primary">
+            View Fee Profile
+          </a>
+        </td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="5" class="text-center text-muted">No active students found.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  {% if is_paginated %}
+  <nav>
+    <ul class="pagination">
+      {% if page_obj.has_previous %}
+        <li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}">Previous</a></li>
+      {% endif %}
+      <li class="page-item disabled"><span class="page-link">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span></li>
+      {% if page_obj.has_next %}
+        <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}">Next</a></li>
+      {% endif %}
+    </ul>
+  </nav>
+  {% endif %}
+</div>
+{% endblock %}

@@ -36,9 +36,8 @@
                         {{ form.amount_due }}
                         {% if form.amount_due.errors %}<div class="text-danger small mt-1">{{ form.amount_due.errors.0 }}</div>{% endif %}
                     </div>
-                    <div class="mb-3 form-check">
-                        {{ form.is_fully_paid }}
-                        <label class="form-check-label">Fully Paid</label>
+                    <div class="alert alert-info small py-2">
+                        Payment status is calculated automatically from recorded payments.
                     </div>
                     <div class="d-flex gap-2">
                         <button type="submit" class="btn btn-primary">

@@ -57,6 +57,10 @@
                 <h4 class="mb-0">
                     {% if overall_status == 'Paid' %}
                         <span class="badge bg-success">Paid</span>
+                    {% elif overall_status == 'Overdue' %}
+                        <span class="badge bg-danger">Overdue</span>
+                    {% elif overall_status == 'Not Generated' %}
+                        <span class="badge bg-secondary">Not Generated</span>
                     {% else %}
                         <span class="badge bg-warning text-dark">Pending</span>
                     {% endif %}

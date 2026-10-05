@@ -3,6 +3,8 @@ from django.core.exceptions import ValidationError
 from django.core.validators import FileExtensionValidator
 from django.db import models
 
+from core.mixins import TrackableMixin
+
 
 def staff_document_path(instance, filename):
     staff_id = getattr(instance, "staff_id", None) or instance.pk or "new"
@@ -20,7 +22,7 @@ document_validators = [
 ]
 
 
-class StaffProfile(models.Model):
+class StaffProfile(TrackableMixin, models.Model):
     class Gender(models.TextChoices):
         MALE = "M", "Male"
         FEMALE = "F", "Female"
@@ -65,6 +67,7 @@ class StaffProfile(models.Model):
     city = models.CharField(max_length=80, blank=True)
     state = models.CharField(max_length=80, blank=True)
     postal_code = models.CharField(max_length=15, blank=True)
+    blood_group = models.CharField(max_length=10, blank=True)
 
     # ── Documents ──
     address_proof_type = models.CharField(max_length=60, blank=True)
@@ -85,8 +88,8 @@ class StaffProfile(models.Model):
 
     # ── Status ──
     is_active = models.BooleanField(default=True, db_index=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
+    # created_at / updated_at / created_by / updated_by
+    # are provided by TrackableMixin
 
     class Meta:
         ordering = ("employee_id",)
@@ -119,7 +122,7 @@ class StaffProfile(models.Model):
         return latest.new_designation if latest else self.designation
 
 
-class EducationRecord(models.Model):
+class EducationRecord(TrackableMixin, models.Model):
     staff = models.ForeignKey(
         StaffProfile,
         on_delete=models.CASCADE,
@@ -143,7 +146,7 @@ class EducationRecord(models.Model):
         return f"{self.qualification} ({self.passing_year})"
 
 
-class StaffDocument(models.Model):
+class StaffDocument(TrackableMixin, models.Model):
     staff = models.ForeignKey(
         StaffProfile,
         on_delete=models.CASCADE,
@@ -166,7 +169,7 @@ class StaffDocument(models.Model):
         return self.title
 
 
-class ExperienceHistory(models.Model):
+class ExperienceHistory(TrackableMixin, models.Model):
     staff = models.ForeignKey(
         StaffProfile,
         on_delete=models.CASCADE,
@@ -186,7 +189,7 @@ class ExperienceHistory(models.Model):
         return f"{self.role} at {self.organization}"
 
 
-class PromotionHistory(models.Model):
+class PromotionHistory(TrackableMixin, models.Model):
     staff = models.ForeignKey(
         StaffProfile,
         on_delete=models.CASCADE,
@@ -206,7 +209,7 @@ class PromotionHistory(models.Model):
         return f"{self.staff.full_name} → {self.new_designation}"
 
 
-class SalaryIncrement(models.Model):
+class SalaryIncrement(TrackableMixin, models.Model):
     staff = models.ForeignKey(
         StaffProfile,
         on_delete=models.CASCADE,
@@ -216,7 +219,8 @@ class SalaryIncrement(models.Model):
     base_salary = models.DecimalField(max_digits=10, decimal_places=2)
     increment_amount = models.DecimalField(max_digits=10, decimal_places=2)
     new_salary = models.DecimalField(max_digits=10, decimal_places=2)
-    created_at = models.DateTimeField(auto_now_add=True)
+    # created_at / updated_at / created_by / updated_by
+    # are provided by TrackableMixin
 
     class Meta:
         unique_together = ("staff", "year")

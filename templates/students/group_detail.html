@@ -1,0 +1,136 @@
+{% extends "base.html" %}
+{% block title %}{{ group.get_name_display }} Group | School ERP{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row justify-content-center">
+        <div class="col-xl-10">
+
+            <div class="page-hero">
+                <div>
+                    <h2>
+                        <span class="badge me-2
+                            {% if group.name == 'RED' %}group-badge-red
+                            {% elif group.name == 'GREEN' %}group-badge-green
+                            {% else %}group-badge-orange{% endif %}"
+                            style="color:#fff; background: rgba(255,255,255,0.25);">
+                            {{ group.get_name_display }}
+                        </span>
+                        Group
+                    </h2>
+                    <p>{{ students|length }} student{{ students|length|pluralize }} · {{ staff_assignments|length }} staff assigned</p>
+                </div>
+                <div class="page-hero-actions">
+                    <a href="{% url 'group_list' %}" class="btn btn-outline-light"><i class="bi bi-arrow-left me-1"></i>All Groups</a>
+                </div>
+            </div>
+
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags|default:'info' }} alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+
+            <div class="row">
+                <div class="col-lg-7">
+                    <div class="card detail-card">
+                        <div class="card-header"><h5><i class="bi bi-people-fill me-2"></i>Students in this group</h5></div>
+                        <div class="card-body p-0 p-md-3">
+
+                            <!-- Desktop table -->
+                            <div class="table-responsive d-none d-md-block">
+                                <table class="table data-table align-middle mb-0">
+                                    <thead>
+                                        <tr><th>Student ID</th><th>Name</th><th>Status</th><th class="text-end"></th></tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for student in students %}
+                                        <tr>
+                                            <td><code class="text-primary">{{ student.student_id }}</code></td>
+                                            <td>{{ student.name }}</td>
+                                            <td>
+                                                {% if student.is_active %}
+                                                    <span class="badge bg-success">Active</span>
+                                                {% else %}
+                                                    <span class="badge bg-secondary">Inactive</span>
+                                                {% endif %}
+                                            </td>
+                                            <td class="text-end">
+                                                <a href="{% url 'student_detail' student.pk %}" class="btn btn-sm btn-outline-secondary">View</a>
+                                            </td>
+                                        </tr>
+                                        {% empty %}
+                                        <tr><td colspan="4"><div class="empty-state">No students in this group yet.</div></td></tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <!-- Mobile list -->
+                            <div class="d-md-none p-3 pt-0">
+                                {% for student in students %}
+                                <div class="d-flex justify-content-between align-items-center py-2 {% if not forloop.last %}border-bottom{% endif %}">
+                                    <div>
+                                        <div class="fw-semibold">{{ student.name }}</div>
+                                        <code class="text-primary small">{{ student.student_id }}</code>
+                                        {% if student.is_active %}
+                                            <span class="badge bg-success ms-1">Active</span>
+                                        {% else %}
+                                            <span class="badge bg-secondary ms-1">Inactive</span>
+                                        {% endif %}
+                                    </div>
+                                    <a href="{% url 'student_detail' student.pk %}" class="btn btn-sm btn-outline-secondary">View</a>
+                                </div>
+                                {% empty %}
+                                <div class="empty-state">No students in this group yet.</div>
+                                {% endfor %}
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-5">
+                    <div class="card detail-card">
+                        <div class="card-header"><h5><i class="bi bi-person-badge-fill me-2"></i>Assigned staff</h5></div>
+                        <div class="card-body">
+                            <ul class="list-unstyled mb-3">
+                                {% for assignment in staff_assignments %}
+                                    <li class="d-flex justify-content-between align-items-center py-2 {% if not forloop.last %}border-bottom{% endif %}">
+                                        <span>
+                                            <i class="bi bi-person-check me-1 text-success"></i>
+                                            {{ assignment.staff.full_name }}
+                                            <span class="text-muted small d-block d-sm-inline">({{ assignment.staff.designation }})</span>
+                                        </span>
+                                        <span class="text-muted small text-nowrap ms-2">since {{ assignment.assigned_on }}</span>
+                                    </li>
+                                {% empty %}
+                                    <li class="text-muted small">No staff assigned to this group yet.</li>
+                                {% endfor %}
+                            </ul>
+
+                            <form method="post" action="{% url 'assign_group_staff' group.pk %}" class="border-top pt-3">
+                                {% csrf_token %}
+                                <label class="form-label small fw-semibold">Assign a staff member</label>
+                                {{ assignment_form.staff }}
+                                {% if assignment_form.staff.errors %}
+                                    <div class="text-danger small mt-1">{{ assignment_form.staff.errors|striptags }}</div>
+                                {% endif %}
+                                {% if assignment_form.non_field_errors %}
+                                    <div class="text-danger small mt-1">{{ assignment_form.non_field_errors|striptags }}</div>
+                                {% endif %}
+                                <button type="submit" class="btn btn-sm btn-primary mt-2 w-100">
+                                    <i class="bi bi-plus-circle me-1"></i>Assign to group
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+{% block title %}Bulk Group Reassign | School ERP{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row justify-content-center">
+        <div class="col-12 col-lg-6">
+
+            <div class="page-hero">
+                <div>
+                    <h2><i class="bi bi-arrow-repeat me-2"></i>Bulk Group Reassignment</h2>
+                    <p>Move every active student from one group into another</p>
+                </div>
+                <div class="page-hero-actions">
+                    <a href="{% url 'student_list' %}" class="btn btn-outline-light"><i class="bi bi-arrow-left me-1"></i>Back to List</a>
+                </div>
+            </div>
+
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags|default:'info' }} alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+
+            {% if form.non_field_errors %}
+            <div class="alert alert-danger" role="alert">
+                {% for error in form.non_field_errors %}<div>{{ error }}</div>{% endfor %}
+            </div>
+            {% endif %}
+
+            <div class="card action-card">
+                <div class="card-header"><h5><i class="bi bi-diagram-3-fill me-2"></i>Reassign a Group</h5></div>
+                <div class="card-body">
+                    <p class="text-muted small mb-4">
+                        Moves every <strong>active</strong> student currently in one group into another group —
+                        typically after a term-end review cycle. Each student gets a logged group-history entry
+                        with the reason you provide below.
+                    </p>
+                    <form method="post" novalidate>
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold" for="{{ form.from_group.id_for_label }}">{{ form.from_group.label }}</label>
+                            {{ form.from_group }}
+                            {% if form.from_group.errors %}<div class="text-danger small mt-1">{{ form.from_group.errors|striptags }}</div>{% endif %}
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold" for="{{ form.to_group.id_for_label }}">{{ form.to_group.label }}</label>
+                            {{ form.to_group }}
+                            {% if form.to_group.errors %}<div class="text-danger small mt-1">{{ form.to_group.errors|striptags }}</div>{% endif %}
+                        </div>
+                        <div class="mb-2">
+                            <label class="form-label fw-semibold" for="{{ form.reason.id_for_label }}">Reason</label>
+                            {{ form.reason }}
+                            {% if form.reason.errors %}<div class="text-danger small mt-1">{{ form.reason.errors|striptags }}</div>{% endif %}
+                        </div>
+                        <div class="d-flex flex-column flex-sm-row gap-2 justify-content-end mt-4">
+                            <a href="{% url 'student_list' %}" class="btn btn-outline-secondary order-2 order-sm-1">Cancel</a>
+                            <button type="submit" class="btn btn-primary order-1 order-sm-2"
+                                    onclick="return confirm('This will move every active student from one group to another. Continue?');">
+                                <i class="bi bi-check-circle me-1"></i>Reassign
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+{% endblock %}

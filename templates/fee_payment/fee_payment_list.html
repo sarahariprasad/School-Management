@@ -82,7 +82,7 @@
                     <td class="text-end fw-bold">₹{{ payment.amount_paid }}</td>
                     <td><span class="badge bg-secondary">{{ payment.get_mode_display }}</span></td>
                     <td>{{ payment.paid_on|date:"d M Y, h:i A" }}</td>
-                    <td>{{ payment.paid_by_staff|default:"—" }}</td>
+                    <td>{{ payment.recorded_by_display }}</td>
                     <td class="text-end">
                         <a href="{% url 'fee_payment:fee_payment_detail' payment.pk %}" class="btn btn-sm btn-outline-primary">
                             <i class="bi bi-eye"></i>

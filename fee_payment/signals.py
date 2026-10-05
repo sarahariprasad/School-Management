@@ -49,15 +49,11 @@ def handle_assignment_created(sender, instance, created, **kwargs):
     transaction.on_commit(_on_commit)
 
 
-# ---------- FeePayment Signals ----------
-
+# Payment confirmations are deliberately dispatched from the model-save
+# signal rather than the view. This gives admin/API-created payments the same
+# behaviour and ensures the message is sent only after a successful commit.
 @receiver(post_save, sender=FeePayment)
 def handle_payment_recorded(sender, instance, created, **kwargs):
-    """
-    Send payment confirmation to parent when a new payment is recorded.
-    Note: This is a fallback. Primary trigger is in FeePaymentCreateView
-    for better control over failure handling.
-    """
     if not created:
         return
 

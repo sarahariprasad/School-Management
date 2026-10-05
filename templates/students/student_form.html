@@ -1,84 +1,331 @@
 {% extends "base.html" %}
 {% load static %}
-{% block title %}Add / Edit Student | School ERP{% endblock %}
+{% block title %}Add Student | School ERP{% endblock %}
+
 {% block content %}
+<div class="container-fluid py-4">
+    <div class="row justify-content-center">
+        <div class="col-xl-10">
 
-<div class="container mt-4">
-    <h2 class="mb-4 text-center">Add / Edit Student</h2>
-
-    <form method="post" enctype="multipart/form-data">
-        {% csrf_token %}
-
-        <!-- Tabs -->
-        <ul class="nav nav-tabs" id="studentTab" role="tablist">
-            <li class="nav-item">
-                <button class="nav-link active" id="details-tab" data-bs-toggle="tab" data-bs-target="#details" type="button">Student Details</button>
-            </li>
-            <li class="nav-item">
-                <button class="nav-link" id="parents-tab" data-bs-toggle="tab" data-bs-target="#parents" type="button">Parent Details</button>
-            </li>
-            <li class="nav-item">
-                <button class="nav-link" id="class-tab" data-bs-toggle="tab" data-bs-target="#class" type="button">Class & Teacher</button>
-            </li>
-            <li class="nav-item">
-                <button class="nav-link" id="therapy-tab" data-bs-toggle="tab" data-bs-target="#therapy" type="button">Therapies</button>
-            </li>
-            <li class="nav-item">
-                <button class="nav-link" id="docs-tab" data-bs-toggle="tab" data-bs-target="#docs" type="button">Documents</button>
-            </li>
-        </ul>
-
-        <!-- Tab Content -->
-        <div class="tab-content p-3 border border-top-0 bg-white shadow-sm" id="studentTabContent">
-            
-            <!-- Student Details -->
-            <div class="tab-pane fade show active" id="details" role="tabpanel">
-                {{ form.student_id.label_tag }} {{ form.student_id }}
-                {{ form.name.label_tag }} {{ form.name }}
-                {{ form.date_of_birth.label_tag }} {{ form.date_of_birth }}
-                {{ form.gender.label_tag }} {{ form.gender }}
-                {{ form.student_branch.label_tag }} {{ form.student_branch }}
-                {{ form.photo.label_tag }} {{ form.photo }}
-                {{ form.address.label_tag }} {{ form.address }}
+            <div class="page-header-bar">
+                <div>
+                    <h2><i class="bi bi-person-plus-fill me-2"></i>Add New Student</h2>
+                    <p class="text-muted mb-0">Fill in the steps below to create a new student record.</p>
+                </div>
+                <a href="{% url 'student_list' %}" class="btn btn-outline-secondary btn-sm btn-back">
+                    <i class="bi bi-arrow-left me-1"></i>Back to List
+                </a>
             </div>
 
-            <!-- Parent Details -->
-            <div class="tab-pane fade" id="parents" role="tabpanel">
-                {{ form.mother_name.label_tag }} {{ form.mother_name }}
-                {{ form.mother_phone.label_tag }} {{ form.mother_phone }}
-                {{ form.mother_email.label_tag }} {{ form.mother_email }}
-                {{ form.mother_occupation.label_tag }} {{ form.mother_occupation }}
-                {{ form.mother_photo.label_tag }} {{ form.mother_photo }}
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags|default:'info' }} alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
 
-                {{ form.father_name.label_tag }} {{ form.father_name }}
-                {{ form.father_phone.label_tag }} {{ form.father_phone }}
-                {{ form.father_email.label_tag }} {{ form.father_email }}
-                {{ form.father_occupation.label_tag }} {{ form.father_occupation }}
-                {{ form.father_photo.label_tag }} {{ form.father_photo }}
+            {% if form.errors %}
+            <div class="alert alert-danger alert-dismissible fade show mb-4" role="alert">
+                <h6 class="alert-heading fw-bold"><i class="bi bi-exclamation-triangle-fill me-2"></i>Please correct the following errors:</h6>
+                <ul class="mb-0 small mt-2">
+                    {% for error in form.non_field_errors %}
+                        <li><strong>Form:</strong> {{ error }}</li>
+                    {% endfor %}
+                    {% for field, errors in form.errors.items %}
+                        {% if field != '__all__' %}
+                        <li><strong>{{ form.fields|dictsort:field|first|default:field|title }}:</strong> {{ errors|striptags }}</li>
+                        {% endif %}
+                    {% endfor %}
+                </ul>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
             </div>
+            {% endif %}
 
-            <!-- Class & Teacher -->
-            <div class="tab-pane fade" id="class" role="tabpanel">
-                {{ form.student_class.label_tag }} {{ form.student_class }}
-                {{ form.assigned_teacher.label_tag }} {{ form.assigned_teacher }}
-            </div>
+            <form method="post" enctype="multipart/form-data" novalidate id="studentWizardForm">
+                {% csrf_token %}
 
-            <!-- Therapies -->
-            <div class="tab-pane fade" id="therapy" role="tabpanel">
-                {{ form.therapies.label_tag }} {{ form.therapies }}
-            </div>
+                <!-- Step progress -->
+                <div class="wizard-progress">
+                    <ul class="wizard-steps" id="wizardSteps">
+                        <li class="wizard-step-item active" data-step-index="0" data-target="details">
+                            <div class="wizard-step-circle">1</div>
+                            <div class="wizard-step-label">Student
+                                {% if form.student_id.errors or form.name.errors or form.date_of_birth.errors or form.gender.errors or form.student_branch.errors or form.photo.errors or form.address.errors %}
+                                    <i class="bi bi-exclamation-circle-fill tab-error"></i>
+                                {% endif %}
+                            </div>
+                        </li>
+                        <li class="wizard-step-item" data-step-index="1" data-target="parents">
+                            <div class="wizard-step-circle">2</div>
+                            <div class="wizard-step-label">Parents
+                                {% if form.mother_name.errors or form.mother_phone.errors or form.mother_email.errors or form.mother_occupation.errors or form.mother_photo.errors or form.father_name.errors or form.father_phone.errors or form.father_email.errors or form.father_occupation.errors or form.father_photo.errors %}
+                                    <i class="bi bi-exclamation-circle-fill tab-error"></i>
+                                {% endif %}
+                            </div>
+                        </li>
+                        <li class="wizard-step-item" data-step-index="2" data-target="group">
+                            <div class="wizard-step-circle">3</div>
+                            <div class="wizard-step-label">Group
+                                {% if form.group.errors %}
+                                    <i class="bi bi-exclamation-circle-fill tab-error"></i>
+                                {% endif %}
+                            </div>
+                        </li>
+                        <li class="wizard-step-item" data-step-index="3" data-target="docs">
+                            <div class="wizard-step-circle">4</div>
+                            <div class="wizard-step-label">Docs
+                                {% if form.medical_documents.errors %}
+                                    <i class="bi bi-exclamation-circle-fill tab-error"></i>
+                                {% endif %}
+                            </div>
+                        </li>
+                    </ul>
+                </div>
 
-            <!-- Documents -->
-            <div class="tab-pane fade" id="docs" role="tabpanel">
-                {{ form.medical_documents.label_tag }} {{ form.medical_documents }}
-            </div>
+                <!-- STEP 1: Student details -->
+                <div class="wizard-panel active" data-panel="details">
+                    <div class="card staff-form-card">
+                        <div class="card-body">
+                            <h6 class="card-title"><i class="bi bi-person-fill me-2"></i>Student Information</h6>
+                            <div class="row g-3">
+                                <div class="col-12 col-md-6">
+                                    <label for="{{ form.student_id.id_for_label }}" class="form-label">Student ID <span class="text-danger">*</span></label>
+                                    {{ form.student_id }}
+                                    {% if form.student_id.errors %}<div class="text-danger small mt-1">{{ form.student_id.errors|striptags }}</div>{% endif %}
+                                </div>
+                                <div class="col-12 col-md-6">
+                                    <label for="{{ form.name.id_for_label }}" class="form-label">Full Name <span class="text-danger">*</span></label>
+                                    {{ form.name }}
+                                    {% if form.name.errors %}<div class="text-danger small mt-1">{{ form.name.errors|striptags }}</div>{% endif %}
+                                </div>
+                                <div class="col-12 col-md-6">
+                                    <label for="{{ form.date_of_birth.id_for_label }}" class="form-label">Date of Birth <span class="text-danger">*</span></label>
+                                    {{ form.date_of_birth }}
+                                    {% if form.date_of_birth.errors %}<div class="text-danger small mt-1">{{ form.date_of_birth.errors|striptags }}</div>{% endif %}
+                                </div>
+                                <div class="col-12 col-md-6">
+                                    <label for="{{ form.gender.id_for_label }}" class="form-label">Gender <span class="text-danger">*</span></label>
+                                    {{ form.gender }}
+                                    {% if form.gender.errors %}<div class="text-danger small mt-1">{{ form.gender.errors|striptags }}</div>{% endif %}
+                                </div>
+                                <div class="col-12 col-md-6">
+                                    <label for="{{ form.student_branch.id_for_label }}" class="form-label">Branch <span class="text-danger">*</span></label>
+                                    {{ form.student_branch }}
+                                    {% if form.student_branch.errors %}<div class="text-danger small mt-1">{{ form.student_branch.errors|striptags }}</div>{% endif %}
+                                </div>
+                                <div class="col-12 col-md-6">
+                                    <label for="{{ form.photo.id_for_label }}" class="form-label">Student Photo</label>
+                                    <div class="photo-upload-row">
+                                        {{ form.photo }}
+                                        <img id="photoPreview" class="photo-preview" alt="Preview" style="display:none;">
+                                    </div>
+                                    {% if form.photo.errors %}<div class="text-danger small mt-1">{{ form.photo.errors|striptags }}</div>{% endif %}
+                                </div>
+                                <div class="col-12">
+                                    <label for="{{ form.address.id_for_label }}" class="form-label">Address</label>
+                                    {{ form.address }}
+                                    {% if form.address.errors %}<div class="text-danger small mt-1">{{ form.address.errors|striptags }}</div>{% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- STEP 2: Parent details -->
+                <div class="wizard-panel" data-panel="parents">
+                    <div class="card staff-form-card">
+                        <div class="card-body">
+                            <h6 class="card-title"><i class="bi bi-people-fill me-2"></i>Parent Information</h6>
+
+                            <div class="parent-divider"><span><i class="bi bi-gender-female"></i>Mother's Details</span></div>
+                            <div class="row g-3">
+                                <div class="col-12 col-md-6">
+                                    <label for="{{ form.mother_name.id_for_label }}" class="form-label">Mother's Name <span class="text-danger">*</span></label>
+                                    {{ form.mother_name }}
+                                    {% if form.mother_name.errors %}<div class="text-danger small mt-1">{{ form.mother_name.errors|striptags }}</div>{% endif %}
+                                </div>
+                                <div class="col-12 col-md-6">
+                                    <label for="{{ form.mother_phone.id_for_label }}" class="form-label">Phone</label>
+                                    {{ form.mother_phone }}
+                                    {% if form.mother_phone.errors %}<div class="text-danger small mt-1">{{ form.mother_phone.errors|striptags }}</div>{% endif %}
+                                </div>
+                                <div class="col-12 col-md-6">
+                                    <label for="{{ form.mother_email.id_for_label }}" class="form-label">Email</label>
+                                    {{ form.mother_email }}
+                                    {% if form.mother_email.errors %}<div class="text-danger small mt-1">{{ form.mother_email.errors|striptags }}</div>{% endif %}
+                                </div>
+                                <div class="col-12 col-md-6">
+                                    <label for="{{ form.mother_occupation.id_for_label }}" class="form-label">Occupation</label>
+                                    {{ form.mother_occupation }}
+                                </div>
+                                <div class="col-12 col-md-6">
+                                    <label for="{{ form.mother_photo.id_for_label }}" class="form-label">Mother's Photo</label>
+                                    {{ form.mother_photo }}
+                                    {% if form.mother_photo.errors %}<div class="text-danger small mt-1">{{ form.mother_photo.errors|striptags }}</div>{% endif %}
+                                </div>
+                            </div>
+
+                            <div class="parent-divider"><span><i class="bi bi-gender-male"></i>Father's Details</span></div>
+                            <div class="row g-3">
+                                <div class="col-12 col-md-6">
+                                    <label for="{{ form.father_name.id_for_label }}" class="form-label">Father's Name <span class="text-danger">*</span></label>
+                                    {{ form.father_name }}
+                                    {% if form.father_name.errors %}<div class="text-danger small mt-1">{{ form.father_name.errors|striptags }}</div>{% endif %}
+                                </div>
+                                <div class="col-12 col-md-6">
+                                    <label for="{{ form.father_phone.id_for_label }}" class="form-label">Phone</label>
+                                    {{ form.father_phone }}
+                                    {% if form.father_phone.errors %}<div class="text-danger small mt-1">{{ form.father_phone.errors|striptags }}</div>{% endif %}
+                                </div>
+                                <div class="col-12 col-md-6">
+                                    <label for="{{ form.father_email.id_for_label }}" class="form-label">Email</label>
+                                    {{ form.father_email }}
+                                    {% if form.father_email.errors %}<div class="text-danger small mt-1">{{ form.father_email.errors|striptags }}</div>{% endif %}
+                                </div>
+                                <div class="col-12 col-md-6">
+                                    <label for="{{ form.father_occupation.id_for_label }}" class="form-label">Occupation</label>
+                                    {{ form.father_occupation }}
+                                </div>
+                                <div class="col-12 col-md-6">
+                                    <label for="{{ form.father_photo.id_for_label }}" class="form-label">Father's Photo</label>
+                                    {{ form.father_photo }}
+                                    {% if form.father_photo.errors %}<div class="text-danger small mt-1">{{ form.father_photo.errors|striptags }}</div>{% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- STEP 3: Group -->
+                <div class="wizard-panel" data-panel="group">
+                    <div class="card staff-form-card">
+                        <div class="card-body">
+                            <h6 class="card-title"><i class="bi bi-diagram-3-fill me-2"></i>Group</h6>
+                            <div class="row g-3">
+                                <div class="col-12 col-md-6">
+                                    <label for="{{ form.group.id_for_label }}" class="form-label">Group</label>
+                                    {{ form.group }}
+                                    {% if form.group.errors %}<div class="text-danger small mt-1">{{ form.group.errors|striptags }}</div>{% endif %}
+                                    <div class="form-hint mt-1">Red / Green / Orange. You can leave this unset and assign it later.</div>
+                                </div>
+                            </div>
+                            <div class="alert alert-info small mt-3 mb-0">
+                                <i class="bi bi-info-circle-fill me-1"></i>
+                                Therapy enrollments (with their assigned therapist) are added from the student's
+                                detail page once the student record is created.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- STEP 4: Documents -->
+                <div class="wizard-panel" data-panel="docs">
+                    <div class="card staff-form-card">
+                        <div class="card-body">
+                            <h6 class="card-title"><i class="bi bi-folder-fill me-2"></i>Documents</h6>
+                            <div class="row g-3">
+                                <div class="col-12">
+                                    <label for="{{ form.medical_documents.id_for_label }}" class="form-label">Medical Documents</label>
+                                    {{ form.medical_documents }}
+                                    {% if form.medical_documents.errors %}<div class="text-danger small mt-1">{{ form.medical_documents.errors|striptags }}</div>{% endif %}
+                                    <div class="form-hint mt-1">Upload relevant medical reports, assessments, or IEP documents.</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Wizard navigation -->
+                <div class="wizard-nav">
+                    <a href="{% url 'student_list' %}" class="btn btn-outline-secondary" id="wizardCancelBtn">
+                        <i class="bi bi-x-circle me-1"></i>Cancel
+                    </a>
+                    <button type="button" class="btn btn-outline-secondary" id="wizardBackBtn" style="display:none;">
+                        <i class="bi bi-arrow-left me-1"></i>Back
+                    </button>
+                    <span class="spacer"></span>
+                    <button type="button" class="btn btn-primary" id="wizardNextBtn">
+                        Next<i class="bi bi-arrow-right ms-1"></i>
+                    </button>
+                    <button type="submit" class="btn btn-primary" id="wizardSaveBtn" style="display:none;">
+                        <i class="bi bi-check-circle me-1"></i>Save Student
+                    </button>
+                </div>
+            </form>
         </div>
-
-        <div class="mt-3 text-end">
-            <button type="submit" class="btn btn-primary">Save Student</button>
-        </div>
-    </form>
+    </div>
 </div>
+{% endblock %}
 
-<script src="{% static 'js/bootstrap.bundle.min.js' %}"></script>
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        // Add Bootstrap classes to unstyled widgets rendered by Django forms
+        document.querySelectorAll('#studentWizardForm input, #studentWizardForm select, #studentWizardForm textarea').forEach(function (input) {
+            if (input.type === 'hidden' || input.type === 'checkbox' || input.type === 'radio') return;
+            if (input.type === 'file') { if (!input.classList.contains('form-control')) input.classList.add('form-control'); return; }
+            if (input.tagName === 'SELECT') { if (!input.classList.contains('form-select')) input.classList.add('form-select'); return; }
+            if (!input.classList.contains('form-control')) input.classList.add('form-control');
+        });
+
+        // Photo preview
+        var photoInput = document.getElementById('{{ form.photo.id_for_label }}');
+        var photoPreview = document.getElementById('photoPreview');
+        if (photoInput) {
+            photoInput.addEventListener('change', function (e) {
+                var file = e.target.files[0];
+                if (file) {
+                    var reader = new FileReader();
+                    reader.onload = function (e) {
+                        photoPreview.src = e.target.result;
+                        photoPreview.style.display = 'block';
+                    };
+                    reader.readAsDataURL(file);
+                }
+            });
+        }
+
+        // ---- Wizard logic ----
+        var steps = Array.prototype.slice.call(document.querySelectorAll('.wizard-step-item'));
+        var panels = Array.prototype.slice.call(document.querySelectorAll('.wizard-panel'));
+        var backBtn = document.getElementById('wizardBackBtn');
+        var nextBtn = document.getElementById('wizardNextBtn');
+        var saveBtn = document.getElementById('wizardSaveBtn');
+        var cancelBtn = document.getElementById('wizardCancelBtn');
+        var current = 0;
+
+        // If a step already has server-side validation errors, open it first
+        var errorStepIndex = steps.findIndex(function (s) { return s.querySelector('.tab-error'); });
+        if (errorStepIndex !== -1) current = errorStepIndex;
+
+        function goToStep(index) {
+            current = index;
+            steps.forEach(function (step, i) {
+                step.classList.remove('active', 'completed', 'has-error');
+                if (i < index) step.classList.add('completed');
+                if (i === index) step.classList.add('active');
+                if (step.querySelector('.tab-error')) step.classList.add('has-error');
+            });
+            panels.forEach(function (panel, i) {
+                panel.classList.toggle('active', i === index);
+            });
+            backBtn.style.display = index === 0 ? 'none' : 'inline-flex';
+            cancelBtn.style.display = index === 0 ? 'inline-flex' : 'none';
+            var isLast = index === panels.length - 1;
+            nextBtn.style.display = isLast ? 'none' : 'inline-flex';
+            saveBtn.style.display = isLast ? 'inline-flex' : 'none';
+            window.scrollTo({ top: document.querySelector('.wizard-progress').offsetTop - 90, behavior: 'smooth' });
+        }
+
+        steps.forEach(function (step, i) {
+            step.addEventListener('click', function () { goToStep(i); });
+        });
+        nextBtn.addEventListener('click', function () { if (current < panels.length - 1) goToStep(current + 1); });
+        backBtn.addEventListener('click', function () { if (current > 0) goToStep(current - 1); });
+
+        goToStep(current);
+    });
+</script>
 {% endblock %}

@@ -1,0 +1,5 @@
+{% if field.errors %}
+  <div class="text-danger small mt-1">
+    {% for error in field.errors %}{{ error }}{% if not forloop.last %} · {% endif %}{% endfor %}
+  </div>
+{% endif %}

@@ -127,7 +127,7 @@
               <td>{{ inst.assignment.fee_structure.category }}</td>
               <td class="text-center">#{{ inst.installment_number }}</td>
               <td>
-                {% if inst.due_date < today %}
+                {% if inst.is_overdue %}
                   <span class="text-danger fw-bold">{{ inst.due_date|date:"d M Y" }}</span>
                 {% else %}
                   {{ inst.due_date|date:"d M Y" }}
@@ -137,7 +137,7 @@
               <td class="text-end text-success">₹{{ inst.total_paid }}</td>
               <td class="text-end pe-3 fw-bold text-danger">₹{{ inst.remaining_balance }}</td>
               <td>
-                {% if inst.due_date < today %}
+                {% if inst.is_overdue %}
                   <span class="badge bg-danger">Overdue</span>
                 {% else %}
                   <span class="badge bg-warning text-dark">Pending</span>

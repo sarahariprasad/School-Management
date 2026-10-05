@@ -1,7 +1,9 @@
 {% extends "base.html" %}
 {% load static %}
 
-{% block title %}NOWMI CGC{% endblock %}
+{% block title %}NOWMI CGC | Dashboard{% endblock %}
+
+{% block extra_css %}{% endblock %}
 
 {% block content %}
 
@@ -9,175 +11,342 @@
 
 <!-- Public Landing Page -->
 <section class="hero-section">
-    <div class="container">
-        <div class="row align-items-center">
-
-            <div class="col-lg-6 order-2 order-lg-1">
-                <h1 class="hero-title">
-                    Welcome to
-                    <span>NOWMI School ERP</span>
-                </h1>
-
-                <p class="hero-text">
-                    Beyond technology and management, our school is deeply
-                    committed to nurturing every child with care and patience.
-                    We believe true learning happens when children are
-                    encouraged to explore, ask questions and understand
-                    concepts in their own unique way.
-                </p>
-
-                <p class="hero-text">
-                    Our ERP simplifies admissions, staff management,
-                    attendance, academics and administration through one
-                    centralized platform that can be accessed anytime,
-                    anywhere.
-                </p>
-
-                <a href="{% url 'accounts:login' %}"
-                   class="btn btn-primary btn-lg hero-btn">
-                    <i class="bi bi-box-arrow-in-right me-2"></i>
-                    Login to Continue
-                </a>
-            </div>
-
-            <div class="col-lg-6 text-center order-1 order-lg-2 mb-4 mb-lg-0">
-                <img src="{% static 'images/school_building.jpg' %}"
-                     class="img-fluid hero-image rounded shadow"
-                     alt="School Building">
-            </div>
-
-        </div>
+  <div class="container">
+    <div class="row align-items-center">
+      <div class="col-lg-6 order-2 order-lg-1">
+        <h1 class="hero-title">
+          Welcome to
+          <span>NOWMI School ERP</span>
+        </h1>
+        <p class="lead opacity-75 mb-4">
+          Beyond technology and management, our school is deeply committed to nurturing every child with care and patience. We believe true learning happens when children are encouraged to explore, ask questions and understand concepts in their own unique way.
+        </p>
+        <p class="opacity-75 mb-4">
+          Our ERP simplifies admissions, staff management, attendance, academics and administration through one centralized platform that can be accessed anytime, anywhere.
+        </p>
+        <a href="{% url 'accounts:login' %}" class="btn btn-light btn-lg hero-btn text-primary">
+          <i class="bi bi-box-arrow-in-right me-2"></i> Login to Continue
+        </a>
+      </div>
+      <div class="col-lg-6 text-center order-1 order-lg-2 mb-4 mb-lg-0">
+        <img src="{% static 'images/school_building.jpg' %}" class="img-fluid hero-image" alt="School Building">
+      </div>
     </div>
+  </div>
 </section>
 
 {% else %}
 
 <!-- Dashboard -->
-<section class="dashboard-section">
-    <div class="dashboard-header mb-4">
-        <h2 class="fw-bold mb-1">Dashboard</h2>
-        <p class="text-muted mb-0">
-            Welcome, <strong>{{ user.get_role_display }}</strong>
-            {% if user.branch %}| {{ user.branch.name }}{% endif %}
-        </p>
+<div class="container-fluid py-4">
+
+  <!-- Header -->
+  <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-4 gap-2">
+    <div>
+      <h2 class="fw-bold mb-1">Dashboard</h2>
+      <p class="text-muted mb-0">
+        Welcome, <strong>{{ user.get_role_display }}</strong>
+        {% if user.branch %}| {{ user.branch.name }}{% endif %}
+      </p>
+    </div>
+    <div class="text-muted small">
+      <i class="bi bi-calendar3 me-1"></i> {{ today|date:"l, d F Y" }}
+    </div>
+  </div>
+
+  <!-- Summary Stat Cards -->
+  <div class="row g-4 mb-4">
+
+    <!-- Branches -->
+    <div class="col-12 col-sm-6 col-lg-3">
+      <a href="{% url 'branch_list' %}" class="card stat-card text-decoration-none h-100 p-3">
+        <div class="d-flex align-items-center gap-3">
+          <div class="stat-icon bg-primary bg-opacity-10 text-primary">
+            <i class="bi bi-building"></i>
+          </div>
+          <div>
+            <h6 class="text-muted small fw-semibold mb-1 text-uppercase">Branches</h6>
+            <h3 class="fw-bold mb-0 text-dark">{{ total_branches|default:"0" }}</h3>
+          </div>
+        </div>
+      </a>
     </div>
 
-    <!-- Quick Access Links with Totals -->
-    <div class="row g-3">
-
-        <!-- Branches -->
-        <div class="col-6 col-md-4 col-lg-3">
-            <a href="{% url 'branch_list' %}" class="card text-decoration-none border-0 shadow-sm h-100 text-center p-3 hover-shadow transition-all">
-                <div class="mb-2">
-                    <i class="bi bi-building fs-1 text-primary"></i>
-                </div>
-                <h6 class="fw-semibold text-dark mb-1">Branches</h6>
-                <span class="badge bg-primary fs-6">{{ total_branches|default:"0" }}</span>
-            </a>
+    <!-- Total Staff -->
+    <div class="col-12 col-sm-6 col-lg-3">
+      <a href="{% url 'staff_list' %}" class="card stat-card text-decoration-none h-100 p-3">
+        <div class="d-flex align-items-center gap-3">
+          <div class="stat-icon bg-success bg-opacity-10 text-success">
+            <i class="bi bi-people"></i>
+          </div>
+          <div>
+            <h6 class="text-muted small fw-semibold mb-1 text-uppercase">Total Staff</h6>
+            <h3 class="fw-bold mb-0 text-dark">{{ total_staff|default:"0" }}</h3>
+            <span class="badge bg-success bg-opacity-10 text-success small mt-1">{{ active_staff|default:"0" }} Active</span>
+          </div>
         </div>
-
-        <!-- Staff -->
-        <div class="col-6 col-md-4 col-lg-3">
-            <a href="{% url 'staff_list' %}" class="card text-decoration-none border-0 shadow-sm h-100 text-center p-3 hover-shadow transition-all">
-                <div class="mb-2">
-                    <i class="bi bi-people fs-1 text-success"></i>
-                </div>
-                <h6 class="fw-semibold text-dark mb-1">Staff</h6>
-                <span class="badge bg-success fs-6">{{ total_staff|default:"0" }}</span>
-            </a>
-        </div>
-
-        <!-- Students -->
-        <div class="col-6 col-md-4 col-lg-3">
-            <a href="{% url 'student_list' %}" class="card text-decoration-none border-0 shadow-sm h-100 text-center p-3 hover-shadow transition-all">
-                <div class="mb-2">
-                    <i class="bi bi-mortarboard fs-1 text-info"></i>
-                </div>
-                <h6 class="fw-semibold text-dark mb-1">Students</h6>
-                <span class="badge bg-info fs-6">{{ total_students|default:"0" }}</span>
-            </a>
-        </div>
-
-        <!-- Fee Categories -->
-        <div class="col-6 col-md-4 col-lg-3">
-            <a href="{% url 'fee_payment:fee_category_list' %}" class="card text-decoration-none border-0 shadow-sm h-100 text-center p-3 hover-shadow transition-all">
-                <div class="mb-2">
-                    <i class="bi bi-tags fs-1 text-warning"></i>
-                </div>
-                <h6 class="fw-semibold text-dark mb-1">Fee Categories</h6>
-                <span class="badge bg-warning text-dark fs-6">{{ total_fee_categories|default:"0" }}</span>
-            </a>
-        </div>
-
-        <!-- Fee Structures -->
-        <div class="col-6 col-md-4 col-lg-3">
-            <a href="{% url 'fee_payment:fee_structure_list' %}" class="card text-decoration-none border-0 shadow-sm h-100 text-center p-3 hover-shadow transition-all">
-                <div class="mb-2">
-                    <i class="bi bi-cash-stack fs-1 text-danger"></i>
-                </div>
-                <h6 class="fw-semibold text-dark mb-1">Fee Structures</h6>
-                <span class="badge bg-danger fs-6">{{ total_fee_structures|default:"0" }}</span>
-            </a>
-        </div>
-
-        <!-- Fee Assignments -->
-        <div class="col-6 col-md-4 col-lg-3">
-            <a href="{% url 'fee_payment:student_fee_assignment_list' %}" class="card text-decoration-none border-0 shadow-sm h-100 text-center p-3 hover-shadow transition-all">
-                <div class="mb-2">
-                    <i class="bi bi-person-check fs-1 text-secondary"></i>
-                </div>
-                <h6 class="fw-semibold text-dark mb-1">Fee Assignments</h6>
-                <span class="badge bg-secondary fs-6">{{ total_fee_assignments|default:"0" }}</span>
-            </a>
-        </div>
-
-        <!-- Installments -->
-        <div class="col-6 col-md-4 col-lg-3">
-            <a href="{% url 'fee_payment:fee_installment_list' %}" class="card text-decoration-none border-0 shadow-sm h-100 text-center p-3 hover-shadow transition-all">
-                <div class="mb-2">
-                    <i class="bi bi-calendar-check fs-1 text-primary"></i>
-                </div>
-                <h6 class="fw-semibold text-dark mb-1">Installments</h6>
-                <span class="badge bg-primary fs-6">{{ total_installments|default:"0" }}</span>
-            </a>
-        </div>
-
-        <!-- Payments -->
-        <div class="col-6 col-md-4 col-lg-3">
-            <a href="{% url 'fee_payment:fee_payment_list' %}" class="card text-decoration-none border-0 shadow-sm h-100 text-center p-3 hover-shadow transition-all">
-                <div class="mb-2">
-                    <i class="bi bi-wallet2 fs-1 text-success"></i>
-                </div>
-                <h6 class="fw-semibold text-dark mb-1">Payments</h6>
-                <span class="badge bg-success fs-6">{{ total_payments|default:"0" }}</span>
-            </a>
-        </div>
-
-        <!-- Send Reminders -->
-        <div class="col-6 col-md-4 col-lg-3">
-            <a href="{% url 'fee_payment:send_due_reminders' %}" class="card text-decoration-none border-0 shadow-sm h-100 text-center p-3 hover-shadow transition-all">
-                <div class="mb-2">
-                    <i class="bi bi-bell fs-1 text-warning"></i>
-                </div>
-                <h6 class="fw-semibold text-dark mb-1">Send Reminders</h6>
-                <span class="badge bg-warning text-dark fs-6">{{ total_pending_reminders|default:"0" }}</span>
-            </a>
-        </div>
-
-        <!-- Daily Collection Report -->
-        <div class="col-6 col-md-4 col-lg-3">
-            <a href="{% url 'fee_payment:daily_collection_report' %}" class="card text-decoration-none border-0 shadow-sm h-100 text-center p-3 hover-shadow transition-all">
-                <div class="mb-2">
-                    <i class="bi bi-graph-up-arrow fs-1 text-info"></i>
-                </div>
-                <h6 class="fw-semibold text-dark mb-1">Daily Collection</h6>
-                <span class="badge bg-info fs-6">{{ today_collection|default:"0" }}</span>
-            </a>
-        </div>
-
+      </a>
     </div>
-</section>
+
+    <!-- Total Students -->
+    <div class="col-12 col-sm-6 col-lg-3">
+      <a href="{% url 'student_list' %}" class="card stat-card text-decoration-none h-100 p-3">
+        <div class="d-flex align-items-center gap-3">
+          <div class="stat-icon bg-info bg-opacity-10 text-info">
+            <i class="bi bi-mortarboard"></i>
+          </div>
+          <div>
+            <h6 class="text-muted small fw-semibold mb-1 text-uppercase">Total Students</h6>
+            <h3 class="fw-bold mb-0 text-dark">{{ total_students|default:"0" }}</h3>
+            <span class="badge bg-info bg-opacity-10 text-info small mt-1">{{ active_students|default:"0" }} Active</span>
+          </div>
+        </div>
+      </a>
+    </div>
+
+    <!-- Today's Collection -->
+    <div class="col-12 col-sm-6 col-lg-3">
+      <a href="{% url 'fee_payment:daily_collection_report' %}" class="card stat-card text-decoration-none h-100 p-3">
+        <div class="d-flex align-items-center gap-3">
+          <div class="stat-icon bg-warning bg-opacity-10 text-warning">
+            <i class="bi bi-graph-up-arrow"></i>
+          </div>
+          <div>
+            <h6 class="text-muted small fw-semibold mb-1 text-uppercase">Today's Collection</h6>
+            <h3 class="fw-bold mb-0 text-dark">₹{{ today_collection|default:"0" }}</h3>
+          </div>
+        </div>
+      </a>
+    </div>
+
+  </div>
+
+  <!-- Therapy Group Rosters -->
+  <div class="row g-4 mb-4">
+    {% for roster in group_rosters %}
+    <div class="col-12 col-xl-6">
+      <div class="card shadow-sm h-100 border-{{ roster.color }}">
+        <div class="card-header bg-{{ roster.color }} text-white d-flex justify-content-between align-items-center">
+          <h5 class="mb-0"><i class="bi bi-people-fill me-2"></i>{{ roster.name }}</h5>
+          <span class="badge text-bg-light text-{{ roster.color }}">
+            {{ roster.students|length }} student{{ roster.students|length|pluralize }}
+          </span>
+        </div>
+        <div class="card-body">
+          {% if roster.group %}
+          <div class="row g-4">
+            <div class="col-md-7">
+              <h6 class="text-muted text-uppercase small fw-bold">Active Students</h6>
+              <div class="list-group list-group-flush">
+                {% for student in roster.students %}
+                <a href="{% url 'student_detail' student.pk %}" class="list-group-item list-group-item-action px-0 d-flex justify-content-between align-items-center">
+                  <span>
+                    <span class="fw-semibold">{{ student.name }}</span>
+                    <small class="text-muted ms-1">{{ student.student_id }}</small>
+                  </span>
+                  <i class="bi bi-chevron-right text-muted"></i>
+                </a>
+                {% empty %}
+                <p class="text-muted mb-0">No active students in this group.</p>
+                {% endfor %}
+              </div>
+            </div>
+            <div class="col-md-5">
+              <h6 class="text-muted text-uppercase small fw-bold">Assigned Staff</h6>
+              <div class="list-group list-group-flush">
+                {% for assignment in roster.staff_assignments %}
+                <a href="{% url 'staff_profile_admin_view' assignment.staff.pk %}" class="list-group-item list-group-item-action px-0">
+                  <span class="fw-semibold d-block">{{ assignment.staff.full_name }}</span>
+                  <small class="text-muted">{{ assignment.staff.designation }}</small>
+                </a>
+                {% empty %}
+                <p class="text-muted mb-0">No staff assigned yet.</p>
+                {% endfor %}
+              </div>
+            </div>
+          </div>
+          {% else %}
+          <p class="text-muted mb-0">{{ roster.name }} has not been created yet. Add it from Student Groups.</p>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  <!-- Charts Row -->
+  <div class="row g-4">
+
+    <!-- Staff Joining Trend -->
+    <div class="col-12 col-lg-6">
+      <div class="card chart-card h-100">
+        <div class="chart-header d-flex justify-content-between align-items-center">
+          <div>
+            <h5 class="fw-bold mb-0">Staff Joining Trend</h5>
+            <p class="text-muted small mb-0">New staff joined per month</p>
+          </div>
+          <div class="dropdown">
+            <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+              {{ current_year }}
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end">
+              {% for yr in available_years %}
+              <li><a class="dropdown-item" href="?year={{ yr }}">{{ yr }}</a></li>
+              {% endfor %}
+            </ul>
+          </div>
+        </div>
+        <div class="card-body">
+          <canvas id="staffChart" height="280"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- Student Admission Trend -->
+    <div class="col-12 col-lg-6">
+      <div class="card chart-card h-100">
+        <div class="chart-header d-flex justify-content-between align-items-center">
+          <div>
+            <h5 class="fw-bold mb-0">Student Admissions</h5>
+            <p class="text-muted small mb-0">New admissions per month</p>
+          </div>
+          <div class="dropdown">
+            <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+              {{ current_year }}
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end">
+              {% for yr in available_years %}
+              <li><a class="dropdown-item" href="?year={{ yr }}">{{ yr }}</a></li>
+              {% endfor %}
+            </ul>
+          </div>
+        </div>
+        <div class="card-body">
+          <canvas id="studentChart" height="280"></canvas>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Quick Actions Row -->
+  <div class="row g-4 mt-1">
+    <div class="col-12">
+      <div class="card chart-card">
+        <div class="chart-header">
+          <h5 class="fw-bold mb-0">Quick Access</h5>
+        </div>
+        <div class="card-body">
+          <div class="row g-3">
+            <div class="col-6 col-md-3">
+              <a href="{% url 'staff_list' %}" class="btn btn-outline-primary w-100 py-3 rounded-3">
+                <i class="bi bi-people fs-4 d-block mb-1"></i>
+                <span class="small fw-semibold">Staff List</span>
+              </a>
+            </div>
+            <div class="col-6 col-md-3">
+              <a href="{% url 'student_list' %}" class="btn btn-outline-info w-100 py-3 rounded-3">
+                <i class="bi bi-mortarboard fs-4 d-block mb-1"></i>
+                <span class="small fw-semibold">Students</span>
+              </a>
+            </div>
+            <div class="col-6 col-md-3">
+              <a href="{% url 'branch_list' %}" class="btn btn-outline-success w-100 py-3 rounded-3">
+                <i class="bi bi-building fs-4 d-block mb-1"></i>
+                <span class="small fw-semibold">Branches</span>
+              </a>
+            </div>
+            <div class="col-6 col-md-3">
+              <a href="{% url 'fee_payment:daily_collection_report' %}" class="btn btn-outline-warning w-100 py-3 rounded-3">
+                <i class="bi bi-cash-stack fs-4 d-block mb-1"></i>
+                <span class="small fw-semibold">Collections</span>
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
 
 {% endif %}
 
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+
+<!-- SAFE DATA PASSING: json_script keeps template braces OUT of raw JS -->
+{{ staff_months|json_script:"staff-months-data" }}
+{{ staff_counts|json_script:"staff-counts-data" }}
+{{ student_months|json_script:"student-months-data" }}
+{{ student_counts|json_script:"student-counts-data" }}
+
+<script>
+  const staffMonths   = JSON.parse(document.getElementById('staff-months-data').textContent);
+  const staffCounts   = JSON.parse(document.getElementById('staff-counts-data').textContent);
+  const studentMonths = JSON.parse(document.getElementById('student-months-data').textContent);
+  const studentCounts = JSON.parse(document.getElementById('student-counts-data').textContent);
+
+  const commonOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: { display: false },
+      tooltip: {
+        backgroundColor: 'rgba(33, 37, 41, 0.9)',
+        padding: 12,
+        cornerRadius: 8,
+        titleFont: { size: 13 },
+        bodyFont: { size: 13, weight: '600' }
+      }
+    },
+    scales: {
+      y: {
+        beginAtZero: true,
+        grid: { color: 'rgba(0,0,0,0.04)' },
+        ticks: { font: { size: 11 }, precision: 0 }
+      },
+      x: {
+        grid: { display: false },
+        ticks: { font: { size: 12 } }
+      }
+    }
+  };
+
+  new Chart(document.getElementById('staffChart').getContext('2d'), {
+    type: 'bar',
+    data: {
+      labels: staffMonths,
+      datasets: [{
+        label: 'Staff Joined',
+        data: staffCounts,
+        backgroundColor: 'rgba(13, 110, 253, 0.8)',
+        borderColor: 'rgba(13, 110, 253, 1)',
+        borderWidth: 1,
+        borderRadius: 6,
+        borderSkipped: false,
+      }]
+    },
+    options: commonOptions
+  });
+
+  new Chart(document.getElementById('studentChart').getContext('2d'), {
+    type: 'bar',
+    data: {
+      labels: studentMonths,
+      datasets: [{
+        label: 'Students Admitted',
+        data: studentCounts,
+        backgroundColor: 'rgba(13, 202, 240, 0.8)',
+        borderColor: 'rgba(13, 202, 240, 1)',
+        borderWidth: 1,
+        borderRadius: 6,
+        borderSkipped: false,
+      }]
+    },
+    options: commonOptions
+  });
+</script>
 {% endblock %}

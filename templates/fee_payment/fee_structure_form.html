@@ -28,9 +28,10 @@
                             {% if form.branch.errors %}<div class="text-danger small mt-1">{{ form.branch.errors.0 }}</div>{% endif %}
                         </div>
                         <div class="col-md-6 mb-3">
-                            <label class="form-label">Class <span class="text-danger">*</span></label>
-                            {{ form.class_name }}
-                            {% if form.class_name.errors %}<div class="text-danger small mt-1">{{ form.class_name.errors.0 }}</div>{% endif %}
+                            <label class="form-label">Group</label>
+                            {{ form.group }}
+                            <div class="form-text">Leave blank for a fee that applies to all groups.</div>
+                            {% if form.group.errors %}<div class="text-danger small mt-1">{{ form.group.errors.0 }}</div>{% endif %}
                         </div>
                     </div>
                     <div class="row">
@@ -50,7 +51,7 @@
                         <div class="col-md-4 mb-3">
                             <label class="form-label">Frequency <span class="text-danger">*</span></label>
                             {{ form.frequency }}
-                            <div class="form-text">Determines how many installments are auto-generated.</div>
+                            <div class="form-text">Determines the billing period for automatically generated installments.</div>
                             {% if form.frequency.errors %}<div class="text-danger small mt-1">{{ form.frequency.errors.0 }}</div>{% endif %}
                         </div>
                         <div class="col-md-4 mb-3">
@@ -60,8 +61,9 @@
                             {% if form.start_date.errors %}<div class="text-danger small mt-1">{{ form.start_date.errors.0 }}</div>{% endif %}
                         </div>
                         <div class="col-md-4 mb-3">
-                            <label class="form-label">Amount (₹) <span class="text-danger">*</span></label>
+                            <label class="form-label">Amount per Billing Period (₹) <span class="text-danger">*</span></label>
                             {{ form.amount }}
+                            <div class="form-text">For example: monthly amount for Monthly, or quarterly amount for Quarterly.</div>
                             {% if form.amount.errors %}<div class="text-danger small mt-1">{{ form.amount.errors.0 }}</div>{% endif %}
                         </div>
                     </div>

@@ -16,7 +16,7 @@
             <thead class="table-light">
                 <tr>
                     <th>Branch</th>
-                    <th>Class</th>
+                    <th>Group</th>
                     <th>Category</th>
                     <th>Year</th>
                     <th>Frequency</th>
@@ -30,7 +30,7 @@
                 {% for fs in fee_structures %}
                 <tr>
                     <td>{{ fs.branch.name }}</td>
-                    <td>{{ fs.class_name.name }}</td>
+                    <td>{{ fs.group.get_name_display|default:"All Groups" }}</td>
                     <td>{{ fs.category.name }}</td>
                     <td>{{ fs.academic_year }}</td>
                     <td><span class="badge bg-info">{{ fs.get_frequency_display }}</span></td>

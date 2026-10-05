@@ -1,11 +1,17 @@
+import logging
 from functools import wraps
 
+from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from django.core.exceptions import PermissionDenied
+from django.shortcuts import redirect
+
+logger = logging.getLogger(__name__)
 
 
 def role_required(*roles):
-    """Allow Django superusers or users having any of the named roles."""
+    """Allow Django superusers or users having any of the named roles.
+    Unauthorized attempts are logged and redirected with a message
+    instead of raising a raw 403."""
     def decorator(view_func):
         @login_required
         @wraps(view_func)
@@ -13,7 +19,13 @@ def role_required(*roles):
             user = request.user
             if user.is_superuser or user.role in roles:
                 return view_func(request, *args, **kwargs)
-            raise PermissionDenied("You do not have access to this page.")
+
+            logger.warning(
+                "Permission denied: user=%s (role=%s) tried to access %s (requires one of %s)",
+                user.username, getattr(user, "role", None), request.path, roles,
+            )
+            messages.error(request, "You do not have permission to access this page.")
+            return redirect("student_list")
         return wrapped
     return decorator
 

@@ -89,7 +89,7 @@ class StaffCreateForm(forms.ModelForm):
             "designation", "joining_date", "phone", "emergency_contact",
             "emergency_contact_name", "address", "city", "state",
             "postal_code", "address_proof_type", "address_proof",
-            "photo", "is_active",
+            "photo", "is_active","blood_group",
         ]
         widgets = {
             "employee_id": _text(placeholder="EMP001"),
@@ -108,6 +108,7 @@ class StaffCreateForm(forms.ModelForm):
             "address_proof_type": _text(placeholder="Aadhaar / PAN / Passport"),
             "address_proof": _file(),
             "photo": forms.FileInput(attrs={"class": "form-control", "accept": "image/*"}),
+            "blood_group":_text(placeholder="Blood Group"),
             "is_active": _checkbox(),
         }
 
@@ -142,6 +143,13 @@ class StaffCreateForm(forms.ModelForm):
 
     def save(self, commit=True):
         profile = super().save(commit=False)
+        if commit:
+            self._save_with_user(profile)
+        return profile
+
+    def _save_with_user(self, profile):
+        """Create the User and persist the profile.
+        Called by the view only after all inline formsets have passed validation."""
         role = self.cleaned_data["role"]
         primary = self.cleaned_data.get("primary_branch")
         accessible = self.cleaned_data.get("accessible_branches")
@@ -160,8 +168,10 @@ class StaffCreateForm(forms.ModelForm):
         else:
             user.accessible_branches.set(accessible)
         profile.user = user
-        if commit:
-            profile.save()
+        if self.actor:
+            profile.created_by = self.actor
+            profile.updated_by = self.actor
+        profile.save()
         return profile
 
 
@@ -181,7 +191,7 @@ class StaffProfileForm(forms.ModelForm):
             "designation", "joining_date", "phone", "emergency_contact",
             "emergency_contact_name", "address", "city", "state",
             "postal_code", "address_proof_type", "address_proof",
-            "photo", "is_active",
+            "photo", "is_active","blood_group",
         ]
         widgets = {
             "employee_id": _text(),
@@ -193,6 +203,7 @@ class StaffProfileForm(forms.ModelForm):
             "phone": _text(),
             "emergency_contact": _text(),
             "emergency_contact_name": _text(),
+            "blood_group":_text(),
             "address": _textarea(),
             "city": _text(),
             "state": _text(),
@@ -203,7 +214,8 @@ class StaffProfileForm(forms.ModelForm):
             "is_active": _checkbox(),
         }
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, user=None, **kwargs):
+        self.user = user
         super().__init__(*args, **kwargs)
         if self.instance and self.instance.user_id:
             self.fields["first_name"].initial = self.instance.user.first_name
@@ -212,6 +224,8 @@ class StaffProfileForm(forms.ModelForm):
 
     def save(self, commit=True):
         profile = super().save(commit=False)
+        if self.user:
+            profile.updated_by = self.user
         if commit:
             profile.save()
             user = profile.user

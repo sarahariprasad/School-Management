@@ -39,8 +39,8 @@
                             <p class="fw-semibold mb-0">{{ payment.installment.assignment.student|student_id }}</p>
                         </div>
                         <div class="col-6">
-                            <small class="text-muted">Class</small>
-                            <p class="fw-semibold mb-0">{{ payment.installment.assignment.fee_structure.class_name.name|default:"—" }}</p>
+                            <small class="text-muted">Group</small>
+                            <p class="fw-semibold mb-0">{{ payment.installment.assignment.fee_structure.group.get_name_display|default:"All Groups" }}</p>
                         </div>
                         <div class="col-6">
                             <small class="text-muted">Branch</small>

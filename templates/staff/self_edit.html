@@ -1,17 +1,49 @@
 {% extends "base.html" %}
-{% block title %}Edit My Details{% endblock %}
+{% block title %}Edit My Details | School ERP{% endblock %}
+
 {% block content %}
 <div class="container my-5">
-  <div class="card shadow-sm mx-auto" style="max-width: 550px;">
+  <div class="card profile-edit-card">
+
+    <div class="card-header">
+      <h2><i class="bi bi-person-gear me-2"></i>Edit My Details</h2>
+      <p>Update your address, phone and other information</p>
+    </div>
+
     <div class="card-body">
-      <h2 class="card-title mb-3">Edit Address / Phone</h2>
-      <form method="post" enctype="multipart/form-data">
+      <form method="post" enctype="multipart/form-data" novalidate>
         {% csrf_token %}
-        {{ form.as_p }}
-        <div class="d-flex justify-content-between mt-4">
-          <button type="submit" class="btn btn-primary">Save Changes</button>
-          <a href="{% url 'staff_profile' %}" class="btn btn-secondary">Cancel</a>
+
+        {% for field in form %}
+        <div class="form-group">
+          <label for="{{ field.id_for_label }}">
+            {{ field.label }}
+            {% if field.field.required %}<span class="required">*</span>{% endif %}
+          </label>
+
+          {{ field }}
+
+          {% if field.errors %}
+          <div class="errorlist">
+            {% for error in field.errors %}<li>{{ error }}</li>{% endfor %}
+          </div>
+          {% endif %}
+
+          {% if field.help_text %}
+          <div class="form-text">{{ field.help_text }}</div>
+          {% endif %}
         </div>
+        {% endfor %}
+
+        <div class="profile-actions">
+          <button type="submit" class="btn btn-primary">
+            <i class="bi bi-check-lg"></i> Save Changes
+          </button>
+          <a href="{% url 'staff_profile' %}" class="btn btn-outline-secondary">
+            <i class="bi bi-x-lg"></i> Cancel
+          </a>
+        </div>
+
       </form>
     </div>
   </div>

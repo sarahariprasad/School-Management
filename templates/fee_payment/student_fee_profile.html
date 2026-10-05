@@ -1,0 +1,136 @@
+{% extends "base.html" %}
+{% block title %}Fee Profile — {{ student.name }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+  <h3>Student Fee Profile</h3>
+
+  <div class="card mb-3">
+    <div class="card-body">
+      <div class="row">
+        <div class="col-md-4"><strong>Student ID:</strong> {{ profile.student_id }}</div>
+        <div class="col-md-4"><strong>Name:</strong> {{ profile.student_name }}</div>
+        <div class="col-md-4"><strong>Parent/Guardian:</strong> {{ profile.parent_guardian_name }}</div>
+      </div>
+      <div class="row mt-2">
+        <div class="col-md-4"><strong>Therapy Group:</strong> {{ profile.class_grade }}</div>
+        <div class="col-md-4"><strong>Branch:</strong> {{ profile.section_program }}</div>
+        <div class="col-md-4"><strong>Admission Date:</strong> {{ profile.admission_date }}</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="col-md-3">
+      <div class="card text-center mb-3">
+        <div class="card-body">
+          <div class="text-muted">Monthly Fee</div>
+          <h4>₹{{ profile.monthly_fee_amount }}</h4>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card text-center mb-3">
+        <div class="card-body">
+          <div class="text-muted">Current Outstanding</div>
+          <h4 class="{% if profile.current_outstanding > 0 %}text-danger{% else %}text-success{% endif %}">
+            ₹{{ profile.current_outstanding }}
+          </h4>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card text-center mb-3">
+        <div class="card-body">
+          <div class="text-muted">Payment Status</div>
+          <h4>
+            <span class="badge
+              {% if profile.payment_status == 'No Dues' %}bg-success
+              {% elif profile.payment_status == 'Overdue' %}bg-danger
+              {% else %}bg-warning text-dark{% endif %}">
+              {{ profile.payment_status }}
+            </span>
+          </h4>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card text-center mb-3">
+        <div class="card-body">
+          <div class="text-muted">Next Due</div>
+          <h4>{{ profile.next_due_date|default:"—" }}</h4>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card mb-3">
+    <div class="card-header">Discounts / Concessions</div>
+    <div class="card-body">
+      {% if profile.discounts %}
+        <table class="table table-sm">
+          <thead><tr><th>Category</th><th>Amount</th><th>Reason</th></tr></thead>
+          <tbody>
+            {% for d in profile.discounts %}
+            <tr><td>{{ d.category }}</td><td>₹{{ d.amount }}</td><td>{{ d.reason }}</td></tr>
+            {% endfor %}
+          </tbody>
+          <tfoot><tr><th colspan="1">Total</th><th>₹{{ profile.total_discount }}</th><th></th></tr></tfoot>
+        </table>
+      {% else %}
+        <p class="text-muted mb-0">No discounts applied.</p>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="card mb-3">
+    <div class="card-header">Additional Charges</div>
+    <div class="card-body">
+      {% if profile.additional_charges %}
+        <table class="table table-sm">
+          <thead><tr><th>Description</th><th>Amount</th><th>Date</th><th>Paid?</th></tr></thead>
+          <tbody>
+            {% for c in profile.additional_charges %}
+            <tr>
+              <td>{{ c.description }}</td>
+              <td>₹{{ c.amount }}</td>
+              <td>{{ c.charge_date }}</td>
+              <td>{% if c.is_paid %}Yes{% else %}No{% endif %}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+          <tfoot><tr><th colspan="1">Total</th><th>₹{{ profile.additional_charges_total }}</th><th colspan="2"></th></tr></tfoot>
+        </table>
+      {% else %}
+        <p class="text-muted mb-0">No additional charges.</p>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="card mb-3">
+    <div class="card-header">Last Payment</div>
+    <div class="card-body">
+      {{ profile.last_payment_date|default:"No payments recorded yet." }}
+    </div>
+  </div>
+
+  <div class="card mb-3">
+    <div class="card-header">Active Fee Assignments</div>
+    <div class="card-body">
+      <table class="table table-sm">
+        <thead><tr><th>Category</th><th>Academic Year</th><th>Final Amount</th><th>Balance</th></tr></thead>
+        <tbody>
+          {% for a in profile.assignments %}
+          <tr>
+            <td><a href="{% url 'fee_payment:student_fee_assignment_detail' a.pk %}">{{ a.fee_structure.category.name }}</a></td>
+            <td>{{ a.fee_structure.academic_year }}</td>
+            <td>₹{{ a.final_amount }}</td>
+            <td>₹{{ a.total_balance }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

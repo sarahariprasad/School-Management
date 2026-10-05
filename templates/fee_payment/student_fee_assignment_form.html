@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 
-{% block title %}{% if object %}Edit{% else %}Add{% endif %} Fee Assignment | NOWMI CGC{% endblock %}
+{% block title %}{% if object %}Edit{% else %}New{% endif %} Fee Assignment | NOWMI CGC{% endblock %}
 
 {% block content %}
 <div class="row justify-content-center">
@@ -8,12 +8,20 @@
         <div class="card shadow-sm">
             <div class="card-header bg-primary text-white">
                 <h5 class="mb-0">
-                    <i class="bi bi-person-check"></i> {% if object %}Edit{% else %}Add{% endif %} Fee Assignment
+                    <i class="bi bi-person-check"></i> {% if object %}Edit{% else %}New{% endif %} Fee Assignment
                 </h5>
             </div>
             <div class="card-body">
                 <form method="post" novalidate>
                     {% csrf_token %}
+                    {% if form.non_field_errors %}
+                    <div class="alert alert-danger">
+                        {% for error in form.non_field_errors %}
+                            <div>{{ error }}</div>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+
                     <div class="row">
                         <div class="col-md-6 mb-3">
                             <label class="form-label">Student <span class="text-danger">*</span></label>
@@ -26,55 +34,55 @@
                             {% if form.fee_structure.errors %}<div class="text-danger small mt-1">{{ form.fee_structure.errors.0 }}</div>{% endif %}
                         </div>
                     </div>
+
                     <div class="row">
-                        <div class="col-md-4 mb-3">
+                        <div class="col-md-6 mb-3">
                             <label class="form-label">Discount Amount (₹)</label>
                             {{ form.discount_amount }}
-                            <div class="form-text">Final amount = Fee amount − Discount</div>
+                            <div class="form-text">{{ form.discount_amount.help_text }}</div>
                             {% if form.discount_amount.errors %}<div class="text-danger small mt-1">{{ form.discount_amount.errors.0 }}</div>{% endif %}
                         </div>
-                        <div class="col-md-4 mb-3">
+                        <div class="col-md-6 mb-3">
                             <label class="form-label">Discount Reason</label>
                             {{ form.discount_reason }}
+                            <div class="form-text">Required if a discount amount is entered.</div>
                             {% if form.discount_reason.errors %}<div class="text-danger small mt-1">{{ form.discount_reason.errors.0 }}</div>{% endif %}
-                        </div>
-                        <div class="col-md-4 mb-3">
-                            <label class="form-label">Start Date <span class="badge bg-info">Day Care</span></label>
-                            {{ form.start_date }}
-                            <div class="form-text">
-                                <strong>School:</strong> Leave blank (uses Fee Structure date).<br>
-                                <strong>Day Care:</strong> Set to student join date.
-                            </div>
-                            {% if form.start_date.errors %}<div class="text-danger small mt-1">{{ form.start_date.errors.0 }}</div>{% endif %}
                         </div>
                     </div>
 
-                    <hr class="my-4">
-                    <h6 class="text-muted mb-3"><i class="bi bi-bell"></i> Parent Contact & Notifications</h6>
+                    <div class="mb-3">
+                        <label class="form-label">Start Date</label>
+                        {{ form.start_date }}
+                        <div class="form-text">{{ form.start_date.help_text }}</div>
+                        {% if form.start_date.errors %}<div class="text-danger small mt-1">{{ form.start_date.errors.0 }}</div>{% endif %}
+                    </div>
 
+                    <hr>
+                    <h6 class="text-muted mb-3">Parent Contact Overrides</h6>
                     <div class="row">
                         <div class="col-md-6 mb-3">
                             <label class="form-label">Parent Email</label>
                             {{ form.parent_email }}
-                            <div class="form-text">Leave blank to use student record email.</div>
+                            <div class="form-text">{{ form.parent_email.help_text }}</div>
                             {% if form.parent_email.errors %}<div class="text-danger small mt-1">{{ form.parent_email.errors.0 }}</div>{% endif %}
                         </div>
                         <div class="col-md-6 mb-3">
                             <label class="form-label">Parent Phone</label>
                             {{ form.parent_phone }}
-                            <div class="form-text">Leave blank to use student record phone.</div>
+                            <div class="form-text">{{ form.parent_phone.help_text }}</div>
                             {% if form.parent_phone.errors %}<div class="text-danger small mt-1">{{ form.parent_phone.errors.0 }}</div>{% endif %}
                         </div>
                     </div>
+
                     <div class="mb-3 form-check">
                         {{ form.notify_parent }}
-                        <label class="form-check-label"><strong>Send fee notifications to parent</strong></label>
-                        <div class="form-text">Parents receive emails/SMS for fee dues and payment confirmations.</div>
+                        <label class="form-check-label">Send fee notifications to parent</label>
                     </div>
                     <div class="mb-3 form-check">
                         {{ form.is_active }}
                         <label class="form-check-label">Active</label>
                     </div>
+
                     <div class="d-flex gap-2">
                         <button type="submit" class="btn btn-primary">
                             <i class="bi bi-check-lg"></i> Save

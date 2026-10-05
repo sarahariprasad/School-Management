@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Bulk Promote Students | School ERP{% endblock %}
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row justify-content-center">
+        <div class="col-12 col-lg-6">
+
+            <div class="page-hero">
+                <div>
+                    <h2><i class="bi bi-arrow-up-circle-fill me-2"></i>Bulk Promote Students</h2>
+                    <p>Move every active student in a class up to the next class at once</p>
+                </div>
+                <div class="page-hero-actions">
+                    <a href="{% url 'student_list' %}" class="btn btn-outline-light"><i class="bi bi-arrow-left me-1"></i>Back to List</a>
+                </div>
+            </div>
+
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags|default:'info' }} alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+
+            {% if form.non_field_errors %}
+            <div class="alert alert-danger" role="alert">
+                {% for error in form.non_field_errors %}<div>{{ error }}</div>{% endfor %}
+            </div>
+            {% endif %}
+
+            <div class="card action-card">
+                <div class="card-header"><h5><i class="bi bi-mortarboard-fill me-2"></i>Promote a Class</h5></div>
+                <div class="card-body">
+                    <p class="text-muted small">
+                        This moves every <strong>active</strong> student currently in the selected class
+                        into the target class, all at once — typically run once a year. Each student's
+                        Class History will show this promotion with the reason you enter below.
+                        Inactive students in the source class are left untouched.
+                    </p>
+                    <form method="post" novalidate>
+                        {% csrf_token %}
+                        {% for field in form %}
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold" for="{{ field.id_for_label }}">{{ field.label }}</label>
+                            {{ field }}
+                            {% if field.errors %}<div class="text-danger small mt-1">{{ field.errors|striptags }}</div>{% endif %}
+                            {% if field.help_text %}<div class="form-text text-muted">{{ field.help_text }}</div>{% endif %}
+                        </div>
+                        {% endfor %}
+                        <div class="d-flex flex-column flex-sm-row gap-2 justify-content-end mt-4">
+                            <a href="{% url 'student_list' %}" class="btn btn-outline-secondary order-2 order-sm-1">Cancel</a>
+                            <button type="submit" class="btn btn-primary order-1 order-sm-2"
+                                    onclick="return confirm('This will promote every active student in the source class. Continue?');">
+                                <i class="bi bi-check-circle me-1"></i>Promote Students
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+{% endblock %}

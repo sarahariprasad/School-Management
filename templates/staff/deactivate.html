@@ -6,7 +6,7 @@
   <div class="row justify-content-center">
     <div class="col-12 col-md-8 col-lg-5">
 
-      <div class="card border-danger shadow-sm">
+      <div class="card shadow-sm" style="border-top: 4px solid #dc3545;">
         <div class="card-header bg-danger text-white">
           <h5 class="mb-0"><i class="bi bi-person-x-fill me-2"></i>Deactivate Staff Member</h5>
         </div>
@@ -15,7 +15,8 @@
             {% if profile.photo %}
               <img src="{{ profile.photo.url }}" class="rounded-circle me-3" width="50" height="50" style="object-fit:cover;">
             {% else %}
-              <div class="bg-secondary text-white rounded-circle d-flex align-items-center justify-content-center me-3" style="width:50px;height:50px;font-size:20px;">
+              <div class="text-white rounded-circle d-flex align-items-center justify-content-center me-3"
+                   style="width:50px;height:50px;font-size:20px;background:linear-gradient(135deg,#0f766e,#14b8a6);">
                 {{ profile.user.first_name|default:"?"|first|upper }}
               </div>
             {% endif %}
@@ -34,9 +35,12 @@
             {% csrf_token %}
             {% for field in form %}
               <div class="mb-3">
-                <label class="form-label fw-semibold">{{ field.label }}</label>
+                <label class="form-label fw-semibold">
+                  {{ field.label }}{% if field.field.required %}<span class="text-danger">*</span>{% endif %}
+                </label>
                 {{ field }}
-                {% if field.errors %}<div class="text-danger small mt-1">{{ field.errors|striptags }}</div>{% endif %}
+                {% if field.errors %}<div class="text-danger small mt-1"><i class="bi bi-x-circle me-1"></i>{{ field.errors|striptags }}</div>{% endif %}
+                {% if field.help_text %}<div class="form-text small text-muted">{{ field.help_text }}</div>{% endif %}
               </div>
             {% endfor %}
             <div class="d-flex flex-column flex-sm-row gap-2">

@@ -6,12 +6,16 @@ from django.db.models import Q, Value
 from django.db.models.functions import Concat
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
+from django.contrib.contenttypes.models import ContentType
 from openpyxl import Workbook
 from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
 from openpyxl.utils import get_column_letter
+from django.utils import timezone
 
 from accounts.decorators import role_required
 from core.permissions import branch_scope
+from audit_log.services import log_audit, snapshot_instance, build_field_changes, log_formset_changes
+from audit_log.models import AuditLog
 from .forms import (
     DocumentFormSet, EducationFormSet, EducationRecordForm,
     ExperienceFormSet, ExperienceHistoryForm, PromotionFormSet,
@@ -28,14 +32,23 @@ from .models import EducationRecord, StaffDocument, StaffProfile
 @login_required
 def staff_list(request):
     search = request.GET.get("search", "").strip()
+    status_filter = request.GET.get("status", "").strip().lower()
 
     staff = branch_scope(
         request.user,
-        StaffProfile.objects.select_related("user", "user__branch"),
+        StaffProfile.objects.select_related(
+            "user", "user__branch", "updated_by", "created_by"
+        ),
         "user__branch",
     ).annotate(
         full_name=Concat("user__first_name", Value(" "), "user__last_name")
     )
+
+    # ── Status filter ──
+    if status_filter == "active":
+        staff = staff.filter(is_active=True)
+    elif status_filter == "inactive":
+        staff = staff.filter(is_active=False)
 
     if search:
         staff = staff.filter(
@@ -58,12 +71,14 @@ def staff_list(request):
     return render(request, "staff/list.html", {
         "staff": page_obj,
         "search": search,
+        "status_filter": status_filter,
+        "status_choices": [("active", "Active"), ("inactive", "Inactive")],
         "total_count": paginator.count,
     })
 
 
 # ═══════════════════════════════════════════════════════════════
-# CREATE VIEW
+# CREATE VIEW  —  FIXED: validate everything BEFORE touching DB
 # ═══════════════════════════════════════════════════════════════
 @role_required("SYSTEM_ADMIN", "BRANCH_ADMIN")
 @transaction.atomic
@@ -72,8 +87,11 @@ def staff_create(request):
         form = StaffCreateForm(request.POST, request.FILES, actor=request.user)
 
         if form.is_valid():
-            profile = form.save()
+            # 1) Build the profile in memory ONLY — do NOT write to DB yet.
+            #    (This also prevents the User from being created early.)
+            profile = form.save(commit=False)
 
+            # 2) Bind formsets to the in-memory profile so they can validate
             education_formset = EducationFormSet(
                 request.POST, request.FILES, instance=profile, prefix="edu"
             )
@@ -86,17 +104,31 @@ def staff_create(request):
 
             if (education_formset.is_valid() and document_formset.is_valid()
                     and salary_formset.is_valid()):
+                # 3) EVERYTHING is clean — now actually persist
+                form._save_with_user(profile)
                 education_formset.save()
                 document_formset.save()
                 salary_formset.save()
+
+                # ── AUDIT: main profile ──
+                log_audit(request.user, profile, "CREATE",
+                          snapshot=snapshot_instance(profile))
+
+                # ── AUDIT: inline records ──
+                for fs in (education_formset, document_formset, salary_formset):
+                    for frm in fs.forms:
+                        if frm.instance.pk and not frm.cleaned_data.get("DELETE"):
+                            log_audit(
+                                request.user, frm.instance, "CREATE",
+                                snapshot=snapshot_instance(frm.instance)
+                            )
+
                 messages.success(
                     request,
                     f"Staff member '{profile.full_name}' created successfully."
                 )
                 return redirect("staff_list")
             else:
-                # Rollback the created profile so we don't leave orphans
-                profile.delete()
                 messages.error(request, "Please correct the errors below.")
         else:
             # Main form invalid — still bind formsets so template can render POST data
@@ -130,6 +162,7 @@ def staff_create(request):
 # EDIT VIEW
 # ═══════════════════════════════════════════════════════════════
 @role_required("SYSTEM_ADMIN", "BRANCH_ADMIN")
+@transaction.atomic
 def staff_edit(request, pk):
     profile = get_object_or_404(
         branch_scope(
@@ -140,8 +173,19 @@ def staff_edit(request, pk):
         pk=pk,
     )
 
+    # Capture a pristine copy BEFORE the form touches the instance
+    old_profile = StaffProfile.objects.get(pk=profile.pk) if request.method == "POST" else None
+
+    # Fetch audit trail for the template
+    profile_ct = ContentType.objects.get_for_model(StaffProfile)
+    audit_logs = AuditLog.objects.filter(
+        content_type=profile_ct, object_id=profile.pk
+    ).select_related("user").order_by("-action_time")[:25]
+
     if request.method == "POST":
-        form = StaffProfileForm(request.POST, request.FILES, instance=profile)
+        form = StaffProfileForm(
+            request.POST, request.FILES, instance=profile, user=request.user
+        )
         education_formset = EducationFormSet(
             request.POST, request.FILES, instance=profile, prefix="edu"
         )
@@ -161,18 +205,32 @@ def staff_edit(request, pk):
         if (form.is_valid() and education_formset.is_valid()
                 and document_formset.is_valid() and salary_formset.is_valid()
                 and experience_formset.is_valid() and promotion_formset.is_valid()):
-            form.save()
+            profile = form.save()
             education_formset.save()
             document_formset.save()
             salary_formset.save()
             experience_formset.save()
             promotion_formset.save()
+
+            # ── AUDIT: Profile changes ──
+            if old_profile:
+                changes = build_field_changes(old_profile, profile)
+                if changes:
+                    log_audit(request.user, profile, "UPDATE", field_changes=changes)
+
+            # ── AUDIT: Inline formsets ──
+            log_formset_changes(request.user, education_formset, profile, "staff")
+            log_formset_changes(request.user, document_formset, profile, "staff")
+            log_formset_changes(request.user, salary_formset, profile, "staff")
+            log_formset_changes(request.user, experience_formset, profile, "staff")
+            log_formset_changes(request.user, promotion_formset, profile, "staff")
+
             messages.success(request, f"Staff '{profile.full_name}' updated successfully.")
             return redirect("staff_list")
         else:
             messages.error(request, "Please correct the errors below.")
     else:
-        form = StaffProfileForm(instance=profile)
+        form = StaffProfileForm(instance=profile, user=request.user)
         education_formset = EducationFormSet(instance=profile, prefix="edu")
         document_formset = DocumentFormSet(instance=profile, prefix="doc")
         salary_formset = SalaryFormSet(instance=profile, prefix="sal")
@@ -186,6 +244,7 @@ def staff_edit(request, pk):
         "salary_formset": salary_formset,
         "experience_formset": experience_formset,
         "promotion_formset": promotion_formset,
+        "audit_logs": audit_logs,
         "title": f"Edit Staff: {profile.full_name}",
         "action": "Update",
         "profile": profile,
@@ -196,6 +255,7 @@ def staff_edit(request, pk):
 # DEACTIVATE VIEW
 # ═══════════════════════════════════════════════════════════════
 @role_required("SYSTEM_ADMIN", "BRANCH_ADMIN")
+@transaction.atomic
 def staff_deactivate(request, pk):
     profile = get_object_or_404(
         branch_scope(
@@ -208,6 +268,7 @@ def staff_deactivate(request, pk):
     if not profile.is_active:
         return redirect("staff_list")
 
+    old_profile = StaffProfile.objects.get(pk=profile.pk)
     form = StaffExitForm(request.POST or None, instance=profile)
     if request.method == "POST" and form.is_valid():
         profile = form.save(commit=False)
@@ -215,6 +276,11 @@ def staff_deactivate(request, pk):
         profile.save(update_fields=["leaving_date", "exit_reason", "is_active"])
         profile.user.is_active = False
         profile.user.save(update_fields=["is_active"])
+
+        # ── AUDIT ──
+        changes = build_field_changes(old_profile, profile)
+        log_audit(request.user, profile, "UPDATE", field_changes=changes)
+
         messages.success(request, f"Staff '{profile.full_name}' has been deactivated.")
         return redirect("staff_list")
 
@@ -255,6 +321,7 @@ def education_add(request, pk):
         record = form.save(commit=False)
         record.staff = profile
         record.save()
+        log_audit(request.user, record, "CREATE", snapshot=snapshot_instance(record))
         messages.success(request, "Education record added.")
     return redirect("staff_documents", pk=pk)
 
@@ -270,6 +337,7 @@ def document_add(request, pk):
         document = form.save(commit=False)
         document.staff = profile
         document.save()
+        log_audit(request.user, document, "CREATE", snapshot=snapshot_instance(document))
         messages.success(request, "Document uploaded.")
     return redirect("staff_documents", pk=pk)
 
@@ -322,9 +390,19 @@ def staff_profile_view(request):
 @login_required
 def staff_profile_edit(request):
     profile = get_object_or_404(StaffProfile, user=request.user)
+    old_profile = StaffProfile.objects.get(pk=profile.pk) if request.method == "POST" else None
+
     form = StaffSelfEditForm(request.POST or None, request.FILES or None, instance=profile)
     if request.method == "POST" and form.is_valid():
-        form.save()
+        profile = form.save(commit=False)
+        profile.updated_by = request.user
+        profile.save()
+
+        if old_profile:
+            changes = build_field_changes(old_profile, profile)
+            if changes:
+                log_audit(request.user, profile, "UPDATE", field_changes=changes)
+
         messages.success(request, "Your profile has been updated.")
         return redirect("staff_profile")
     return render(request, "staff/self_edit.html", {"form": form, "profile": profile})
@@ -343,11 +421,19 @@ def staff_profile_admin_view(request, pk):
         ),
         pk=pk,
     )
+
+    # Optional: pass audit logs to the read-only profile template
+    profile_ct = ContentType.objects.get_for_model(StaffProfile)
+    audit_logs = AuditLog.objects.filter(
+        content_type=profile_ct, object_id=profile.pk
+    ).select_related("user").order_by("-action_time")[:15]
+
     return render(request, "staff/profile.html", {
         "profile": profile,
         "experience_history": profile.experience_history.all(),
         "promotions": profile.promotions.all(),
         "increments": profile.increments.all(),
+        "audit_logs": audit_logs,
         "is_self": False,
     })
 
@@ -366,6 +452,7 @@ def experience_add(request, pk):
         exp = form.save(commit=False)
         exp.staff = profile
         exp.save()
+        log_audit(request.user, exp, "CREATE", snapshot=snapshot_instance(exp))
         messages.success(request, "Experience record added.")
         return redirect("staff_profile_admin_view", pk=profile.pk)
     return render(request, "staff/experience_form.html", {"form": form, "profile": profile})
@@ -382,6 +469,7 @@ def promotion_add(request, pk):
         promo = form.save(commit=False)
         promo.staff = profile
         promo.save()
+        log_audit(request.user, promo, "CREATE", snapshot=snapshot_instance(promo))
         messages.success(request, "Promotion record added.")
         return redirect("staff_profile_admin_view", pk=profile.pk)
     return render(request, "staff/promotion_form.html", {"form": form, "profile": profile})
@@ -404,6 +492,7 @@ def salary_increment_add(request, pk):
             if not inc.new_salary:
                 inc.new_salary = inc.base_salary + inc.increment_amount
             inc.save()
+            log_audit(request.user, inc, "CREATE", snapshot=snapshot_instance(inc))
             messages.success(request, "Salary increment added.")
             return redirect("staff_profile_admin_view", pk=profile.pk)
     return render(request, "staff/salary_increment_form.html", {"form": form, "profile": profile})

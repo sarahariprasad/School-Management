@@ -1,0 +1,131 @@
+{% extends "base.html" %}
+
+{% block title %}Invoice {{ invoice.invoice_no }}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h3 class="mb-0"><i class="bi bi-receipt"></i> Invoice {{ invoice.invoice_no }}</h3>
+  <div>
+    {% if invoice.pdf_file %}
+    <a href="{% url 'fee_payment:invoice_download' invoice.pk %}" class="btn btn-outline-secondary">
+      <i class="bi bi-file-earmark-pdf"></i> Download PDF
+    </a>
+    {% endif %}
+    {% if invoice.status != 'cancelled' %}
+    <form method="post" action="{% url 'fee_payment:invoice_send_email' invoice.pk %}" class="d-inline">
+      {% csrf_token %}
+      <input type="hidden" name="next" value="{{ request.path }}">
+      <button type="submit" class="btn btn-outline-success">
+        <i class="bi bi-envelope"></i> {% if invoice.status == 'sent' %}Resend{% else %}Send{% endif %} Email
+      </button>
+    </form>
+    <form method="post" action="{% url 'fee_payment:invoice_cancel' invoice.pk %}" class="d-inline"
+          onsubmit="return confirm('Cancel this invoice? This cannot be undone.');">
+      {% csrf_token %}
+      <button type="submit" class="btn btn-outline-danger">
+        <i class="bi bi-x-circle"></i> Cancel Invoice
+      </button>
+    </form>
+    {% endif %}
+  </div>
+</div>
+
+<div class="row">
+  <div class="col-md-6">
+    <div class="card mb-3">
+      <div class="card-header">Invoice Details</div>
+      <div class="card-body">
+        <dl class="row mb-0">
+          <dt class="col-5">Invoice No</dt><dd class="col-7">{{ invoice.invoice_no }}</dd>
+          <dt class="col-5">Invoice Date</dt><dd class="col-7">{{ invoice.invoice_date }}</dd>
+          <dt class="col-5">Status</dt>
+          <dd class="col-7">
+            {% if invoice.status == 'sent' %}
+              <span class="badge bg-success">{{ invoice.get_status_display }}</span>
+            {% elif invoice.status == 'cancelled' %}
+              <span class="badge bg-secondary">{{ invoice.get_status_display }}</span>
+            {% else %}
+              <span class="badge bg-warning text-dark">{{ invoice.get_status_display }}</span>
+            {% endif %}
+          </dd>
+          <dt class="col-5">Amount</dt><dd class="col-7 fw-semibold">₹{{ invoice.amount|floatformat:2 }}</dd>
+          <dt class="col-5">Covers</dt>
+          <dd class="col-7">
+            {% if invoice.installment %}
+              Installment #{{ invoice.installment.installment_number }} (Due {{ invoice.installment.due_date }})
+            {% else %}
+              Full assignment
+            {% endif %}
+          </dd>
+          {% if invoice.sent_at %}
+          <dt class="col-5">Sent At</dt><dd class="col-7">{{ invoice.sent_at }}</dd>
+          {% endif %}
+          <dt class="col-5">Created By</dt><dd class="col-7">{{ invoice.created_by_display }}</dd>
+          {% if invoice.remarks %}
+          <dt class="col-5">Remarks</dt><dd class="col-7">{{ invoice.remarks }}</dd>
+          {% endif %}
+        </dl>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-6">
+    <div class="card mb-3">
+      <div class="card-header">Student</div>
+      <div class="card-body">
+        <dl class="row mb-0">
+          <dt class="col-5">Student</dt>
+          <dd class="col-7">
+            <a href="{% url 'fee_payment:student_fee_assignment_detail' invoice.assignment.pk %}">
+              {{ invoice.assignment.student }}
+            </a>
+          </dd>
+          <dt class="col-5">{{ student_id_field|default:"Student ID" }}</dt><dd class="col-7">{{ student_display_id }}</dd>
+          <dt class="col-5">Group</dt><dd class="col-7">{{ invoice.assignment.fee_structure.group.get_name_display|default:"All Groups" }}</dd>
+          <dt class="col-5">Branch</dt><dd class="col-7">{{ invoice.assignment.fee_structure.branch }}</dd>
+          <dt class="col-5">Category</dt><dd class="col-7">{{ invoice.assignment.fee_structure.category.name }}</dd>
+          <dt class="col-5">Parent Email</dt><dd class="col-7">{{ invoice.assignment.effective_parent_email|default:"—" }}</dd>
+        </dl>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-header">Delivery History</div>
+  <div class="table-responsive">
+    <table class="table table-sm mb-0">
+      <thead class="table-light">
+        <tr>
+          <th>Channel</th>
+          <th>Recipient</th>
+          <th>Sent At</th>
+          <th>Status</th>
+          <th>Error</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for log in invoice.notification_logs.all %}
+        <tr>
+          <td>{{ log.get_channel_display }}</td>
+          <td>{{ log.recipient|default:"—" }}</td>
+          <td>{{ log.sent_at }}</td>
+          <td>
+            {% if log.is_success %}
+              <span class="badge bg-success">Sent</span>
+            {% else %}
+              <span class="badge bg-danger">Failed</span>
+            {% endif %}
+          </td>
+          <td class="text-muted small">{{ log.error_message|default:"—" }}</td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="5" class="text-center text-muted py-3">No delivery attempts yet.</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

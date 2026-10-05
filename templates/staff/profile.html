@@ -1,191 +1,570 @@
 {% extends "base.html" %}
 {% block title %}{% if is_self %}My Profile{% else %}{{ profile.full_name }}{% endif %} | School ERP{% endblock %}
 
+{% block extra_css %}
+<style>
+  /* Profile Avatar */
+  .profile-avatar {
+    width: 140px;
+    height: 140px;
+    object-fit: cover;
+    border: 4px solid #fff;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.12);
+  }
+  .profile-avatar-placeholder {
+    width: 140px;
+    height: 140px;
+    font-size: 56px;
+    font-weight: 600;
+    border: 4px solid #fff;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.12);
+    background: linear-gradient(135deg, #0f766e, #14b8a6);
+  }
+
+  /* Info Cards */
+  .info-card {
+    border: none;
+    border-radius: 16px;
+    box-shadow: 0 2px 16px rgba(0,0,0,0.06);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+  .info-card:hover {
+    box-shadow: 0 4px 24px rgba(0,0,0,0.1);
+  }
+
+  /* Section Headers (inside accordion bodies) */
+  .section-title {
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #0f766e;
+    font-weight: 700;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  .section-title::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: linear-gradient(to right, #dee2e6, transparent);
+    margin-left: 0.5rem;
+  }
+
+  /* Detail Grid */
+  .detail-item {
+    padding: 0.75rem;
+    background: #f8f9fa;
+    border-radius: 10px;
+    height: 100%;
+  }
+  .detail-item strong {
+    display: block;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    color: #6c757d;
+    margin-bottom: 0.25rem;
+    font-weight: 600;
+  }
+  .detail-item span {
+    color: #212529;
+    font-weight: 500;
+    font-size: 0.9rem;
+  }
+
+  /* Tables */
+  .custom-table {
+    border-radius: 12px;
+    overflow: hidden;
+    border: 1px solid #e9ecef;
+  }
+  .custom-table thead th {
+    background: #f8f9fa !important;
+    color: #495057 !important;
+    font-weight: 600;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    border-bottom: 2px solid #e9ecef;
+    padding: 0.85rem 1rem;
+  }
+  .custom-table tbody td {
+    padding: 0.85rem 1rem;
+    vertical-align: middle;
+    font-size: 0.9rem;
+  }
+  .custom-table tbody tr:hover {
+    background: #f8f9fa;
+  }
+
+  /* Document List */
+  .doc-item {
+    border: 1px solid #e9ecef;
+    border-radius: 10px;
+    padding: 0.75rem 1rem;
+    margin-bottom: 0.5rem;
+    transition: all 0.2s ease;
+    background: #fff;
+  }
+  .doc-item:hover {
+    border-color: #14b8a6;
+    box-shadow: 0 2px 8px rgba(15,118,110,0.08);
+  }
+
+  /* Contact Info */
+  .contact-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.6rem 0;
+    border-bottom: 1px solid #f1f3f5;
+  }
+  .contact-item:last-child {
+    border-bottom: none;
+  }
+  .contact-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    background: rgba(15, 118, 110, 0.08);
+    color: #0f766e;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.9rem;
+    flex-shrink: 0;
+  }
+
+  /* Badges */
+  .badge-custom {
+    padding: 0.5em 0.85em;
+    font-weight: 500;
+    border-radius: 20px;
+    font-size: 0.8rem;
+  }
+
+  /* Buttons */
+  .btn-action {
+    border-radius: 10px;
+    font-weight: 500;
+    padding: 0.5rem 1rem;
+    font-size: 0.875rem;
+  }
+
+  /* Mobile adjustments */
+  @media (max-width: 767.98px) {
+    .profile-avatar, .profile-avatar-placeholder {
+      width: 100px;
+      height: 100px;
+      font-size: 40px;
+    }
+    .detail-item {
+      margin-bottom: 0.5rem;
+    }
+  }
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="container-fluid py-4">
 
   <!-- Header -->
-  <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-4 gap-2">
+  <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-4 gap-3">
     <div>
+      <nav aria-label="breadcrumb" class="mb-1">
+        <ol class="breadcrumb mb-0 small">
+          <li class="breadcrumb-item"><a href="{% url 'staff_list' %}" class="text-decoration-none">Staff</a></li>
+          <li class="breadcrumb-item active" aria-current="page">
+            {% if is_self %}My Profile{% else %}{{ profile.full_name }}{% endif %}
+          </li>
+        </ol>
+      </nav>
       <h2 class="fw-bold mb-1">{% if is_self %}My Profile{% else %}{{ profile.full_name }}{% endif %}</h2>
-      <p class="text-muted mb-0">{{ profile.employee_id }} · {{ profile.get_department_display }}</p>
+      <p class="text-muted mb-0">
+        <span class="font-monospace small bg-light px-2 py-1 rounded">{{ profile.employee_id }}</span>
+        <span class="mx-1">&middot;</span>
+        {{ profile.get_department_display }}
+      </p>
     </div>
-    <div class="d-flex gap-2">
+    <div class="d-flex gap-2 flex-wrap">
       {% if is_self %}
-        <a href="{% url 'staff_profile_edit' %}" class="btn btn-primary"><i class="bi bi-pencil-square me-1"></i> Edit Profile</a>
+        <a href="{% url 'staff_profile_edit' %}" class="btn btn-primary btn-action">
+          <i class="bi bi-pencil-square me-1"></i> Edit Profile
+        </a>
       {% else %}
-        <a href="{% url 'staff_edit' profile.pk %}" class="btn btn-primary"><i class="bi bi-pencil-square me-1"></i> Edit</a>
-        <a href="{% url 'staff_export_single_excel' profile.pk %}" class="btn btn-success"><i class="bi bi-file-earmark-excel me-1"></i> Export Excel</a>
+        <a href="{% url 'staff_edit' profile.pk %}" class="btn btn-primary btn-action">
+          <i class="bi bi-pencil-square me-1"></i> Edit
+        </a>
+        <a href="{% url 'staff_export_single_excel' profile.pk %}" class="btn btn-success btn-action">
+          <i class="bi bi-file-earmark-excel me-1"></i> Export
+        </a>
       {% endif %}
-      <a href="{% url 'staff_list' %}" class="btn btn-outline-secondary"><i class="bi bi-arrow-left me-1"></i> Back</a>
+      <a href="{% url 'staff_list' %}" class="btn btn-outline-secondary btn-action">
+        <i class="bi bi-arrow-left me-1"></i> Back
+      </a>
     </div>
   </div>
 
   <!-- Messages -->
   {% if messages %}
     {% for message in messages %}
-    <div class="alert alert-{{ message.tags|default:'info' }} alert-dismissible fade show">{{ message }}<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>
+    <div class="alert alert-{{ message.tags|default:'info' }} alert-dismissible fade show rounded-3 shadow-sm">
+      {{ message }}
+      <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
     {% endfor %}
   {% endif %}
 
   <div class="row g-4">
 
     <!-- Left Column: Photo & Basic Info -->
-    <div class="col-lg-4">
-      <div class="card shadow-sm text-center p-4">
+    <div class="col-12 col-lg-4">
+      <div class="card info-card text-center p-4">
         {% if profile.photo %}
-          <img src="{{ profile.photo.url }}" class="rounded-circle mx-auto mb-3" width="120" height="120" style="object-fit:cover;">
+          <img src="{{ profile.photo.url }}" class="rounded-circle mx-auto mb-3 profile-avatar" alt="{{ profile.full_name }}">
         {% else %}
-          <div class="bg-secondary text-white rounded-circle d-flex align-items-center justify-content-center mx-auto mb-3" style="width:120px;height:120px;font-size:48px;">
+          <div class="text-white rounded-circle d-flex align-items-center justify-content-center mx-auto mb-3 profile-avatar-placeholder">
             {{ profile.user.first_name|default:"?"|first|upper }}
           </div>
         {% endif %}
-        <h5 class="fw-bold mb-1">{{ profile.full_name }}</h5>
-        <p class="text-muted mb-2">{{ profile.current_designation }}</p>
-        <div class="mb-2">
-          {% if profile.is_active %}<span class="badge bg-success">Active</span>{% else %}<span class="badge bg-secondary">Inactive</span>{% endif %}
-          <span class="badge bg-primary">{{ profile.get_department_display }}</span>
+        <h4 class="fw-bold mb-1">{{ profile.full_name }}</h4>
+        <p class="text-muted mb-3">{{ profile.current_designation }}</p>
+        <div class="mb-3 d-flex justify-content-center gap-2 flex-wrap">
+          {% if profile.is_active %}
+            <span class="badge bg-success badge-custom"><i class="bi bi-check-circle-fill me-1"></i>Active</span>
+          {% else %}
+            <span class="badge bg-secondary badge-custom"><i class="bi bi-pause-circle-fill me-1"></i>Inactive</span>
+          {% endif %}
+          <span class="badge badge-custom text-white" style="background:linear-gradient(135deg,#0f766e,#14b8a6);">{{ profile.get_department_display }}</span>
         </div>
-        <hr>
-        <div class="text-start small">
-          <p class="mb-1"><i class="bi bi-envelope me-2 text-primary"></i>{{ profile.user.email }}</p>
-          <p class="mb-1"><i class="bi bi-telephone me-2 text-primary"></i>{{ profile.phone|default:"—" }}</p>
-          <p class="mb-1"><i class="bi bi-geo-alt me-2 text-primary"></i>{{ profile.city|default:"" }}{% if profile.city and profile.state %}, {% endif %}{{ profile.state|default:"" }}</p>
-          <p class="mb-0"><i class="bi bi-building me-2 text-primary"></i>{{ profile.user.branch.name|default:"—" }}</p>
+        <hr class="my-3">
+        <div class="text-start">
+          <div class="contact-item">
+            <div class="contact-icon"><i class="bi bi-envelope"></i></div>
+            <div class="text-truncate" title="{{ profile.user.email }}">{{ profile.user.email }}</div>
+          </div>
+          <div class="contact-item">
+            <div class="contact-icon"><i class="bi bi-telephone"></i></div>
+            <div>{{ profile.phone|default:"—" }}</div>
+          </div>
+          <div class="contact-item">
+            <div class="contact-icon"><i class="bi bi-geo-alt"></i></div>
+            <div>
+              {% if profile.city or profile.state %}
+                {{ profile.city|default:"" }}{% if profile.city and profile.state %}, {% endif %}{{ profile.state|default:"" }}
+              {% else %}
+                —
+              {% endif %}
+            </div>
+          </div>
+          <div class="contact-item">
+            <div class="contact-icon"><i class="bi bi-building"></i></div>
+            <div>{{ profile.user.branch.name|default:"—" }}</div>
+          </div>
         </div>
       </div>
     </div>
 
-    <!-- Right Column: Tabs -->
-    <div class="col-lg-8">
-      <div class="card shadow-sm">
-        <div class="card-header bg-light p-0">
-          <ul class="nav nav-tabs card-header-tabs" id="profileTabs" role="tablist">
-            <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#details">Details</button></li>
-            <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#experience">Experience</button></li>
-            <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#promotions">Promotions</button></li>
-            <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#salary">Salary</button></li>
-            <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#documents">Documents</button></li>
-          </ul>
-        </div>
-        <div class="card-body">
-          <div class="tab-content">
+    <!-- Right Column: Accordion Sections (replaces tabs) -->
+    <div class="col-12 col-lg-8">
+      <div class="accordion profile-accordion" id="profileAccordion">
 
-            <!-- Details Tab -->
-            <div class="tab-pane fade show active" id="details">
-              <h6 class="fw-bold text-primary mb-3">Personal Information</h6>
-              <div class="row g-2 small">
-                <div class="col-md-6"><strong>Gender:</strong> {{ profile.get_gender_display|default:"—" }}</div>
-                <div class="col-md-6"><strong>Date of Birth:</strong> {{ profile.date_of_birth|default:"—" }}</div>
-                <div class="col-md-6"><strong>Joining Date:</strong> {{ profile.joining_date }}</div>
-                <div class="col-md-6"><strong>Leaving Date:</strong> {{ profile.leaving_date|default:"—" }}</div>
-                <div class="col-md-6"><strong>Emergency Contact:</strong> {{ profile.emergency_contact|default:"—" }}</div>
-                <div class="col-md-6"><strong>Emergency Name:</strong> {{ profile.emergency_contact_name|default:"—" }}</div>
+        <!-- Details -->
+        <div class="accordion-item">
+          <h2 class="accordion-header">
+            <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#details">
+              <i class="bi bi-person-fill section-icon"></i> Details
+            </button>
+          </h2>
+          <div id="details" class="accordion-collapse collapse show" data-bs-parent="#profileAccordion">
+            <div class="accordion-body">
+              <div class="section-title">Personal Information</div>
+              <div class="row g-3 mb-4">
+                <div class="col-6 col-md-4">
+                  <div class="detail-item">
+                    <strong>Gender</strong>
+                    <span>{{ profile.get_gender_display|default:"—" }}</span>
+                  </div>
+                </div>
+                <div class="col-6 col-md-4">
+                  <div class="detail-item">
+                    <strong>Date of Birth</strong>
+                    <span>{{ profile.date_of_birth|default:"—" }}</span>
+                  </div>
+                </div>
+                <div class="col-6 col-md-4">
+                  <div class="detail-item">
+                    <strong>Joining Date</strong>
+                    <span>{{ profile.joining_date|default:"—" }}</span>
+                  </div>
+                </div>
+                <div class="col-6 col-md-4">
+                  <div class="detail-item">
+                    <strong>Leaving Date</strong>
+                    <span>{{ profile.leaving_date|default:"—" }}</span>
+                  </div>
+                </div>
+                <div class="col-6 col-md-4">
+                  <div class="detail-item">
+                    <strong>Emergency Contact</strong>
+                    <span>{{ profile.emergency_contact|default:"—" }}</span>
+                  </div>
+                </div>
+                <div class="col-6 col-md-4">
+                  <div class="detail-item">
+                    <strong>Emergency Name</strong>
+                    <span>{{ profile.emergency_contact_name|default:"—" }}</span>
+                  </div>
+                </div>
               </div>
-              <hr>
-              <h6 class="fw-bold text-primary mb-3">Address</h6>
-              <p class="small mb-1">{{ profile.address|default:"—" }}</p>
-              <p class="small mb-0">{{ profile.city|default:"" }}{% if profile.city and profile.state %}, {% endif %}{{ profile.state|default:"" }} {{ profile.postal_code|default:"" }}</p>
-            </div>
 
-            <!-- Experience Tab -->
-            <div class="tab-pane fade" id="experience">
-              <div class="d-flex justify-content-between align-items-center mb-3">
-                <h6 class="fw-bold text-primary mb-0">Experience History</h6>
-                {% if not is_self %}
-                <a href="{% url 'experience_add' profile.pk %}" class="btn btn-sm btn-outline-primary"><i class="bi bi-plus-lg"></i> Add</a>
-                {% endif %}
-              </div>
-              <div class="table-responsive">
-                <table class="table table-sm table-hover">
-                  <thead class="table-light"><tr><th>Organization</th><th>Role</th><th>Start</th><th>End</th></tr></thead>
-                  <tbody>
-                    {% for exp in experience_history %}
-                    <tr><td>{{ exp.organization }}</td><td>{{ exp.role }}</td><td>{{ exp.start_date }}</td><td>{{ exp.end_date|default:"Present" }}</td></tr>
-                    {% empty %}<tr><td colspan="4" class="text-center text-muted">No experience records.</td></tr>{% endfor %}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-
-            <!-- Promotions Tab -->
-            <div class="tab-pane fade" id="promotions">
-              <div class="d-flex justify-content-between align-items-center mb-3">
-                <h6 class="fw-bold text-primary mb-0">Promotion History</h6>
-                {% if not is_self %}
-                <a href="{% url 'promotion_add' profile.pk %}" class="btn btn-sm btn-outline-primary"><i class="bi bi-plus-lg"></i> Add</a>
-                {% endif %}
-              </div>
-              <div class="table-responsive">
-                <table class="table table-sm table-hover">
-                  <thead class="table-light"><tr><th>Old Designation</th><th>New Designation</th><th>Date</th></tr></thead>
-                  <tbody>
-                    {% for promo in promotions %}
-                    <tr><td>{{ promo.old_designation }}</td><td>{{ promo.new_designation }}</td><td>{{ promo.promotion_date }}</td></tr>
-                    {% empty %}<tr><td colspan="3" class="text-center text-muted">No promotions yet.</td></tr>{% endfor %}
-                  </tbody>
-                </table>
+              <div class="section-title">Address</div>
+              <div class="p-3 bg-light rounded-3">
+                <p class="mb-1 fw-medium">{{ profile.address|default:"—" }}</p>
+                <p class="mb-0 text-muted small">
+                  {{ profile.city|default:"" }}{% if profile.city and profile.state %}, {% endif %}{{ profile.state|default:"" }} {{ profile.postal_code|default:"" }}
+                </p>
               </div>
             </div>
-
-            <!-- Salary Tab -->
-            <div class="tab-pane fade" id="salary">
-              <div class="d-flex justify-content-between align-items-center mb-3">
-                <h6 class="fw-bold text-primary mb-0">Salary Increment History</h6>
-                {% if not is_self %}
-                <a href="{% url 'salary_increment_add' profile.pk %}" class="btn btn-sm btn-outline-primary"><i class="bi bi-plus-lg"></i> Add</a>
-                {% endif %}
-              </div>
-              <div class="table-responsive">
-                <table class="table table-sm table-hover">
-                  <thead class="table-light"><tr><th>Year</th><th>Base Salary</th><th>Increment</th><th>New Salary</th></tr></thead>
-                  <tbody>
-                    {% for inc in increments %}
-                    <tr><td>{{ inc.year }}</td><td>₹{{ inc.base_salary }}</td><td>₹{{ inc.increment_amount }}</td><td>₹{{ inc.new_salary }}</td></tr>
-                    {% empty %}<tr><td colspan="4" class="text-center text-muted">No salary records.</td></tr>{% endfor %}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-
-            <!-- Documents Tab -->
-            <div class="tab-pane fade" id="documents">
-              <h6 class="fw-bold text-primary mb-3">Documents</h6>
-              {% if profile.address_proof %}
-                <p class="small"><strong>Address Proof:</strong> {{ profile.address_proof_type|default:"—" }} · <a href="{% url 'address_proof_download' profile.pk %}" class="btn btn-sm btn-outline-primary"><i class="bi bi-download"></i> Download</a></p>
-              {% else %}<p class="text-muted small">No address proof uploaded.</p>{% endif %}
-
-              <h6 class="fw-bold mt-3 small">Education Certificates</h6>
-              {% if profile.education_records.exists %}
-                <ul class="list-group list-group-flush small">
-                  {% for edu in profile.education_records.all %}
-                  <li class="list-group-item d-flex justify-content-between align-items-center px-0">
-                    <span>{{ edu.qualification }} — {{ edu.institution }} ({{ edu.passing_year }})</span>
-                    {% if edu.certificate %}<a href="{% url 'education_download' profile.pk edu.pk %}" class="btn btn-sm btn-outline-primary"><i class="bi bi-download"></i></a>{% endif %}
-                  </li>
-                  {% endfor %}
-                </ul>
-              {% else %}<p class="text-muted small">No education certificates.</p>{% endif %}
-
-              <h6 class="fw-bold mt-3 small">Supporting Documents</h6>
-              {% if profile.documents.exists %}
-                <ul class="list-group list-group-flush small">
-                  {% for doc in profile.documents.all %}
-                  <li class="list-group-item d-flex justify-content-between align-items-center px-0">
-                    <span>{{ doc.title }} <span class="text-muted">({{ doc.document_type|default:"—" }})</span></span>
-                    <a href="{% url 'staff_document_download' profile.pk doc.pk %}" class="btn btn-sm btn-outline-primary"><i class="bi bi-download"></i></a>
-                  </li>
-                  {% endfor %}
-                </ul>
-              {% else %}<p class="text-muted small">No supporting documents.</p>{% endif %}
-
-              {% if not is_self %}
-              <a href="{% url 'staff_documents' profile.pk %}" class="btn btn-sm btn-outline-primary mt-2"><i class="bi bi-upload me-1"></i> Manage Documents</a>
-              {% endif %}
-            </div>
-
           </div>
         </div>
+
+        <!-- Experience -->
+        <div class="accordion-item">
+          <h2 class="accordion-header">
+            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#experience">
+              <i class="bi bi-briefcase-fill section-icon"></i> Experience
+            </button>
+          </h2>
+          <div id="experience" class="accordion-collapse collapse" data-bs-parent="#profileAccordion">
+            <div class="accordion-body">
+              <div class="d-flex justify-content-between align-items-center mb-3">
+                <div class="section-title mb-0">Experience History</div>
+                {% if not is_self %}
+                <a href="{% url 'experience_add' profile.pk %}" class="btn btn-sm btn-outline-primary rounded-pill px-3">
+                  <i class="bi bi-plus-lg me-1"></i> Add
+                </a>
+                {% endif %}
+              </div>
+              <div class="table-responsive">
+                <table class="table table-hover custom-table mb-0">
+                  <thead>
+                    <tr>
+                      <th>Organization</th>
+                      <th>Role</th>
+                      <th>Start</th>
+                      <th>End</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% for exp in experience_history %}
+                    <tr>
+                      <td class="fw-medium">{{ exp.organization }}</td>
+                      <td><span class="badge bg-light text-dark border">{{ exp.role }}</span></td>
+                      <td>{{ exp.start_date }}</td>
+                      <td>{{ exp.end_date|default:"Present" }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                      <td colspan="4" class="text-center text-muted py-4">
+                        <i class="bi bi-briefcase fs-4 d-block mb-2 opacity-50"></i>
+                        No experience records found.
+                      </td>
+                    </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Promotions -->
+        <div class="accordion-item">
+          <h2 class="accordion-header">
+            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#promotions">
+              <i class="bi bi-graph-up-arrow section-icon"></i> Promotions
+            </button>
+          </h2>
+          <div id="promotions" class="accordion-collapse collapse" data-bs-parent="#profileAccordion">
+            <div class="accordion-body">
+              <div class="d-flex justify-content-between align-items-center mb-3">
+                <div class="section-title mb-0">Promotion History</div>
+                {% if not is_self %}
+                <a href="{% url 'promotion_add' profile.pk %}" class="btn btn-sm btn-outline-primary rounded-pill px-3">
+                  <i class="bi bi-plus-lg me-1"></i> Add
+                </a>
+                {% endif %}
+              </div>
+              <div class="table-responsive">
+                <table class="table table-hover custom-table mb-0">
+                  <thead>
+                    <tr>
+                      <th>Old Designation</th>
+                      <th>New Designation</th>
+                      <th>Date</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% for promo in promotions %}
+                    <tr>
+                      <td class="text-muted">{{ promo.old_designation }}</td>
+                      <td><span class="badge bg-success bg-opacity-10 text-success">{{ promo.new_designation }}</span></td>
+                      <td>{{ promo.promotion_date }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                      <td colspan="3" class="text-center text-muted py-4">
+                        <i class="bi bi-graph-up-arrow fs-4 d-block mb-2 opacity-50"></i>
+                        No promotions yet.
+                      </td>
+                    </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Salary -->
+        <div class="accordion-item">
+          <h2 class="accordion-header">
+            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#salary">
+              <i class="bi bi-currency-rupee section-icon"></i> Salary
+            </button>
+          </h2>
+          <div id="salary" class="accordion-collapse collapse" data-bs-parent="#profileAccordion">
+            <div class="accordion-body">
+              <div class="d-flex justify-content-between align-items-center mb-3">
+                <div class="section-title mb-0">Salary Increment History</div>
+                {% if not is_self %}
+                <a href="{% url 'salary_increment_add' profile.pk %}" class="btn btn-sm btn-outline-primary rounded-pill px-3">
+                  <i class="bi bi-plus-lg me-1"></i> Add
+                </a>
+                {% endif %}
+              </div>
+              <div class="table-responsive">
+                <table class="table table-hover custom-table mb-0">
+                  <thead>
+                    <tr>
+                      <th>Year</th>
+                      <th>Base Salary</th>
+                      <th>Increment</th>
+                      <th>New Salary</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% for inc in increments %}
+                    <tr>
+                      <td><span class="badge bg-light text-dark border">{{ inc.year }}</span></td>
+                      <td>&#8377;{{ inc.base_salary }}</td>
+                      <td class="text-success fw-medium">+&#8377;{{ inc.increment_amount }}</td>
+                      <td class="fw-bold">&#8377;{{ inc.new_salary }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                      <td colspan="4" class="text-center text-muted py-4">
+                        <i class="bi bi-currency-rupee fs-4 d-block mb-2 opacity-50"></i>
+                        No salary records found.
+                      </td>
+                    </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Documents -->
+        <div class="accordion-item">
+          <h2 class="accordion-header">
+            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#documents">
+              <i class="bi bi-folder-fill section-icon"></i> Documents
+            </button>
+          </h2>
+          <div id="documents" class="accordion-collapse collapse" data-bs-parent="#profileAccordion">
+            <div class="accordion-body">
+              <div class="section-title">Address Proof</div>
+              {% if profile.address_proof %}
+                <div class="doc-item d-flex justify-content-between align-items-center">
+                  <div>
+                    <i class="bi bi-file-earmark-text text-primary me-2"></i>
+                    <span class="fw-medium">{{ profile.address_proof_type|default:"Document" }}</span>
+                  </div>
+                  <a href="{% url 'address_proof_download' profile.pk %}" class="btn btn-sm btn-outline-primary rounded-pill">
+                    <i class="bi bi-download me-1"></i> Download
+                  </a>
+                </div>
+              {% else %}
+                <div class="text-center text-muted py-3 bg-light rounded-3">
+                  <i class="bi bi-file-earmark-x fs-4 d-block mb-2 opacity-50"></i>
+                  No address proof uploaded.
+                </div>
+              {% endif %}
+
+              <div class="section-title mt-4">Education Certificates</div>
+              {% if profile.education_records.exists %}
+                <div class="vstack gap-2">
+                  {% for edu in profile.education_records.all %}
+                  <div class="doc-item d-flex justify-content-between align-items-center">
+                    <div class="text-truncate me-3">
+                      <i class="bi bi-mortarboard text-success me-2"></i>
+                      <span class="fw-medium">{{ edu.qualification }}</span>
+                      <span class="text-muted small">&mdash; {{ edu.institution }} ({{ edu.passing_year }})</span>
+                    </div>
+                    {% if edu.certificate %}
+                    <a href="{% url 'education_download' profile.pk edu.pk %}" class="btn btn-sm btn-outline-success rounded-pill flex-shrink-0">
+                      <i class="bi bi-download"></i>
+                    </a>
+                    {% endif %}
+                  </div>
+                  {% endfor %}
+                </div>
+              {% else %}
+                <div class="text-center text-muted py-3 bg-light rounded-3">
+                  <i class="bi bi-mortarboard fs-4 d-block mb-2 opacity-50"></i>
+                  No education certificates.
+                </div>
+              {% endif %}
+
+              <div class="section-title mt-4">Supporting Documents</div>
+              {% if profile.documents.exists %}
+                <div class="vstack gap-2">
+                  {% for doc in profile.documents.all %}
+                  <div class="doc-item d-flex justify-content-between align-items-center">
+                    <div class="text-truncate me-3">
+                      <i class="bi bi-paperclip text-warning me-2"></i>
+                      <span class="fw-medium">{{ doc.title }}</span>
+                      <span class="text-muted small">({{ doc.document_type|default:"—" }})</span>
+                    </div>
+                    <a href="{% url 'staff_document_download' profile.pk doc.pk %}" class="btn btn-sm btn-outline-primary rounded-pill flex-shrink-0">
+                      <i class="bi bi-download"></i>
+                    </a>
+                  </div>
+                  {% endfor %}
+                </div>
+              {% else %}
+                <div class="text-center text-muted py-3 bg-light rounded-3">
+                  <i class="bi bi-folder-x fs-4 d-block mb-2 opacity-50"></i>
+                  No supporting documents.
+                </div>
+              {% endif %}
+
+              {% if not is_self %}
+              <div class="mt-3">
+                <a href="{% url 'staff_documents' profile.pk %}" class="btn btn-outline-primary w-100 rounded-pill">
+                  <i class="bi bi-upload me-1"></i> Manage Documents
+                </a>
+              </div>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+
       </div>
     </div>
 

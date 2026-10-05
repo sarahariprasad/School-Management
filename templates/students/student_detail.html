@@ -1,0 +1,355 @@
+{% extends "base.html" %}
+{% block title %}{{ student.name }} | School ERP{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row justify-content-center">
+        <div class="col-xl-10">
+
+            <div class="page-hero">
+                <div>
+                    <h2 class="h4"><i class="bi bi-person-fill me-2"></i>{{ student.name }} <span style="opacity:0.85; font-weight:500; font-size:0.85em;">({{ student.student_id }})</span></h2>
+                    <p>{{ student.get_gender_display }} · Age {{ student.age|default:"—" }}</p>
+                </div>
+                <div class="page-hero-actions">
+                    <a href="{% url 'student_edit' student.pk %}" class="btn btn-light"><i class="bi bi-pencil me-1"></i>Edit</a>
+                    <a href="{% url 'student_export_single' student.pk %}" class="btn btn-outline-light"><i class="bi bi-download me-1"></i>Export</a>
+                    <a href="{% url 'student_list' %}" class="btn btn-outline-light"><i class="bi bi-arrow-left me-1"></i>Back</a>
+                </div>
+            </div>
+
+            {% if messages %}
+                {% for message in messages %}
+                <div class="alert alert-{{ message.tags|default:'info' }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+                {% endfor %}
+            {% endif %}
+
+            <div class="row">
+                <div class="col-lg-4 order-1">
+
+                    <!-- Profile summary -->
+                    <div class="card detail-card">
+                        <div class="card-body text-center">
+                            {% if student.photo %}
+                                <img src="{{ student.photo.url }}" class="profile-photo-lg mb-2" alt="{{ student.name }}">
+                            {% else %}
+                                <div class="profile-photo-lg mb-2 mx-auto d-flex align-items-center justify-content-center bg-light">
+                                    <i class="bi bi-person fs-1 text-muted"></i>
+                                </div>
+                            {% endif %}
+                            <h5 class="mb-0">{{ student.name }}</h5>
+                            <p class="text-muted small mb-2">{{ student.get_gender_display }} · Age {{ student.age|default:"—" }}</p>
+                            {% if student.is_active %}
+                                <span class="badge bg-success">Active</span>
+                            {% else %}
+                                <span class="badge bg-secondary">Inactive since {{ student.inactive_date|default:"—" }}</span>
+                            {% endif %}
+                            {% if student.group %}
+                                <span class="badge ms-1
+                                    {% if student.group.name == 'RED' %}group-badge-red
+                                    {% elif student.group.name == 'GREEN' %}group-badge-green
+                                    {% else %}group-badge-orange{% endif %}">
+                                    {{ student.group.get_name_display }} group
+                                </span>
+                            {% else %}
+                                <span class="badge bg-light text-muted ms-1">No group</span>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Group + group staff -->
+                    <div class="card detail-card">
+                        <div class="card-header"><h5><i class="bi bi-diagram-3-fill me-2"></i>Group & staff</h5></div>
+                        <div class="card-body">
+                            <p class="small text-muted mb-2">Staff currently assigned to {{ student.group|default:"this student's group" }}:</p>
+                            {% if group_staff %}
+                                <ul class="list-unstyled mb-3">
+                                    {% for s in group_staff %}
+                                        <li class="mb-1"><i class="bi bi-person-badge me-1 text-muted"></i>{{ s.full_name }} <span class="text-muted small">({{ s.designation }})</span></li>
+                                    {% endfor %}
+                                </ul>
+                            {% else %}
+                                <p class="text-muted small mb-3">No staff assigned to this group yet.</p>
+                            {% endif %}
+
+                            <form method="post" action="{% url 'change_group' student.pk %}" class="border-top pt-3">
+                                {% csrf_token %}
+                                <label class="form-label small fw-semibold">Move to a different group</label>
+                                {{ group_form.group }}
+                                {% if group_form.group.errors %}<div class="text-danger small mt-1">{{ group_form.group.errors|striptags }}</div>{% endif %}
+                                <input type="text" name="reason" class="form-control form-control-sm mt-2" placeholder="Reason (e.g. Reassessment)">
+                                <button type="submit" class="btn btn-sm btn-outline-primary mt-2 w-100">
+                                    <i class="bi bi-arrow-repeat me-1"></i>Update group
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+
+                    <!-- Status change -->
+                    <div class="card detail-card">
+                        <div class="card-header"><h5><i class="bi bi-toggle-on me-2"></i>Status</h5></div>
+                        <div class="card-body">
+                            <form method="post" action="{% url 'toggle_status' student.pk %}">
+                                {% csrf_token %}
+                                <div class="d-flex flex-wrap gap-3 mb-2">
+                                    {% for radio in status_form.is_active %}
+                                        <div class="form-check">{{ radio.tag }} <label class="form-check-label">{{ radio.choice_label }}</label></div>
+                                    {% endfor %}
+                                </div>
+                                <input type="text" name="reason" class="form-control form-control-sm mb-2" placeholder="Reason (optional)">
+                                <button type="submit" class="btn btn-sm btn-outline-secondary w-100">
+                                    <i class="bi bi-check2 me-1"></i>Update status
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+
+                    <!-- Parent contacts -->
+                    <div class="card detail-card">
+                        <div class="card-header"><h5><i class="bi bi-people-fill me-2"></i>Parent contacts</h5></div>
+                        <div class="card-body small">
+                            <p class="mb-1"><strong>Mother:</strong> {{ student.mother_name }}{% if student.mother_phone %} · {{ student.mother_phone }}{% endif %}{% if student.mother_email %} · {{ student.mother_email }}{% endif %}</p>
+                            <p class="mb-0"><strong>Father:</strong> {{ student.father_name }}{% if student.father_phone %} · {{ student.father_phone }}{% endif %}{% if student.father_email %} · {{ student.father_email }}{% endif %}</p>
+                        </div>
+                    </div>
+
+                </div>
+
+                <div class="col-lg-8 order-2">
+
+                    <!-- Therapy enrollments -->
+                    <div class="card detail-card">
+                        <div class="card-header"><h5><i class="bi bi-heart-pulse-fill me-2"></i>Therapy enrollments</h5></div>
+                        <div class="card-body">
+
+                            <!-- Desktop table -->
+                            <div class="table-responsive mb-3 d-none d-md-block">
+                                <table class="table data-table align-middle mb-0">
+                                    <thead>
+                                        <tr>
+                                            <th>Therapy</th>
+                                            <th>Therapist</th>
+                                            <th>Frequency</th>
+                                            <th>Start</th>
+                                            <th>Status</th>
+                                            <th></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for enrollment in therapy_enrollments %}
+                                        <tr class="therapy-row {% if not enrollment.is_active %}inactive{% endif %}">
+                                            <td>{{ enrollment.therapy.name }}</td>
+                                            <td>{{ enrollment.staff.full_name|default:"Unassigned" }}</td>
+                                            <td>{{ enrollment.frequency|default:"—" }}</td>
+                                            <td>{{ enrollment.start_date }}</td>
+                                            <td>
+                                                {% if enrollment.is_active %}
+                                                    <span class="badge bg-success">Active</span>
+                                                {% else %}
+                                                    <span class="badge bg-secondary">Ended {{ enrollment.end_date|default:"" }}</span>
+                                                {% endif %}
+                                            </td>
+                                            <td class="text-end">
+                                                {% if enrollment.is_active %}
+                                                <form method="post" action="{% url 'remove_therapy_enrollment' student.pk enrollment.pk %}" class="d-inline"
+                                                      onsubmit="return confirm('End this therapy enrollment?');">
+                                                    {% csrf_token %}
+                                                    <button type="submit" class="btn btn-sm btn-outline-danger">
+                                                        <i class="bi bi-x-circle"></i>
+                                                    </button>
+                                                </form>
+                                                {% endif %}
+                                            </td>
+                                        </tr>
+                                        {% empty %}
+                                        <tr><td colspan="6"><div class="empty-state">No therapy enrollments yet.</div></td></tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <!-- Mobile cards -->
+                            <div class="d-md-none mb-3">
+                                {% for enrollment in therapy_enrollments %}
+                                <div class="border rounded-3 p-3 mb-2 therapy-row {% if not enrollment.is_active %}inactive{% endif %}">
+                                    <div class="d-flex justify-content-between align-items-start mb-1">
+                                        <strong>{{ enrollment.therapy.name }}</strong>
+                                        {% if enrollment.is_active %}
+                                            <span class="badge bg-success">Active</span>
+                                        {% else %}
+                                            <span class="badge bg-secondary">Ended {{ enrollment.end_date|default:"" }}</span>
+                                        {% endif %}
+                                    </div>
+                                    <div class="small text-muted">
+                                        Therapist: {{ enrollment.staff.full_name|default:"Unassigned" }}<br>
+                                        Frequency: {{ enrollment.frequency|default:"—" }} · Start: {{ enrollment.start_date }}
+                                    </div>
+                                    {% if enrollment.is_active %}
+                                    <form method="post" action="{% url 'remove_therapy_enrollment' student.pk enrollment.pk %}" class="mt-2"
+                                          onsubmit="return confirm('End this therapy enrollment?');">
+                                        {% csrf_token %}
+                                        <button type="submit" class="btn btn-sm btn-outline-danger w-100">
+                                            <i class="bi bi-x-circle me-1"></i>End enrollment
+                                        </button>
+                                    </form>
+                                    {% endif %}
+                                </div>
+                                {% empty %}
+                                <div class="empty-state">No therapy enrollments yet.</div>
+                                {% endfor %}
+                            </div>
+
+                            <form method="post" action="{% url 'add_therapy_enrollment' student.pk %}" class="border-top pt-3">
+                                {% csrf_token %}
+                                <p class="fw-semibold small mb-2">Add a new therapy enrollment</p>
+                                <div class="row g-2">
+                                    <div class="col-6 col-md-2">
+                                        {{ therapy_form.therapy }}
+                                        {% if therapy_form.therapy.errors %}<div class="text-danger small">{{ therapy_form.therapy.errors|striptags }}</div>{% endif %}
+                                    </div>
+                                    <div class="col-6 col-md-2">
+                                        {{ therapy_form.staff }}
+                                    </div>
+                                    <div class="col-6 col-md-2">
+                                        {{ therapy_form.frequency }}
+                                    </div>
+                                    <div class="col-6 col-md-2">
+                                        {{ therapy_form.start_date }}
+                                    </div>
+                                    <div class="col-6 col-md-2">
+                                        {{ therapy_form.end_date }}
+                                    </div>
+                                    <div class="col-12 col-md-2">
+                                        <button type="submit" class="btn btn-primary w-100">
+                                            <i class="bi bi-plus-circle me-1"></i>Add
+                                        </button>
+                                    </div>
+                                </div>
+                                {% if therapy_form.non_field_errors %}
+                                    <div class="text-danger small mt-2">{{ therapy_form.non_field_errors|striptags }}</div>
+                                {% endif %}
+                            </form>
+                        </div>
+                    </div>
+
+                    <!-- Remarks -->
+                    <div class="card detail-card">
+                        <div class="card-header"><h5><i class="bi bi-chat-left-text-fill me-2"></i>Progress remarks</h5></div>
+                        <div class="card-body">
+                            <form method="post" action="{% url 'add_remark' student.pk %}" class="border-bottom pb-3 mb-3">
+                                {% csrf_token %}
+                                <div class="row g-2">
+                                    <div class="col-12 col-md-3">
+                                        {{ remark_form.category }}
+                                    </div>
+                                    <div class="col-12 col-md-7">
+                                        {{ remark_form.remark_text }}
+                                        {% if remark_form.remark_text.errors %}<div class="text-danger small">{{ remark_form.remark_text.errors|striptags }}</div>{% endif %}
+                                    </div>
+                                    <div class="col-12 col-md-2">
+                                        <button type="submit" class="btn btn-primary w-100"><i class="bi bi-send me-1"></i>Save</button>
+                                    </div>
+                                </div>
+                                <div class="form-check mt-2">
+                                    {{ remark_form.send_email }}
+                                    <label class="form-check-label small">Email this remark to parents now</label>
+                                </div>
+                            </form>
+
+                            {% for remark in remarks %}
+                                <div class="mb-3 pb-2 {% if not forloop.last %}border-bottom{% endif %}">
+                                    <div class="d-flex justify-content-between flex-wrap gap-1">
+                                        <span class="badge bg-light text-dark border">{{ remark.get_category_display }}</span>
+                                        <small class="text-muted">{{ remark.created_at|date:"d M Y, h:i A" }}</small>
+                                    </div>
+                                    <p class="mb-1 mt-1">{{ remark.remark_text }}</p>
+                                    <small class="text-muted">
+                                        by {{ remark.created_by.full_name|default:"Unknown" }}
+                                        {% if remark.sent_to_parents %} · <i class="bi bi-envelope-check text-success"></i> emailed to parents{% endif %}
+                                    </small>
+                                </div>
+                            {% empty %}
+                                <p class="text-muted small mb-0">No remarks recorded yet.</p>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <!-- History -->
+                    <div class="row">
+                        <div class="col-12 col-md-6">
+                            <div class="card detail-card">
+                                <div class="card-header"><h5><i class="bi bi-clock-history me-2"></i>Group history</h5></div>
+                                <div class="card-body">
+                                    {% if group_history %}
+                                    <div class="timeline">
+                                        {% for h in group_history %}
+                                        <div class="timeline-item">
+                                            <div class="timeline-dot"></div>
+                                            <div class="small"><strong>{{ h.group|default:"Unassigned" }}</strong> — {{ h.changed_on }}</div>
+                                            {% if h.reason %}<div class="small text-muted">{{ h.reason }}</div>{% endif %}
+                                        </div>
+                                        {% endfor %}
+                                    </div>
+                                    {% else %}
+                                        <p class="text-muted small mb-0">No group history yet.</p>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-12 col-md-6">
+                            <div class="card detail-card">
+                                <div class="card-header"><h5><i class="bi bi-clock-history me-2"></i>Status history</h5></div>
+                                <div class="card-body">
+                                    {% if status_history %}
+                                    <div class="timeline">
+                                        {% for h in status_history %}
+                                        <div class="timeline-item">
+                                            <div class="timeline-dot"></div>
+                                            <div class="small"><strong>{{ h.get_status_display }}</strong> — {{ h.changed_on }}</div>
+                                            {% if h.reason %}<div class="small text-muted">{{ h.reason }}</div>{% endif %}
+                                        </div>
+                                        {% endfor %}
+                                    </div>
+                                    {% else %}
+                                        <p class="text-muted small mb-0">No status history yet.</p>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Audit log -->
+                    <div class="card detail-card">
+                        <div class="card-header"><h5><i class="bi bi-shield-check me-2"></i>Audit log</h5></div>
+                        <div class="card-body">
+                            {% if audit_logs %}
+                            <div class="timeline">
+                                {% for log in audit_logs %}
+                                <div class="timeline-item">
+                                    <div class="timeline-dot"></div>
+                                    <div class="small">
+                                        <span class="badge bg-{% if log.action == 'CREATE' %}success{% elif log.action == 'UPDATE' %}warning text-dark{% else %}danger{% endif %} me-1">
+                                            {{ log.get_action_display }}
+                                        </span>
+                                        by {{ log.user.get_full_name|default:log.user.email|default:"System" }}
+                                        <span class="text-muted">— {{ log.action_time|date:"d M Y, h:i A" }}</span>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                            {% else %}
+                                <p class="text-muted small mb-0">No audit history found for this student.</p>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+{% endblock %}
