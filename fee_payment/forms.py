@@ -11,7 +11,7 @@ from django.utils.translation import gettext_lazy as _
 
 from .models import (
     FeeCategory, FeeStructure, StudentFeeAssignment,
-    FeeInstallment, FeePayment, Frequency
+    FeeInstallment, FeePayment, Frequency, SecurityDeposit, DepositPolicy
 )
 from staff.models import StaffProfile
 
@@ -287,3 +287,88 @@ class FeePaymentForm(forms.ModelForm):
                 self.user, getattr(self.user, 'pk', None)
             )
         instance.paid_by_staff = staff_profile
+
+
+# ═══════════════════════════════════════════════════════════════
+# SECURITY DEPOSIT
+# ═══════════════════════════════════════════════════════════════
+
+class SecurityDepositForm(forms.ModelForm):
+    """Records a new refundable deposit for a student."""
+
+    class Meta:
+        model = SecurityDeposit
+        fields = [
+            'student', 'amount', 'paid_on', 'mode', 'transaction_ref',
+            'notice_period_days', 'remarks',
+        ]
+        widgets = {
+            'student': forms.Select(attrs={'class': 'form-select'}),
+            'amount': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
+            'paid_on': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
+            'mode': forms.Select(attrs={'class': 'form-select'}),
+            'transaction_ref': forms.TextInput(attrs={'class': 'form-control'}),
+            'notice_period_days': forms.NumberInput(attrs={'class': 'form-control'}),
+            'remarks': forms.Textarea(attrs={'class': 'form-control', 'rows': 2}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if 'student' in self.fields:
+            self.fields['student'].queryset = self.fields['student'].queryset.filter(
+                is_active=True
+            ).order_by('name')
+        # Pre-fill the notice period from the school's current policy so
+        # staff don't have to look it up or retype it every time.
+        if not self.instance.pk:
+            self.fields['notice_period_days'].initial = DepositPolicy.get_current().notice_period_days
+
+    def clean_amount(self):
+        amount = self.cleaned_data.get('amount')
+        if amount is not None and amount <= 0:
+            raise forms.ValidationError(_("Deposit amount must be greater than zero."))
+        return amount
+
+
+class DepositNoticeForm(forms.Form):
+    """Used when a parent/guardian submits written notice of leaving."""
+    notice_given_on = forms.DateField(
+        required=False,
+        widget=forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
+        help_text="Leave blank to use today's date."
+    )
+
+
+class DepositRefundForm(forms.Form):
+    """Used when actually processing the refund payout."""
+    refunded_on = forms.DateField(
+        required=False,
+        widget=forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
+        help_text="Leave blank to use today's date."
+    )
+    refund_mode = forms.ChoiceField(
+        choices=FeePayment.PAYMENT_MODE_CHOICES,
+        widget=forms.Select(attrs={'class': 'form-select'})
+    )
+    refund_transaction_ref = forms.CharField(
+        required=False,
+        widget=forms.TextInput(attrs={'class': 'form-control'})
+    )
+    deduction_amount = forms.DecimalField(
+        required=False,
+        initial=Decimal('0.00'),
+        min_value=Decimal('0.00'),
+        widget=forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
+        help_text="Any amount withheld before refund (damages, dues, etc.). Leave blank for none."
+    )
+    deduction_reason = forms.CharField(
+        required=False,
+        widget=forms.TextInput(attrs={'class': 'form-control'})
+    )
+
+    def clean(self):
+        cleaned_data = super().clean()
+        deduction_amount = cleaned_data.get('deduction_amount') or Decimal('0.00')
+        if deduction_amount > 0 and not cleaned_data.get('deduction_reason'):
+            self.add_error('deduction_reason', _("Please provide a reason for the deduction."))
+        return cleaned_data

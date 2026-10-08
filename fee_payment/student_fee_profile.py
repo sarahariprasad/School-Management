@@ -8,18 +8,26 @@ asks for:
     Section/Program, Admission date, Monthly fee amount,
     Applicable discounts/concessions, Additional charges (if any),
     Current outstanding amount, Payment status, Last payment date,
-    Next payment due date.
+    Next payment due date, and the refundable Security Deposit status.
 
 Field mapping note
 -------------------
 This school's Student model (students/models.py) doesn't use "class" or
-"section" — students belong to a single `group` (Red/Green/Orange
-therapy group) and a `student_branch`. There's no separate "grade" or
-"program" field. So:
-    Class/Grade      -> student.group  (e.g. "Green")
+"section" — students belong to a single `group` (a dynamic therapy group,
+not fixed Red/Green/Orange choices) and a `student_branch`. There's no
+separate "grade" or "program" field. So:
+    Class/Grade      -> student.group.name  (e.g. "Green")
     Section/Program   -> student.student_branch
-If your school later adds real grade/section fields, swap those two
-lines in build_student_fee_profile().
+
+Security deposit
+-----------------
+Shown as its own block (not folded into "current_outstanding", since a
+held deposit is not a fee due — it's money the school is holding on the
+family's behalf). Only the student's most recent deposit is shown; a
+student should normally have at most one. The Terms & Conditions PDF is
+always downloadable via security_deposit_terms_url, regardless of whether
+the student has a deposit on file yet, so a prospective family can read
+the policy before paying.
 
 Inactive-student rule
 ----------------------
@@ -39,21 +47,15 @@ from datetime import date
 
 from django.db.models import Sum, Q
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.urls import reverse
 from django.views.generic import DetailView, ListView
 
 from students.models import Student
-from .models import StudentFeeAssignment, FeeInstallment, FeePayment, AdditionalCharge
+from .models import (
+    StudentFeeAssignment, FeeInstallment, FeePayment, AdditionalCharge,
+    SecurityDeposit
+)
 from .helpers import get_student_display_id
-
-def get_monthly_equivalent(amount: Decimal, frequency: str = None) -> Decimal:
-    """The school only ever bills monthly — generate_installments() always
-    charges the full assignment.final_amount every month, regardless of
-    what FeeStructure.frequency says. So the "monthly fee" shown here must
-    just be that amount, not amount / frequency. (Previously this divided
-    by 12 for a "yearly"-labelled structure, which showed a monthly figure
-    that didn't match what was actually being billed.)
-    """
-    return amount if amount is not None else Decimal('0.00')
 
 
 def build_student_fee_profile(student: Student) -> dict:
@@ -73,9 +75,11 @@ def build_student_fee_profile(student: Student) -> dict:
     total_discount = Decimal('0.00')
 
     for assignment in assignments:
-        monthly_fee_total += get_monthly_equivalent(
-            assignment.final_amount, assignment.fee_structure.frequency
-        )
+        # Billing is always the full final_amount each cycle (see
+        # StudentFeeAssignment.generate_installments) — no conversion by
+        # frequency here, since that would misrepresent what's actually
+        # charged per installment.
+        monthly_fee_total += assignment.final_amount
         if assignment.discount_amount and assignment.discount_amount > 0:
             discounts.append({
                 'category': assignment.fee_structure.category.name,
@@ -105,13 +109,10 @@ def build_student_fee_profile(student: Student) -> dict:
     next_due = installments.filter(is_fully_paid=False).order_by('due_date').first()
 
     if total_due == 0:
-        # No installment has ever been generated for this student's
-        # assignment(s) yet — distinct from "No Dues" (which means
-        # everything was billed and paid off).
         payment_status = "Not Generated"
     elif outstanding <= 0:
         payment_status = "No Dues"
-    elif next_due and next_due.is_overdue:
+    elif next_due and next_due.due_date < date.today():
         payment_status = "Overdue"
     else:
         payment_status = "Pending"
@@ -119,11 +120,35 @@ def build_student_fee_profile(student: Student) -> dict:
     parent_name_parts = [p for p in [student.father_name, student.mother_name] if p]
     parent_guardian_name = " / ".join(parent_name_parts) if parent_name_parts else "Not on file"
 
+    group = getattr(student, "group", None)
+    class_grade = group.name if group else "Not Assigned"
+
+    # ---------- Security Deposit ----------
+    deposit = SecurityDeposit.objects.filter(student=student).order_by('-paid_on').first()
+    security_deposit = None
+    if deposit:
+        security_deposit = {
+            'id': deposit.pk,
+            'amount': deposit.amount,
+            'status': deposit.status,
+            'paid_on': deposit.paid_on,
+            'receipt_no': deposit.receipt_no,
+            'notice_period_days': deposit.notice_period_days,
+            'notice_given_on': deposit.notice_given_on,
+            'expected_refund_date': deposit.expected_refund_date,
+            'refund_amount_due': deposit.refund_amount_due,
+            'is_refunded': deposit.is_refunded,
+            'refunded_on': deposit.refunded_on,
+            'receipt_download_url': reverse(
+                'fee_payment:security_deposit_receipt_download', kwargs={'pk': deposit.pk}
+            ),
+        }
+
     return {
         'student_id': get_student_display_id(student),
         'student_name': student.name,
         'parent_guardian_name': parent_guardian_name,
-        'class_grade': student.group.get_name_display() if student.group else "Not Assigned",
+        'class_grade': class_grade,
         'section_program': str(student.student_branch) if student.student_branch else "Not Assigned",
         'admission_date': student.admission_date,
         'monthly_fee_amount': monthly_fee_total,
@@ -138,6 +163,8 @@ def build_student_fee_profile(student: Student) -> dict:
         'last_payment_date': last_payment.paid_on if last_payment else None,
         'next_due_date': next_due.due_date if next_due else None,
         'assignments': assignments,
+        'security_deposit': security_deposit,
+        'security_deposit_terms_url': reverse('fee_payment:deposit_terms_download'),
     }
 
 

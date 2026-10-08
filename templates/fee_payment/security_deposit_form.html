@@ -1,0 +1,73 @@
+{% extends 'base.html' %}
+
+{% block title %}{% if object %}Edit{% else %}Record{% endif %} Security Deposit | NOWMI CGC{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-6">
+        <div class="card shadow-sm">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">
+                    <i class="bi bi-piggy-bank"></i> {% if object %}Edit{% else %}Record{% endif %} Security Deposit
+                </h5>
+            </div>
+            <div class="card-body">
+                <form method="post" novalidate>
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label class="form-label">Student <span class="text-danger">*</span></label>
+                        {{ form.student }}
+                        {% if form.student.errors %}<div class="text-danger small mt-1">{{ form.student.errors.0 }}</div>{% endif %}
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Amount (₹) <span class="text-danger">*</span></label>
+                            {{ form.amount }}
+                            {% if form.amount.errors %}<div class="text-danger small mt-1">{{ form.amount.errors.0 }}</div>{% endif %}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Paid On <span class="text-danger">*</span></label>
+                            {{ form.paid_on }}
+                            {% if form.paid_on.errors %}<div class="text-danger small mt-1">{{ form.paid_on.errors.0 }}</div>{% endif %}
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Payment Mode <span class="text-danger">*</span></label>
+                            {{ form.mode }}
+                            {% if form.mode.errors %}<div class="text-danger small mt-1">{{ form.mode.errors.0 }}</div>{% endif %}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Transaction Ref</label>
+                            {{ form.transaction_ref }}
+                            {% if form.transaction_ref.errors %}<div class="text-danger small mt-1">{{ form.transaction_ref.errors.0 }}</div>{% endif %}
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Notice Period (days) <span class="text-danger">*</span></label>
+                        {{ form.notice_period_days }}
+                        <div class="form-text">Days' written notice required before this deposit becomes refundable. Pre-filled from the school's current policy.</div>
+                        {% if form.notice_period_days.errors %}<div class="text-danger small mt-1">{{ form.notice_period_days.errors.0 }}</div>{% endif %}
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Remarks</label>
+                        {{ form.remarks }}
+                        {% if form.remarks.errors %}<div class="text-danger small mt-1">{{ form.remarks.errors.0 }}</div>{% endif %}
+                    </div>
+                    <div class="alert alert-info small py-2">
+                        <i class="bi bi-info-circle"></i> This deposit is fully refundable when the student leaves,
+                        subject to the notice period above. Notice and refund are recorded separately from the
+                        deposit's detail page once the parent/guardian informs the school.
+                    </div>
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-check-lg"></i> Save
+                        </button>
+                        <a href="{% url 'fee_payment:security_deposit_list' %}" class="btn btn-outline-secondary">Cancel</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -115,6 +115,84 @@
   </div>
 
   <div class="card mb-3">
+    <div class="card-header d-flex justify-content-between align-items-center">
+      <span>Security Deposit (Refundable)</span>
+      <a href="{{ profile.security_deposit_terms_url }}" class="btn btn-sm btn-outline-secondary">
+        <i class="bi bi-file-earmark-pdf"></i> Download Terms &amp; Conditions
+      </a>
+    </div>
+    <div class="card-body">
+      {% if profile.security_deposit %}
+        {% with dep=profile.security_deposit %}
+        <div class="row">
+          <div class="col-md-3">
+            <div class="text-muted small">Amount</div>
+            <div class="fw-bold">₹{{ dep.amount }}</div>
+          </div>
+          <div class="col-md-3">
+            <div class="text-muted small">Paid On</div>
+            <div>{{ dep.paid_on }}</div>
+          </div>
+          <div class="col-md-3">
+            <div class="text-muted small">Receipt No</div>
+            <div>{{ dep.receipt_no }}</div>
+          </div>
+          <div class="col-md-3">
+            <div class="text-muted small">Status</div>
+            <span class="badge
+              {% if dep.is_refunded %}bg-success
+              {% elif dep.notice_given_on %}bg-warning text-dark
+              {% else %}bg-secondary{% endif %}">
+              {{ dep.status }}
+            </span>
+          </div>
+        </div>
+
+        {% if dep.notice_given_on and not dep.is_refunded %}
+        <div class="row mt-3">
+          <div class="col-md-4">
+            <div class="text-muted small">Notice Given On</div>
+            <div>{{ dep.notice_given_on }}</div>
+          </div>
+          <div class="col-md-4">
+            <div class="text-muted small">Refundable From</div>
+            <div>{{ dep.expected_refund_date }}</div>
+          </div>
+          <div class="col-md-4">
+            <div class="text-muted small">Refund Amount Due</div>
+            <div class="fw-bold">₹{{ dep.refund_amount_due }}</div>
+          </div>
+        </div>
+        {% endif %}
+
+        {% if dep.is_refunded %}
+        <div class="row mt-3">
+          <div class="col-md-4">
+            <div class="text-muted small">Refunded On</div>
+            <div>{{ dep.refunded_on }}</div>
+          </div>
+        </div>
+        {% endif %}
+
+        <div class="mt-3 d-flex gap-2">
+          <a href="{{ dep.receipt_download_url }}" class="btn btn-sm btn-outline-primary">
+            <i class="bi bi-receipt"></i> Download Deposit Receipt
+          </a>
+          <a href="{% url 'fee_payment:security_deposit_detail' dep.id %}" class="btn btn-sm btn-outline-secondary">
+            <i class="bi bi-eye"></i> View / Manage Deposit
+          </a>
+        </div>
+        {% endwith %}
+      {% else %}
+        <p class="text-muted mb-2">No security deposit recorded for this student yet.</p>
+        <a href="{% url 'fee_payment:security_deposit_create' %}" class="btn btn-sm btn-success">
+          <i class="bi bi-plus-lg"></i> Record Deposit
+        </a>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="card mb-3">
     <div class="card-header">Active Fee Assignments</div>
     <div class="card-body">
       <table class="table table-sm">

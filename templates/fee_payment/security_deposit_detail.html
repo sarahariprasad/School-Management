@@ -1,0 +1,184 @@
+{% extends 'base.html' %}
+
+{% block title %}Deposit {{ deposit.receipt_no }} | NOWMI CGC{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h4 class="mb-0"><i class="bi bi-piggy-bank"></i> Security Deposit — {{ deposit.receipt_no }}</h4>
+    <div class="d-flex gap-2">
+        <a href="{% url 'fee_payment:security_deposit_receipt_download' deposit.pk %}" class="btn btn-outline-primary">
+            <i class="bi bi-file-earmark-pdf"></i> Download Receipt
+        </a>
+        <a href="{% url 'fee_payment:deposit_terms_download' %}" class="btn btn-outline-secondary">
+            <i class="bi bi-file-earmark-pdf"></i> Terms &amp; Conditions
+        </a>
+        <a href="{% url 'fee_payment:security_deposit_update' deposit.pk %}" class="btn btn-warning">
+            <i class="bi bi-pencil"></i> Edit
+        </a>
+    </div>
+</div>
+
+<div class="card shadow-sm mb-4">
+    <div class="card-body">
+        <div class="row g-3">
+            <div class="col-md-3">
+                <div class="text-muted small">Student</div>
+                <div class="fw-semibold">{{ deposit.student.name }}</div>
+                <small class="text-muted">{{ student_display_id }}</small>
+            </div>
+            <div class="col-md-3">
+                <div class="text-muted small">Amount</div>
+                <div class="fw-bold fs-5">₹{{ deposit.amount }}</div>
+            </div>
+            <div class="col-md-3">
+                <div class="text-muted small">Paid On</div>
+                <div>{{ deposit.paid_on }}</div>
+            </div>
+            <div class="col-md-3">
+                <div class="text-muted small">Status</div>
+                <span class="badge fs-6
+                    {% if deposit.is_refunded %}bg-success
+                    {% elif deposit.notice_given_on %}bg-warning text-dark
+                    {% else %}bg-secondary{% endif %}">
+                    {{ deposit.status }}
+                </span>
+            </div>
+        </div>
+        <hr>
+        <div class="row g-3">
+            <div class="col-md-3">
+                <div class="text-muted small">Payment Mode</div>
+                <div>{{ deposit.get_mode_display }}</div>
+            </div>
+            <div class="col-md-3">
+                <div class="text-muted small">Transaction Ref</div>
+                <div>{{ deposit.transaction_ref|default:"—" }}</div>
+            </div>
+            <div class="col-md-3">
+                <div class="text-muted small">Notice Period</div>
+                <div>{{ deposit.notice_period_days }} days</div>
+            </div>
+            <div class="col-md-3">
+                <div class="text-muted small">Recorded By</div>
+                <div>{{ deposit.created_by_display }}</div>
+            </div>
+        </div>
+        {% if deposit.remarks %}
+        <hr>
+        <div class="text-muted small">Remarks</div>
+        <div>{{ deposit.remarks }}</div>
+        {% endif %}
+    </div>
+</div>
+
+{% if deposit.is_refunded %}
+<div class="card shadow-sm mb-4 border-success">
+    <div class="card-header bg-success text-white">
+        <i class="bi bi-check-circle"></i> Refund Completed
+    </div>
+    <div class="card-body">
+        <div class="row g-3">
+            <div class="col-md-3">
+                <div class="text-muted small">Refunded On</div>
+                <div>{{ deposit.refunded_on }}</div>
+            </div>
+            <div class="col-md-3">
+                <div class="text-muted small">Refund Mode</div>
+                <div>{{ deposit.get_refund_mode_display }}</div>
+            </div>
+            <div class="col-md-3">
+                <div class="text-muted small">Deduction</div>
+                <div>₹{{ deposit.deduction_amount }}{% if deposit.deduction_reason %} — {{ deposit.deduction_reason }}{% endif %}</div>
+            </div>
+            <div class="col-md-3">
+                <div class="text-muted small">Amount Refunded</div>
+                <div class="fw-bold">₹{{ deposit.amount_refunded }}</div>
+            </div>
+        </div>
+    </div>
+</div>
+{% else %}
+
+    {% if not deposit.notice_given_on %}
+    <div class="card shadow-sm mb-4">
+        <div class="card-header">
+            <i class="bi bi-envelope"></i> Record Notice of Leaving
+        </div>
+        <div class="card-body">
+            <p class="text-muted">Record the date the parent/guardian submitted written notice. The refund becomes due {{ deposit.notice_period_days }} days after that date.</p>
+            <form method="post" action="{% url 'fee_payment:security_deposit_record_notice' deposit.pk %}" class="row g-3 align-items-end">
+                {% csrf_token %}
+                <div class="col-md-4">
+                    <label class="form-label">Notice Given On</label>
+                    {{ notice_form.notice_given_on }}
+                </div>
+                <div class="col-md-4">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-check-lg"></i> Record Notice
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+    {% else %}
+    <div class="card shadow-sm mb-4">
+        <div class="card-header">
+            <i class="bi bi-hourglass-split"></i> Notice on File
+        </div>
+        <div class="card-body">
+            <div class="row g-3 mb-3">
+                <div class="col-md-4">
+                    <div class="text-muted small">Notice Given On</div>
+                    <div>{{ deposit.notice_given_on }}</div>
+                </div>
+                <div class="col-md-4">
+                    <div class="text-muted small">Refundable From</div>
+                    <div class="fw-bold">{{ deposit.expected_refund_date }}</div>
+                </div>
+                <div class="col-md-4">
+                    <div class="text-muted small">Refund Amount Due</div>
+                    <div class="fw-bold">₹{{ deposit.refund_amount_due }}</div>
+                </div>
+            </div>
+
+            <hr>
+            <h6>Process Refund</h6>
+            <form method="post" action="{% url 'fee_payment:security_deposit_refund' deposit.pk %}" class="row g-3">
+                {% csrf_token %}
+                <div class="col-md-4">
+                    <label class="form-label">Refunded On</label>
+                    {{ refund_form.refunded_on }}
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Refund Mode</label>
+                    {{ refund_form.refund_mode }}
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Refund Transaction Ref</label>
+                    {{ refund_form.refund_transaction_ref }}
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Deduction Amount (₹)</label>
+                    {{ refund_form.deduction_amount }}
+                </div>
+                <div class="col-md-8">
+                    <label class="form-label">Deduction Reason</label>
+                    {{ refund_form.deduction_reason }}
+                    <div class="form-text">Required only if a deduction amount is entered (damages, outstanding dues, etc.).</div>
+                </div>
+                <div class="col-12">
+                    <button type="submit" class="btn btn-success">
+                        <i class="bi bi-cash-coin"></i> Mark Refunded
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+    {% endif %}
+
+{% endif %}
+
+<a href="{% url 'fee_payment:security_deposit_list' %}" class="btn btn-outline-secondary">
+    <i class="bi bi-arrow-left"></i> Back to Deposits
+</a>
+{% endblock %}

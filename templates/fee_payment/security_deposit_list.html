@@ -1,0 +1,130 @@
+{% extends 'base.html' %}
+
+{% load fee_extras %}
+
+{% block title %}Security Deposits | NOWMI CGC{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h4 class="mb-0"><i class="bi bi-piggy-bank"></i> Security Deposits</h4>
+    <div class="d-flex gap-2">
+        <a href="{% url 'fee_payment:deposit_terms_download' %}" class="btn btn-outline-secondary">
+            <i class="bi bi-file-earmark-pdf"></i> Terms &amp; Conditions
+        </a>
+        <a href="{% url 'fee_payment:security_deposit_create' %}" class="btn btn-primary">
+            <i class="bi bi-plus-lg"></i> Record Deposit
+        </a>
+    </div>
+</div>
+
+<!-- Filters -->
+<div class="card shadow-sm mb-4">
+    <div class="card-body">
+        <form method="get" class="row g-3 align-items-end">
+            <div class="col-md-4">
+                <label class="form-label">Search</label>
+                <input type="text" name="q" class="form-control" placeholder="Student name or receipt no..." value="{{ request.GET.q }}">
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">Status</label>
+                <select name="status" class="form-select">
+                    <option value="">All</option>
+                    <option value="held" {% if request.GET.status == 'held' %}selected{% endif %}>Held</option>
+                    <option value="notice_given" {% if request.GET.status == 'notice_given' %}selected{% endif %}>Notice Given</option>
+                    <option value="refunded" {% if request.GET.status == 'refunded' %}selected{% endif %}>Refunded</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <button type="submit" class="btn btn-outline-primary">
+                    <i class="bi bi-funnel"></i> Filter
+                </button>
+                <a href="{% url 'fee_payment:security_deposit_list' %}" class="btn btn-outline-secondary">
+                    <i class="bi bi-x-lg"></i> Reset
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card shadow-sm">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th>Receipt No</th>
+                    <th>Student</th>
+                    <th class="text-end">Amount</th>
+                    <th>Paid On</th>
+                    <th>Notice Given</th>
+                    <th>Status</th>
+                    <th class="text-end">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for deposit in deposits %}
+                <tr>
+                    <td>
+                        <a href="{% url 'fee_payment:security_deposit_detail' deposit.pk %}" class="fw-bold text-decoration-none">
+                            {{ deposit.receipt_no }}
+                        </a>
+                    </td>
+                    <td>
+                        <div class="fw-semibold">{{ deposit.student.name }}</div>
+                        <small class="text-muted">{{ deposit.student|student_id }}</small>
+                    </td>
+                    <td class="text-end fw-bold">₹{{ deposit.amount }}</td>
+                    <td>{{ deposit.paid_on }}</td>
+                    <td>{{ deposit.notice_given_on|default:"—" }}</td>
+                    <td>
+                        <span class="badge
+                            {% if deposit.is_refunded %}bg-success
+                            {% elif deposit.notice_given_on %}bg-warning text-dark
+                            {% else %}bg-secondary{% endif %}">
+                            {{ deposit.status }}
+                        </span>
+                    </td>
+                    <td class="text-end">
+                        <a href="{% url 'fee_payment:security_deposit_detail' deposit.pk %}" class="btn btn-sm btn-outline-primary">
+                            <i class="bi bi-eye"></i>
+                        </a>
+                        <a href="{% url 'fee_payment:security_deposit_update' deposit.pk %}" class="btn btn-sm btn-warning">
+                            <i class="bi bi-pencil"></i>
+                        </a>
+                        <a href="{% url 'fee_payment:security_deposit_receipt_download' deposit.pk %}" class="btn btn-sm btn-outline-secondary">
+                            <i class="bi bi-file-earmark-pdf"></i>
+                        </a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="7" class="text-center text-muted py-5">
+                        <i class="bi bi-inbox fs-1 d-block mb-2"></i>
+                        No security deposits found.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% if is_paginated %}
+<nav class="mt-3">
+    <ul class="pagination justify-content-center">
+        {% if page_obj.has_previous %}
+        <li class="page-item">
+            <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% for k,v in request.GET.items %}{% if k != 'page' %}&{{ k }}={{ v }}{% endif %}{% endfor %}">Previous</a>
+        </li>
+        {% endif %}
+        <li class="page-item active">
+            <span class="page-link">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+        </li>
+        {% if page_obj.has_next %}
+        <li class="page-item">
+            <a class="page-link" href="?page={{ page_obj.next_page_number }}{% for k,v in request.GET.items %}{% if k != 'page' %}&{{ k }}={{ v }}{% endif %}{% endfor %}">Next</a>
+        </li>
+        {% endif %}
+    </ul>
+</nav>
+{% endif %}
+{% endblock %}

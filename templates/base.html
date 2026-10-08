@@ -117,6 +117,17 @@
                             </a>
                         </li>
                         <li>
+                            <a class="dropdown-item" href="{% url 'fee_payment:security_deposit_list' %}">
+                                <i class="bi bi-piggy-bank"></i> Security Deposits
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item" href="{% url 'fee_payment:deposit_terms_download' %}">
+                                <i class="bi bi-file-earmark-pdf"></i> Deposit Terms &amp; Conditions
+                            </a>
+                        </li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li>
                             <a class="dropdown-item" href="{% url 'fee_payment:daily_collection_report' %}">
                                 <i class="bi bi-graph-up-arrow"></i> Daily Collection Report
                             </a>

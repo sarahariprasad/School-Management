@@ -510,7 +510,7 @@ footer {
 
 /* Gradient card variants */
 .branches-card { background: linear-gradient(135deg, var(--primary), var(--primary-light)); }
-.staff-card    { background: linear-gradient(135deg, var(--secondary), #3b82f6); }
+/*.staff-card    { background: linear-gradient(135deg, var(--secondary), #3b82f6); }*/
 .student-card  { background: linear-gradient(135deg, #7c3aed, #8b5cf6); }
 
 /* ── 14. CHART CARDS ── */

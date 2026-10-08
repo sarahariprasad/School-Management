@@ -4,7 +4,7 @@ from django.utils import timezone
 from django.core.mail import EmailMessage
 from django.conf import settings
 from decimal import Decimal
-from datetime import date
+from datetime import date, timedelta
 from calendar import monthrange
 from dateutil.relativedelta import relativedelta
 import logging
@@ -727,3 +727,159 @@ class AdditionalCharge(TrackableMixin, models.Model):
 
     def __str__(self):
         return f"{self.assignment.student} - {self.description} - ₹{self.amount}"
+
+
+# ---------- Refundable Security Deposit ----------
+
+class DepositPolicy(models.Model):
+    """
+    The one current Terms & Conditions text for refundable deposits,
+    editable by staff via the Django admin rather than hardcoded in code,
+    so the school can update wording/notice period without a deploy.
+    Treated as a singleton — get_current() creates the first row with a
+    sensible default if none exists yet.
+    """
+    notice_period_days = models.PositiveIntegerField(
+        default=30,
+        help_text="Default number of days' written notice required before a deposit becomes refundable. "
+                   "Can be overridden per deposit."
+    )
+    terms_text = models.TextField(
+        default=(
+            "1. The deposit collected at admission is fully refundable when the student "
+            "leaves the school, subject to {notice_period} days' written notice being "
+            "submitted to the school office in advance.\n\n"
+            "2. The refund will be processed within {notice_period} days of the notice "
+            "date, after adjusting any outstanding fees, dues, or damages against the "
+            "deposit amount.\n\n"
+            "3. No deposit will be refunded without prior written notice from the "
+            "parent/guardian.\n\n"
+            "4. The deposit does not carry any interest for the duration it is held.\n\n"
+            "5. In case of damage to school property attributable to the student, the "
+            "cost of repair/replacement will be deducted from the deposit before refund."
+        ),
+        help_text="Use {notice_period} as a placeholder — it is filled in with the value above when displayed."
+    )
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = 'Deposit Terms & Conditions'
+        verbose_name_plural = 'Deposit Terms & Conditions'
+
+    def __str__(self):
+        return "Deposit Terms & Conditions"
+
+    @classmethod
+    def get_current(cls):
+        obj = cls.objects.order_by('-updated_at').first()
+        if obj is None:
+            obj = cls.objects.create()
+        return obj
+
+    @property
+    def rendered_terms_text(self):
+        return self.terms_text.replace("{notice_period}", str(self.notice_period_days))
+
+
+class SecurityDeposit(TrackableMixin, models.Model):
+    """
+    A one-time, refundable deposit collected from a student at admission.
+    Separate from StudentFeeAssignment/FeeInstallment — this is not a
+    recurring fee, it is held and returned (minus any deductions) when the
+    student leaves, after the required notice period.
+    """
+    student = models.ForeignKey(
+        Student,
+        on_delete=models.CASCADE,
+        related_name='security_deposits'
+    )
+    amount = models.DecimalField(
+        max_digits=10, decimal_places=2, validators=[MinValueValidator(0)]
+    )
+    receipt_no = models.CharField(max_length=30, unique=True, editable=False, db_index=True)
+    paid_on = models.DateField(default=date.today)
+    mode = models.CharField(max_length=20, choices=FeePayment.PAYMENT_MODE_CHOICES, default='cash')
+    transaction_ref = models.CharField(max_length=100, blank=True)
+
+    notice_period_days = models.PositiveIntegerField(
+        default=30,
+        help_text="Days' written notice required before this deposit becomes refundable. "
+                   "Pre-filled from the current Deposit Policy at creation, but editable per deposit."
+    )
+    notice_given_on = models.DateField(
+        null=True, blank=True,
+        help_text="Date the parent/guardian submitted written notice of leaving."
+    )
+
+    is_refunded = models.BooleanField(default=False, db_index=True)
+    deduction_amount = models.DecimalField(
+        max_digits=10, decimal_places=2, default=Decimal('0.00'),
+        validators=[MinValueValidator(0)],
+        help_text="Any amount withheld before refund (damages, outstanding dues, etc.)."
+    )
+    deduction_reason = models.CharField(max_length=255, blank=True)
+    refunded_on = models.DateField(null=True, blank=True)
+    refund_mode = models.CharField(max_length=20, choices=FeePayment.PAYMENT_MODE_CHOICES, blank=True)
+    refund_transaction_ref = models.CharField(max_length=100, blank=True)
+
+    remarks = models.CharField(max_length=255, blank=True)
+
+    class Meta:
+        ordering = ['-paid_on']
+        verbose_name = 'Security Deposit'
+        verbose_name_plural = 'Security Deposits'
+
+    def save(self, *args, **kwargs):
+        if not self.receipt_no:
+            self.receipt_no = f"DEP{timezone.now().strftime('%Y%m%d%H%M%S%f')[:-3]}"
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f"{self.student} - Deposit ₹{self.amount} ({'Refunded' if self.is_refunded else 'Held'})"
+
+    @property
+    def refund_amount_due(self):
+        """What would actually be paid back, after any deductions."""
+        if self.is_refunded:
+            return Decimal('0.00')
+        return max(self.amount - self.deduction_amount, Decimal('0.00'))
+
+    @property
+    def expected_refund_date(self):
+        if self.notice_given_on:
+            return self.notice_given_on + timedelta(days=self.notice_period_days)
+        return None
+
+    @property
+    def status(self):
+        """Held / Notice Given (not yet due) / Ready for Refund / Refunded."""
+        if self.is_refunded:
+            return "Refunded"
+        if self.notice_given_on:
+            if date.today() >= self.expected_refund_date:
+                return "Ready for Refund"
+            return f"Notice Given — refundable from {self.expected_refund_date.strftime('%d %b %Y')}"
+        return "Held"
+    @property
+    def amount_refunded(self):
+        """Actual amount paid back to the parent/guardian."""
+        if not self.is_refunded:
+            return Decimal('0.00')
+        return max(self.amount - self.deduction_amount, Decimal('0.00'))
+
+    def record_notice(self, notice_date=None):
+        """Parent/guardian has given written notice of leaving."""
+        self.notice_given_on = notice_date or date.today()
+        self.save()
+
+    def mark_refunded(self, refund_mode='cash', transaction_ref='', refunded_on=None,
+                       deduction_amount=None, deduction_reason=''):
+        if deduction_amount is not None:
+            self.deduction_amount = deduction_amount
+        if deduction_reason:
+            self.deduction_reason = deduction_reason
+        self.is_refunded = True
+        self.refunded_on = refunded_on or date.today()
+        self.refund_mode = refund_mode
+        self.refund_transaction_ref = transaction_ref
+        self.save()

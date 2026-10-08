@@ -3,7 +3,7 @@ from django.urls import reverse_lazy
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib import messages
 from django.shortcuts import redirect, get_object_or_404
-from django.http import FileResponse, Http404
+from django.http import FileResponse, Http404, HttpResponse
 from django.db.models import (
     Q, Sum, F, DecimalField, Value, OuterRef, Subquery, Count
 )
@@ -19,11 +19,13 @@ import logging
 from students.models import Student
 from .models import (
     FeeCategory, FeeStructure, StudentFeeAssignment,
-    FeeInstallment, FeePayment, Frequency, Invoice, InvoiceStatus
+    FeeInstallment, FeePayment, Frequency, Invoice, InvoiceStatus,
+    SecurityDeposit, DepositPolicy,
 )
 from .forms import (
     FeeCategoryForm, FeeStructureForm, StudentFeeAssignmentForm,
-    FeeInstallmentForm, FeePaymentForm
+    FeeInstallmentForm, FeePaymentForm,
+    SecurityDepositForm, DepositNoticeForm, DepositRefundForm
 )
 from .notifications import (
     send_due_reminder_notification
@@ -42,6 +44,7 @@ from core.mixins import (
 )
 from . import reports
 from . import invoices as invoice_utils
+from . import pdf_utils
 
 logger = logging.getLogger(__name__)
 
@@ -616,12 +619,6 @@ class FeePaymentCreateView(AuditableCreateMixin, FinanceAdminRequiredMixin, Crea
             logger.exception("Audit log (CREATE) failed for payment %s: %s", self.object.pk, e)
 
         # ── Auto-generate + email an invoice right after payment ──
-        # Previously nothing ever called invoice_utils.create_invoice() on
-        # the payment path — invoices only came from the separate manual
-        # "Generate Invoice" button, which is why the Invoices page stayed
-        # empty even after payments were recorded. A failure here must never
-        # roll back or block the already-recorded payment, so it's isolated
-        # in its own try/except and only surfaced as a warning message.
         try:
             installment = self.object.installment
             invoice = invoice_utils.create_invoice(
@@ -1044,6 +1041,151 @@ class InvoiceCancelView(AuditableUpdateMixin, FinanceAdminRequiredMixin, View):
         invoice.save(update_fields=['status', 'updated_by', 'updated_at'])
         messages.success(request, f"Invoice {invoice.invoice_no} cancelled.")
         return redirect('fee_payment:invoice_detail', pk=invoice.pk)
+
+
+# ═══════════════════════════════════════════════════════════════
+# SECURITY DEPOSIT
+# ═══════════════════════════════════════════════════════════════
+
+class SecurityDepositListView(StaffRequiredMixin, ListView):
+    model = SecurityDeposit
+    template_name = 'fee_payment/security_deposit_list.html'
+    context_object_name = 'deposits'
+    paginate_by = 25
+
+    def get_queryset(self):
+        qs = SecurityDeposit.objects.select_related('student').order_by('-paid_on')
+
+        q = self.request.GET.get('q')
+        if q:
+            qs = qs.filter(
+                Q(student__name__icontains=q) |
+                Q(receipt_no__icontains=q)
+            )
+
+        status = self.request.GET.get('status')
+        if status == 'refunded':
+            qs = qs.filter(is_refunded=True)
+        elif status == 'held':
+            qs = qs.filter(is_refunded=False, notice_given_on__isnull=True)
+        elif status == 'notice_given':
+            qs = qs.filter(is_refunded=False, notice_given_on__isnull=False)
+
+        return qs
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['student_id_field'] = get_student_id_field_name()
+        return context
+
+
+class SecurityDepositDetailView(StaffRequiredMixin, DetailView):
+    model = SecurityDeposit
+    template_name = 'fee_payment/security_deposit_detail.html'
+    context_object_name = 'deposit'
+
+    def get_queryset(self):
+        return super().get_queryset().select_related('student')
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['student_id_field'] = get_student_id_field_name()
+        context['student_display_id'] = get_student_display_id(self.object.student)
+        context['notice_form'] = DepositNoticeForm()
+        context['refund_form'] = DepositRefundForm(initial={'refund_mode': self.object.mode})
+        return context
+
+
+class SecurityDepositCreateView(AuditableCreateMixin, FinanceAdminRequiredMixin, CreateView):
+    model = SecurityDeposit
+    form_class = SecurityDepositForm
+    template_name = 'fee_payment/security_deposit_form.html'
+    success_url = reverse_lazy('fee_payment:security_deposit_list')
+
+    def form_valid(self, form):
+        messages.success(self.request, "Security deposit recorded successfully.")
+        return super().form_valid(form)
+
+
+class SecurityDepositUpdateView(AuditableUpdateMixin, FinanceAdminRequiredMixin, UpdateView):
+    model = SecurityDeposit
+    form_class = SecurityDepositForm
+    template_name = 'fee_payment/security_deposit_form.html'
+    success_url = reverse_lazy('fee_payment:security_deposit_list')
+
+    def form_valid(self, form):
+        messages.success(self.request, "Security deposit updated successfully.")
+        return super().form_valid(form)
+
+
+class SecurityDepositDeleteView(AuditableDeleteMixin, FinanceAdminRequiredMixin, DeleteView):
+    model = SecurityDeposit
+    template_name = 'fee_payment/confirm_delete.html'
+    success_url = reverse_lazy('fee_payment:security_deposit_list')
+
+    def delete(self, request, *args, **kwargs):
+        messages.success(self.request, "Security deposit deleted successfully.")
+        return super().delete(request, *args, **kwargs)
+
+
+class SecurityDepositRecordNoticeView(AuditableUpdateMixin, FinanceAdminRequiredMixin, View):
+    """Parent/guardian has submitted written notice of leaving."""
+    def post(self, request, pk, *args, **kwargs):
+        deposit = get_object_or_404(SecurityDeposit, pk=pk)
+        form = DepositNoticeForm(request.POST)
+        if form.is_valid():
+            deposit.record_notice(notice_date=form.cleaned_data.get('notice_given_on'))
+            messages.success(
+                request,
+                f"Notice recorded. Refundable from {deposit.expected_refund_date.strftime('%d %b %Y')}."
+            )
+        else:
+            messages.error(request, "Could not record notice — please check the date.")
+        return redirect('fee_payment:security_deposit_detail', pk=deposit.pk)
+
+
+class SecurityDepositRefundView(AuditableUpdateMixin, FinanceAdminRequiredMixin, View):
+    """Actually process and record the refund payout."""
+    def post(self, request, pk, *args, **kwargs):
+        deposit = get_object_or_404(SecurityDeposit, pk=pk)
+        form = DepositRefundForm(request.POST)
+        if form.is_valid():
+            deduction_amount = form.cleaned_data.get('deduction_amount') or Decimal('0.00')
+            refunded_amount = max(deposit.amount - deduction_amount, Decimal('0.00'))
+            deposit.mark_refunded(
+                refund_mode=form.cleaned_data['refund_mode'],
+                transaction_ref=form.cleaned_data.get('refund_transaction_ref', ''),
+                refunded_on=form.cleaned_data.get('refunded_on'),
+                deduction_amount=deduction_amount,
+                deduction_reason=form.cleaned_data.get('deduction_reason', ''),
+            )
+            messages.success(request, f"Deposit refund of ₹{refunded_amount} recorded.")
+        else:
+            messages.error(request, "Could not record refund — please check the form.")
+        return redirect('fee_payment:security_deposit_detail', pk=deposit.pk)
+
+
+class SecurityDepositReceiptDownloadView(StaffRequiredMixin, View):
+    def get(self, request, pk, *args, **kwargs):
+        deposit = get_object_or_404(SecurityDeposit, pk=pk)
+        pdf_bytes = pdf_utils.generate_deposit_receipt_pdf(deposit)
+        response = HttpResponse(pdf_bytes, content_type='application/pdf')
+        response['Content-Disposition'] = f'attachment; filename="{deposit.receipt_no}.pdf"'
+        return response
+
+
+class DepositTermsDownloadView(LoginRequiredMixin, View):
+    """
+    Open to any logged-in user (staff or, if the portal exposes it,
+    a parent/guardian login) — the deposit T&Cs aren't sensitive, and the
+    point of this view is specifically so guardians can download them.
+    """
+    def get(self, request, *args, **kwargs):
+        policy = DepositPolicy.get_current()
+        pdf_bytes = pdf_utils.generate_deposit_terms_pdf(policy)
+        response = HttpResponse(pdf_bytes, content_type='application/pdf')
+        response['Content-Disposition'] = 'attachment; filename="Security_Deposit_Terms_and_Conditions.pdf"'
+        return response
 
 
 # ═══════════════════════════════════════════════════════════════

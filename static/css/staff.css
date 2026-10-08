@@ -1,0 +1,749 @@
+/* =========================================================
+   STAFF PAGE - FULL WIDTH + NAVBAR SAFE + NO OVERLAP
+   ========================================================= */
+
+/* ---------- Page Reset ---------- */
+
+html {
+    width: 100%;
+    max-width: 100%;
+    margin: 0;
+    padding: 0;
+    overflow-x: hidden;
+}
+
+body {
+    width: 100%;
+    max-width: 100%;
+    margin: 0 !important;
+    padding: 0 !important;
+
+    background: #ffffff !important;
+    color: #000000 !important;
+
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 15px;
+    line-height: 1.5;
+
+    overflow-x: hidden;
+}
+
+/* =========================================================
+   MAIN PAGE CONTAINER
+   ========================================================= */
+
+.container-fluid {
+    width: 100% !important;
+    max-width: 100% !important;
+
+    margin: 0 !important;
+
+    /*
+       Top padding prevents the page content from touching/
+       hiding underneath a fixed navbar.
+    */
+    padding: 80px 24px 24px !important;
+
+    background: #ffffff !important;
+
+    box-sizing: border-box;
+}
+
+/* =========================================================
+   HEADER
+   ========================================================= */
+
+.staff-page-header {
+    width: 100%;
+    max-width: 100%;
+
+    box-sizing: border-box;
+
+    background: #ffffff !important;
+    color: #000000 !important;
+
+    padding: 10px 0 20px;
+    margin-bottom: 10px;
+
+    position: relative;
+    z-index: 1;
+}
+
+.staff-page-header h2 {
+    color: #000000 !important;
+
+    font-size: 28px;
+    font-weight: 700;
+
+    margin: 0;
+}
+
+.staff-page-header h2 i {
+    color: #000000 !important;
+}
+
+.staff-page-header p {
+    color: #333333 !important;
+
+    margin: 4px 0 0;
+    font-size: 14px;
+}
+
+.staff-page-header p strong {
+    color: #000000 !important;
+}
+
+/* =========================================================
+   ADD NEW STAFF BUTTON
+   ========================================================= */
+
+/*
+   Explicit styling prevents the button from becoming
+   white-on-white because of inherited Bootstrap/global rules.
+*/
+
+.staff-page-header .btn,
+.staff-page-header .btn-primary,
+.staff-page-header .btn-success,
+.staff-page-header a.btn {
+    background-color: #000000 !important;
+    border-color: #000000 !important;
+    color: #ffffff !important;
+
+    font-weight: 600;
+
+    text-decoration: none;
+
+    box-shadow: none !important;
+}
+
+.staff-page-header .btn i,
+.staff-page-header .btn-primary i,
+.staff-page-header .btn-success i,
+.staff-page-header a.btn i {
+    color: #ffffff !important;
+}
+
+.staff-page-header .btn:hover,
+.staff-page-header .btn-primary:hover,
+.staff-page-header .btn-success:hover,
+.staff-page-header a.btn:hover {
+    background-color: #333333 !important;
+    border-color: #333333 !important;
+    color: #ffffff !important;
+}
+
+.staff-page-header .btn:focus,
+.staff-page-header .btn:active,
+.staff-page-header .btn-primary:focus,
+.staff-page-header .btn-primary:active,
+.staff-page-header .btn-success:focus,
+.staff-page-header .btn-success:active {
+    background-color: #000000 !important;
+    border-color: #000000 !important;
+    color: #ffffff !important;
+
+    box-shadow: 0 0 0 0.15rem rgba(0, 0, 0, 0.15) !important;
+}
+
+.staff-header-actions {
+    margin-left: 60px;
+}
+
+/* =========================================================
+   SEARCH CARD
+   ========================================================= */
+
+.staff-search-card {
+    width: 100%;
+    max-width: 100%;
+
+    box-sizing: border-box;
+
+    background: #ffffff !important;
+
+    border: 1px solid #dddddd !important;
+    border-radius: 10px;
+
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+
+    margin-bottom: 24px;
+}
+
+.staff-search-card .card-body {
+    background: #ffffff !important;
+    color: #000000 !important;
+}
+
+.staff-search-card .form-label {
+    color: #000000 !important;
+    font-weight: 600;
+}
+
+.staff-search-card .text-muted {
+    color: #555555 !important;
+}
+
+.staff-search-card .form-control,
+.staff-search-card .form-select {
+    width: 100%;
+    max-width: 100%;
+
+    box-sizing: border-box;
+
+    background: #ffffff !important;
+    color: #000000 !important;
+
+    border: 1px solid #bdbdbd !important;
+    border-radius: 6px;
+}
+
+.staff-search-card .form-control::placeholder {
+    color: #777777 !important;
+    opacity: 1;
+}
+
+.staff-search-card .form-control:focus,
+.staff-search-card .form-select:focus {
+    background: #ffffff !important;
+    color: #000000 !important;
+
+    border-color: #000000 !important;
+
+    box-shadow: 0 0 0 0.15rem rgba(0, 0, 0, 0.10) !important;
+}
+
+/* =========================================================
+   TABLE CARD
+   ========================================================= */
+
+.staff-table-card {
+    width: 100%;
+    max-width: 100%;
+
+    box-sizing: border-box;
+
+    background: #ffffff !important;
+
+    border: 1px solid #dddddd !important;
+    border-radius: 10px;
+
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+
+    overflow: hidden;
+}
+
+/* =========================================================
+   TABLE RESPONSIVE
+   ========================================================= */
+
+.staff-table-card .table-responsive {
+    width: 100%;
+    max-width: 100%;
+
+    margin: 0;
+    padding: 0;
+
+    overflow-x: auto;
+    overflow-y: hidden;
+}
+
+/* =========================================================
+   TABLE
+   ========================================================= */
+
+.staff-table {
+    width: 100% !important;
+    max-width: 100%;
+
+    margin: 0 !important;
+
+    background: #ffffff !important;
+    color: #000000 !important;
+
+    border-collapse: collapse;
+    table-layout: auto;
+}
+
+/* ---------- Table Header ---------- */
+
+.staff-table thead {
+    background: #f2f2f2 !important;
+}
+
+.staff-table thead th {
+    background: #f2f2f2 !important;
+    color: #000000 !important;
+
+    font-weight: 700;
+    font-size: 13px;
+
+    text-transform: uppercase;
+    letter-spacing: 0.2px;
+
+    padding: 12px 8px;
+
+    border-bottom: 2px solid #cccccc !important;
+
+    white-space: normal;
+    word-wrap: break-word;
+}
+
+/* ---------- Table Body ---------- */
+
+.staff-table tbody {
+    background: #ffffff !important;
+}
+
+.staff-table tbody tr {
+    background: #ffffff !important;
+    color: #000000 !important;
+
+    border-bottom: 1px solid #e5e5e5;
+
+    transition: background-color 0.15s ease;
+}
+
+.staff-table tbody tr:hover {
+    background: #f7f7f7 !important;
+}
+
+.staff-table tbody td {
+    background: transparent !important;
+    color: #000000 !important;
+
+    padding: 10px 8px;
+
+    vertical-align: middle;
+
+    word-wrap: break-word;
+    overflow-wrap: anywhere;
+}
+
+/* =========================================================
+   PREVENT LONG CONTENT FROM EXPANDING TABLE
+   ========================================================= */
+
+.staff-table td,
+.staff-table th {
+    max-width: 200px;
+}
+
+/* Email */
+
+.staff-table td:nth-child(5) {
+    max-width: 180px;
+    overflow-wrap: anywhere;
+}
+
+/* Designation */
+
+.staff-table td:nth-child(8) {
+    max-width: 150px;
+    overflow-wrap: anywhere;
+}
+
+/* Last Updated */
+
+.staff-table td:nth-child(11) {
+    max-width: 130px;
+}
+
+/* Actions */
+
+.staff-table td:last-child,
+.staff-table th:last-child {
+    white-space: nowrap;
+    width: 1%;
+}
+
+/* Employee ID */
+
+.staff-table .employee-id {
+    color: #000000 !important;
+}
+
+/* Muted */
+
+.staff-table .text-muted,
+.staff-table .small.text-muted {
+    color: #555555 !important;
+}
+
+/* =========================================================
+   TABLE ACTION BUTTONS
+   ========================================================= */
+
+.staff-table .btn {
+    color: #000000 !important;
+    background-color: #ffffff !important;
+    border-color: #cccccc !important;
+}
+
+.staff-table .btn:hover {
+    color: #ffffff !important;
+    background-color: #000000 !important;
+    border-color: #000000 !important;
+}
+
+/* =========================================================
+   AVATARS
+   ========================================================= */
+
+.staff-avatar-ring,
+.staff-mobile-avatar {
+    border: 2px solid #dddddd;
+    object-fit: cover;
+}
+
+.staff-avatar-fallback {
+    background: #eeeeee !important;
+    color: #000000 !important;
+
+    border: 2px solid #dddddd;
+}
+
+/* =========================================================
+   MOBILE CARD
+   ========================================================= */
+
+.staff-mobile-card {
+    width: 100%;
+    max-width: 100%;
+
+    box-sizing: border-box;
+
+    margin-bottom: 15px;
+
+    background: #ffffff !important;
+
+    border: 1px solid #dddddd !important;
+    border-radius: 10px;
+
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+
+    overflow: hidden;
+}
+
+.staff-mobile-card .card-body {
+    background: #ffffff !important;
+    color: #000000 !important;
+}
+
+.staff-mobile-top {
+    display: flex;
+    align-items: center;
+
+    gap: 12px;
+}
+
+.staff-mobile-identity {
+    flex: 1;
+    min-width: 0;
+}
+
+.staff-mobile-identity h6 {
+    color: #000000 !important;
+
+    font-size: 16px;
+    font-weight: 700;
+
+    margin: 0 0 3px;
+}
+
+.staff-mobile-identity code {
+    color: #333333 !important;
+    background: #f2f2f2;
+
+    padding: 2px 5px;
+    border-radius: 3px;
+}
+
+.staff-mobile-status {
+    flex-shrink: 0;
+}
+
+/* =========================================================
+   MOBILE INFORMATION
+   ========================================================= */
+
+.staff-mobile-info {
+    display: grid;
+
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+
+    gap: 12px;
+
+    margin-top: 18px;
+    padding-top: 15px;
+
+    border-top: 1px solid #dddddd;
+}
+
+.staff-mobile-info-item {
+    min-width: 0;
+
+    background: #f8f8f8;
+
+    border: 1px solid #e5e5e5;
+    border-radius: 6px;
+
+    padding: 10px;
+}
+
+.staff-mobile-info-item .label {
+    color: #555555 !important;
+
+    font-size: 12px;
+    font-weight: 600;
+
+    margin-bottom: 3px;
+}
+
+.staff-mobile-info-item .label i {
+    color: #000000 !important;
+    margin-right: 4px;
+}
+
+.staff-mobile-info-item .value {
+    color: #000000 !important;
+
+    font-weight: 600;
+
+    overflow-wrap: anywhere;
+}
+
+/* =========================================================
+   MOBILE ACTIONS
+   ========================================================= */
+
+.staff-mobile-actions {
+    display: flex;
+    flex-wrap: wrap;
+
+    gap: 7px;
+
+    margin-top: 15px;
+}
+
+.staff-mobile-actions .btn {
+    display: inline-flex;
+
+    align-items: center;
+    justify-content: center;
+
+    gap: 5px;
+}
+
+/* =========================================================
+   PAGINATION
+   ========================================================= */
+
+.staff-pagination {
+    max-width: 100%;
+    overflow-x: auto;
+}
+
+.staff-pagination .page-link {
+    background: #ffffff !important;
+    color: #000000 !important;
+
+    border: 1px solid #cccccc !important;
+}
+
+.staff-pagination .page-link:hover {
+    background: #f2f2f2 !important;
+    color: #000000 !important;
+}
+
+.staff-pagination .page-item.active .page-link {
+    background: #000000 !important;
+    border-color: #000000 !important;
+
+    color: #ffffff !important;
+}
+
+.staff-pagination .page-item.disabled .page-link {
+    background: #f5f5f5 !important;
+    color: #888888 !important;
+}
+
+/* =========================================================
+   ALERTS
+   ========================================================= */
+
+.alert {
+    color: #000000;
+    border-radius: 6px;
+}
+
+/* =========================================================
+   MOBILE RESPONSIVE
+   ========================================================= */
+
+@media (max-width: 767.98px) {
+
+    html,
+    body {
+        width: 100%;
+        max-width: 100%;
+
+        overflow-x: hidden;
+    }
+
+    .container-fluid {
+        padding: 80px 24px 24px !important;
+
+        /*
+           Smaller navbar-safe spacing on mobile.
+        */
+        padding-top: 70px !important;
+        padding-left: 12px !important;
+        padding-right: 12px !important;
+        padding-bottom: 20px !important;
+    }
+
+    .staff-page-header {
+        padding-top: 5px;
+        padding-bottom: 15px;
+    }
+
+    .staff-page-header h2 {
+        font-size: 24px;
+    }
+
+    .staff-mobile-info {
+        grid-template-columns: 1fr;
+    }
+
+    .staff-mobile-actions {
+        display: grid;
+
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .staff-mobile-actions .btn {
+        width: 100%;
+    }
+
+    /* Add New Staff button on mobile */
+
+    .staff-page-header .btn,
+    .staff-page-header a.btn {
+        color: #ffffff !important;
+        background-color: #000000 !important;
+        border-color: #000000 !important;
+    }
+}
+
+/* =========================================================
+   TABLET / DESKTOP
+   ========================================================= */
+
+@media (min-width: 768px) {
+
+    .staff-page-header {
+        padding-top: 5px;
+    }
+}
+
+/* =========================================================
+   FORCE WHITE PAGE / BLACK TEXT
+   ========================================================= */
+
+body,
+main,
+.container-fluid,
+.staff-search-card,
+.staff-table-card,
+.staff-mobile-card {
+    background-color: #ffffff !important;
+}
+
+.staff-page-header,
+.staff-page-header h2,
+.staff-page-header p,
+.staff-search-card,
+.staff-table-card,
+.staff-mobile-card {
+    color: #000000;
+}
+
+
+
+/* =========================================================
+   STAFF HEADER - PROPER SPACING
+   ========================================================= */
+
+.staff-page-header {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    width: 100% !important;
+}
+
+/* Staff title section */
+.staff-header-title {
+    flex: 0 0 auto;
+}
+
+/* Export + Add Staff section */
+.staff-header-actions {
+    display: flex !important;
+    flex-wrap: wrap;
+    gap: 8px;
+
+    /* Creates visible separation from Staff */
+    margin-left: 50px !important;
+
+    /* Keeps buttons away from the extreme right edge */
+    margin-right: 15px !important;
+}
+
+/* Buttons */
+.staff-header-actions .btn {
+    white-space: nowrap;
+}
+
+/* Add Staff */
+.staff-header-actions .btn-primary {
+    background-color: #000000 !important;
+    border-color: #000000 !important;
+    color: #ffffff !important;
+}
+
+.staff-header-actions .btn-primary i {
+    color: #ffffff !important;
+}
+
+/* Export */
+.staff-header-actions .btn-success {
+    background-color: #198754 !important;
+    border-color: #198754 !important;
+    color: #ffffff !important;
+}
+
+.staff-header-actions .btn-success i {
+    color: #ffffff !important;
+}
+
+/* =========================================================
+   MOBILE
+   ========================================================= */
+
+@media (max-width: 767.98px) {
+
+    .staff-page-header {
+        align-items: stretch !important;
+    }
+
+    .staff-header-actions {
+        width: 100%;
+        margin-left: 0 !important;
+        margin-right: 0 !important;
+    }
+
+    .staff-header-actions .btn {
+        flex: 1;
+    }
+}

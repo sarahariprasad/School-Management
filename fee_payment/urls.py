@@ -67,4 +67,15 @@ urlpatterns = [
     path('reports/daily-collection/export/', views.FeeCollectionReportExportView.as_view(), name='daily_collection_report_export'),
     path('reports/date-range/', views.DateRangePaymentReportView.as_view(), name='date_range_payment_report'),
     path('reports/date-range/export/', views.DateRangePaymentReportExportView.as_view(), name='date_range_payment_report_export'),
+
+    # Security Deposit
+    path('deposits/', views.SecurityDepositListView.as_view(), name='security_deposit_list'),
+    path('deposits/add/', views.SecurityDepositCreateView.as_view(), name='security_deposit_create'),
+    path('deposits/<int:pk>/', views.SecurityDepositDetailView.as_view(), name='security_deposit_detail'),
+    path('deposits/<int:pk>/edit/', views.SecurityDepositUpdateView.as_view(), name='security_deposit_update'),
+    path('deposits/<int:pk>/delete/', views.SecurityDepositDeleteView.as_view(), name='security_deposit_delete'),
+    path('deposits/<int:pk>/notice/', views.SecurityDepositRecordNoticeView.as_view(), name='security_deposit_record_notice'),
+    path('deposits/<int:pk>/refund/', views.SecurityDepositRefundView.as_view(), name='security_deposit_refund'),
+    path('deposits/<int:pk>/receipt.pdf', views.SecurityDepositReceiptDownloadView.as_view(), name='security_deposit_receipt_download'),
+    path('deposits/terms.pdf', views.DepositTermsDownloadView.as_view(), name='deposit_terms_download'),
 ]

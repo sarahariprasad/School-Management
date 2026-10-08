@@ -17,6 +17,7 @@ Requires: pip install reportlab
 """
 
 import io
+import textwrap
 from datetime import datetime
 
 from reportlab.lib.pagesizes import A4
@@ -119,6 +120,16 @@ def _draw_kv(c, x, y, label, value, value_x):
     c.drawString(x, y, label)
     c.setFont("Helvetica", 9)
     c.drawString(value_x, y, _safe(value))
+
+
+def _draw_paragraph(c, x, y, text, width_chars=100, font="Helvetica", size=9, leading=4.8 * mm):
+    """Wraps plain text to fit and draws it line by line. Returns the y
+    position after the last line, for chaining further content below it."""
+    c.setFont(font, size)
+    for line in textwrap.wrap(text, width_chars):
+        c.drawString(x, y, line)
+        y -= leading
+    return y
 
 
 def _draw_table(c, x, y_top, col_widths, rows, row_height=6.5 * mm):
@@ -244,6 +255,333 @@ def generate_receipt_pdf(payment) -> bytes:
     c.setDash()
 
     _draw_receipt_copy(c, margin, bottom_box_y, box_width, box_height, payment, "Student Copy")
+
+    c.showPage()
+    c.save()
+    buffer.seek(0)
+    return buffer.read()
+
+
+# ---------- Security Deposit ----------
+
+def generate_deposit_receipt_pdf(deposit) -> bytes:
+    """deposit: fee_payment.models.SecurityDeposit instance."""
+    buffer = io.BytesIO()
+    c = canvas.Canvas(buffer, pagesize=A4)
+    width, height = A4
+    student = deposit.student
+
+    erp_id = _get_erp_id(student)
+    class_label, section_label = _get_class_section(student)
+    words = amount_in_words(deposit.amount)
+
+    x0, top = 20 * mm, height - 20 * mm
+    box_width = width - 2 * x0
+
+    c.setFont("Helvetica-Bold", 16)
+    c.drawString(x0, top, SCHOOL_NAME)
+    c.setFont("Helvetica-Bold", 13)
+    c.drawRightString(x0 + box_width, top, "SECURITY DEPOSIT RECEIPT")
+
+    c.setStrokeColor(colors.HexColor("#999999"))
+    c.line(x0, top - 6 * mm, x0 + box_width, top - 6 * mm)
+
+    right_x = x0 + box_width * 0.58
+    y = top - 14 * mm
+    _draw_kv(c, x0, y, "Student's Name :", student.name, x0 + 32 * mm)
+    _draw_kv(c, right_x, y, "Receipt No:", deposit.receipt_no, right_x + 28 * mm)
+    y -= 6 * mm
+    _draw_kv(c, x0, y, "Father's Name :", getattr(student, "father_name", None), x0 + 32 * mm)
+    _draw_kv(c, right_x, y, "Paid On:", deposit.paid_on.strftime('%Y-%m-%d'), right_x + 28 * mm)
+    y -= 6 * mm
+    _draw_kv(c, x0, y, "ERP Id :", erp_id, x0 + 32 * mm)
+    _draw_kv(c, right_x, y, "Payment Mode:", deposit.get_mode_display(), right_x + 28 * mm)
+    y -= 6 * mm
+    _draw_kv(c, x0, y, "Class :", f"{class_label} | {section_label}", x0 + 32 * mm)
+    y -= 10 * mm
+
+    col_widths = [box_width - 45 * mm, 45 * mm]
+    rows = [
+        ["Particulars", "Amount"],
+        ["Refundable Security Deposit", f"{deposit.amount}"],
+        [f"Total ({words})", f"{deposit.amount}"],
+    ]
+    y = _draw_table(c, x0, y, col_widths, rows)
+    y -= 8 * mm
+
+    y = _draw_paragraph(
+        c, x0, y,
+        f"This deposit is refundable in full upon the student leaving the school, provided at "
+        f"least {deposit.notice_period_days} days' written notice is given and all dues are "
+        f"cleared. See the attached Terms & Conditions for full details.",
+        width_chars=100
+    )
+
+    c.setFont("Helvetica-Oblique", 8)
+    c.drawString(x0, 15 * mm, "This is a system-generated receipt.")
+    c.drawRightString(x0 + box_width, 15 * mm, f"Print Date: {_format_print_date()}")
+
+    c.showPage()
+    c.save()
+    buffer.seek(0)
+    return buffer.read()
+
+
+def generate_deposit_refund_pdf(deposit) -> bytes:
+    """deposit: fee_payment.models.SecurityDeposit instance, already refunded."""
+    buffer = io.BytesIO()
+    c = canvas.Canvas(buffer, pagesize=A4)
+    width, height = A4
+    student = deposit.student
+    erp_id = _get_erp_id(student)
+    words = amount_in_words(deposit.refund_amount or 0)
+
+    x0, top = 20 * mm, height - 20 * mm
+    box_width = width - 2 * x0
+
+    c.setFont("Helvetica-Bold", 16)
+    c.drawString(x0, top, SCHOOL_NAME)
+    c.setFont("Helvetica-Bold", 13)
+    c.drawRightString(x0 + box_width, top, "DEPOSIT REFUND RECEIPT")
+
+    c.setStrokeColor(colors.HexColor("#999999"))
+    c.line(x0, top - 6 * mm, x0 + box_width, top - 6 * mm)
+
+    right_x = x0 + box_width * 0.58
+    y = top - 14 * mm
+    _draw_kv(c, x0, y, "Student's Name :", student.name, x0 + 32 * mm)
+    _draw_kv(c, right_x, y, "Original Receipt:", deposit.receipt_no, right_x + 28 * mm)
+    y -= 6 * mm
+    _draw_kv(c, x0, y, "ERP Id :", erp_id, x0 + 32 * mm)
+    refunded_str = deposit.refunded_on.strftime('%Y-%m-%d') if deposit.refunded_on else "-"
+    _draw_kv(c, right_x, y, "Refunded On:", refunded_str, right_x + 28 * mm)
+    y -= 10 * mm
+
+    col_widths = [box_width - 45 * mm, 45 * mm]
+    rows = [
+        ["Particulars", "Amount"],
+        ["Original Deposit", f"{deposit.amount}"],
+        [f"Deductions ({deposit.deduction_reason or 'None'})", f"{deposit.deduction_amount}"],
+        [f"Refund Amount ({words})", f"{deposit.refund_amount}"],
+    ]
+    y = _draw_table(c, x0, y, col_widths, rows)
+    y -= 8 * mm
+
+    if deposit.refund_remarks:
+        c.setFont("Helvetica", 9)
+        c.drawString(x0, y, f"Remarks: {deposit.refund_remarks}")
+
+    c.setFont("Helvetica-Oblique", 8)
+    c.drawString(x0, 15 * mm, "This is a system-generated refund receipt.")
+    c.drawRightString(x0 + box_width, 15 * mm, f"Print Date: {_format_print_date()}")
+
+    c.showPage()
+    c.save()
+    buffer.seek(0)
+    return buffer.read()
+
+
+_DEPOSIT_TERMS_CLAUSES = [
+    ("1. Nature of the Deposit",
+     "The security deposit collected at admission is a refundable deposit, not a fee. It is "
+     "held by the school as security against unpaid dues or damage to school property, and is "
+     "not adjusted against regular tuition or other fees during the student's enrolment."),
+    ("2. Notice Period",
+     "A guardian wishing to withdraw the student from the school must give the school at least "
+     "{notice_days} days' written notice. The refund becomes due only after this notice period "
+     "has elapsed."),
+    ("3. Refund Process",
+     "Once the notice period has elapsed and all outstanding fees, if any, have been cleared, "
+     "the deposit — less any applicable deductions — will be refunded to the guardian."),
+    ("4. Deductions",
+     "The school may deduct from the deposit any amount owed for unpaid fees, damage to school "
+     "property, or unreturned school materials (books, uniforms, ID cards, etc.). Any such "
+     "deduction will be itemised and communicated to the guardian in writing at the time of "
+     "refund."),
+    ("5. Withdrawal Without Full Notice",
+     "If a student is withdrawn without the required notice period being served in full, the "
+     "refund will still be processed, but only after a period equivalent to the required notice "
+     "has passed from the date the school is informed of the withdrawal."),
+    ("6. Non-Transferability",
+     "The deposit is specific to the student for whom it was paid. It cannot be transferred to "
+     "another student or adjusted against another family's account."),
+]
+
+
+def generate_deposit_terms_pdf(student=None, notice_period_days=30) -> bytes:
+    """
+    Standalone Terms & Conditions document for the security deposit policy.
+    Personalised with the student's name/ERP ID when one is given; otherwise
+    a generic copy. NOTE: the clause text below is a reasonable starting
+    template, not legal advice — have it reviewed against the school's
+    actual policy before relying on it.
+    """
+    buffer = io.BytesIO()
+    c = canvas.Canvas(buffer, pagesize=A4)
+    width, height = A4
+    x0 = 20 * mm
+    box_width = width - 2 * x0
+    y = height - 20 * mm
+
+    c.setFont("Helvetica-Bold", 15)
+    c.drawString(x0, y, SCHOOL_NAME)
+    c.setFont("Helvetica-Bold", 11)
+    c.drawRightString(x0 + box_width, y, "SECURITY DEPOSIT — TERMS & CONDITIONS")
+    y -= 7 * mm
+    c.setStrokeColor(colors.HexColor("#999999"))
+    c.line(x0, y, x0 + box_width, y)
+    y -= 10 * mm
+
+    if student is not None:
+        c.setFont("Helvetica", 10)
+        c.drawString(x0, y, f"Issued to: {student.name}  (ERP ID: {_get_erp_id(student)})")
+        y -= 10 * mm
+
+    for title, body in _DEPOSIT_TERMS_CLAUSES:
+        if y < 35 * mm:
+            c.showPage()
+            y = height - 20 * mm
+        c.setFont("Helvetica-Bold", 10)
+        c.drawString(x0, y, title)
+        y -= 6 * mm
+        y = _draw_paragraph(c, x0, y, body.format(notice_days=notice_period_days), width_chars=100)
+        y -= 5 * mm
+
+    c.setFont("Helvetica-Oblique", 8)
+    c.drawString(
+        x0, 15 * mm,
+        "This document is a general summary; the school's official policy governs in case of any conflict."
+    )
+    c.drawRightString(x0 + box_width, 15 * mm, f"Print Date: {_format_print_date()}")
+
+    c.showPage()
+    c.save()
+    buffer.seek(0)
+    return buffer.read()
+
+
+# ---------- Security Deposit ----------
+
+def _draw_wrapped_text(c, x, y, text, max_width_mm, font="Helvetica", size=9, leading=5 * mm):
+    """Simple word-wrap for a block of text, paragraph by paragraph (split
+    on blank lines, as DepositPolicy.terms_text uses them as separators)."""
+    from reportlab.pdfbase.pdfmetrics import stringWidth
+    max_width = max_width_mm
+    c.setFont(font, size)
+    for paragraph in text.split("\n\n"):
+        words = paragraph.replace("\n", " ").split()
+        line = ""
+        for word in words:
+            trial = f"{line} {word}".strip()
+            if stringWidth(trial, font, size) <= max_width:
+                line = trial
+            else:
+                c.drawString(x, y, line)
+                y -= leading
+                line = word
+        if line:
+            c.drawString(x, y, line)
+            y -= leading
+        y -= leading * 0.6  # paragraph gap
+    return y
+
+
+def generate_deposit_receipt_pdf(deposit) -> bytes:
+    """deposit: fee_payment.models.SecurityDeposit instance."""
+    buffer = io.BytesIO()
+    c = canvas.Canvas(buffer, pagesize=A4)
+    width, height = A4
+    student = deposit.student
+
+    erp_id = _get_erp_id(student)
+    class_label, section_label = _get_class_section(student)
+    words = amount_in_words(deposit.amount)
+
+    x0, top = 20 * mm, height - 20 * mm
+    box_width = width - 2 * x0
+
+    c.setFont("Helvetica-Bold", 16)
+    c.drawString(x0, top, SCHOOL_NAME)
+    c.setFont("Helvetica-Bold", 13)
+    c.drawRightString(x0 + box_width, top, "SECURITY DEPOSIT RECEIPT")
+
+    c.setStrokeColor(colors.HexColor("#999999"))
+    c.line(x0, top - 6 * mm, x0 + box_width, top - 6 * mm)
+
+    right_x = x0 + box_width * 0.58
+    y = top - 14 * mm
+    _draw_kv(c, x0, y, "Student's Name :", student.name, x0 + 32 * mm)
+    _draw_kv(c, right_x, y, "Receipt No:", deposit.receipt_no, right_x + 28 * mm)
+    y -= 6 * mm
+    _draw_kv(c, x0, y, "Father's Name :", getattr(student, "father_name", None), x0 + 32 * mm)
+    _draw_kv(c, right_x, y, "Paid On:", deposit.paid_on.strftime('%Y-%m-%d'), right_x + 28 * mm)
+    y -= 6 * mm
+    _draw_kv(c, x0, y, "ERP Id :", erp_id, x0 + 32 * mm)
+    _draw_kv(c, right_x, y, "Payment Mode:", deposit.get_mode_display(), right_x + 28 * mm)
+    y -= 6 * mm
+    _draw_kv(c, x0, y, "Class :", f"{class_label} | {section_label}", x0 + 32 * mm)
+    _draw_kv(c, right_x, y, "Notice Period:", f"{deposit.notice_period_days} days", right_x + 28 * mm)
+    y -= 10 * mm
+
+    col_widths = [box_width - 45 * mm, 45 * mm]
+    rows = [
+        ["Particulars", "Amount"],
+        ["Refundable Security Deposit", f"{deposit.amount}"],
+        [f"Total ({words})", f"{deposit.amount}"],
+    ]
+    y = _draw_table(c, x0, y, col_widths, rows)
+    y -= 10 * mm
+
+    c.setFont("Helvetica-Bold", 10)
+    c.drawString(x0, y, "This deposit is fully refundable on leaving the school,")
+    y -= 5 * mm
+    c.drawString(x0, y, f"subject to {deposit.notice_period_days} days' written notice.")
+    y -= 5 * mm
+    c.setFont("Helvetica", 9)
+    c.drawString(x0, y, "Full terms & conditions are available on request or via the student portal.")
+    y -= 10 * mm
+
+    c.setFont("Helvetica-Oblique", 8)
+    c.drawString(x0, 15 * mm, "This is a system-generated receipt. Please retain it for your records.")
+    c.drawRightString(x0 + box_width, 15 * mm, f"Print Date: {_format_print_date()}")
+
+    c.showPage()
+    c.save()
+    buffer.seek(0)
+    return buffer.read()
+
+
+def generate_deposit_terms_pdf(policy=None) -> bytes:
+    """
+    policy: fee_payment.models.DepositPolicy instance. If omitted, callers
+    should pass DepositPolicy.get_current() — kept optional here only so
+    this module never needs to import models.py at the top level.
+    """
+    buffer = io.BytesIO()
+    c = canvas.Canvas(buffer, pagesize=A4)
+    width, height = A4
+    x0, top = 20 * mm, height - 20 * mm
+    box_width = width - 2 * x0
+
+    c.setFont("Helvetica-Bold", 16)
+    c.drawString(x0, top, SCHOOL_NAME)
+    c.setFont("Helvetica-Bold", 13)
+    c.drawRightString(x0 + box_width, top, "SECURITY DEPOSIT")
+    c.setFont("Helvetica", 11)
+    c.drawRightString(x0 + box_width, top - 6 * mm, "Terms & Conditions")
+
+    c.setStrokeColor(colors.HexColor("#999999"))
+    c.line(x0, top - 10 * mm, x0 + box_width, top - 10 * mm)
+
+    text = policy.rendered_terms_text if policy else (
+        "Please contact the school office for current deposit terms and conditions."
+    )
+    y = top - 20 * mm
+    y = _draw_wrapped_text(c, x0, y, text, max_width_mm=box_width, font="Helvetica", size=10, leading=5.5 * mm)
+
+    c.setFont("Helvetica-Oblique", 8)
+    c.drawString(x0, 15 * mm, "This document is system-generated and reflects the policy at the time of download.")
+    c.drawRightString(x0 + box_width, 15 * mm, f"Print Date: {_format_print_date()}")
 
     c.showPage()
     c.save()
