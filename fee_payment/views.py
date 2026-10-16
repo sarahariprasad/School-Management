@@ -399,26 +399,17 @@ class FeeInstallmentListView(StaffRequiredMixin, ListView):
     paginate_by = 20
 
     def get_queryset(self):
-        total_paid_sq = FeePayment.objects.filter(
-            installment=OuterRef('pk')
-        ).values('installment').annotate(
-            total=Sum('amount_paid')
-        ).values('total')
-
+        # with_balance() annotates total_paid + remaining_balance from the
+        # real payment rows. Everything below (filters, and the Pay button /
+        # status badge in the template) is driven by those live numbers, not
+        # the cached is_fully_paid flag — so a partially paid installment is
+        # always shown as having a balance and can always take another payment.
         qs = FeeInstallment.objects.select_related(
             'assignment',
             'assignment__student',
             'assignment__fee_structure',
             'assignment__fee_structure__category'
-        ).annotate(
-            total_paid=Coalesce(
-                Subquery(total_paid_sq),
-                Value(Decimal('0.00')),
-                output_field=DecimalField(max_digits=10, decimal_places=2)
-            ),
-        ).annotate(
-            remaining_balance=F('amount_due') - F('total_paid')
-        )
+        ).with_balance()
 
         q = self.request.GET.get('q')
         if q:
@@ -426,11 +417,13 @@ class FeeInstallmentListView(StaffRequiredMixin, ListView):
 
         status = self.request.GET.get('status')
         if status == 'paid':
-            qs = qs.filter(is_fully_paid=True)
+            qs = qs.filter(remaining_balance__lte=0)
+        elif status == 'partial':
+            qs = qs.filter(total_paid__gt=0, remaining_balance__gt=0)
         elif status == 'pending':
-            qs = qs.filter(is_fully_paid=False)
+            qs = qs.filter(total_paid=0, remaining_balance__gt=0)
         elif status == 'overdue':
-            qs = overdue_installments(qs.filter(is_fully_paid=False))
+            qs = overdue_installments(qs.filter(remaining_balance__gt=0))
 
         due_from = self.request.GET.get('due_from')
         due_to = self.request.GET.get('due_to')
@@ -586,13 +579,18 @@ class FeePaymentCreateView(AuditableCreateMixin, FinanceAdminRequiredMixin, Crea
     def get_initial(self):
         initial = super().get_initial()
         installment_id = self.request.GET.get('installment')
-        if installment_id and FeeInstallment.objects.filter(
-            pk=installment_id,
-            is_fully_paid=False,
-            assignment__is_active=True,
-            assignment__student__is_active=True,
-        ).exists():
-            initial['installment'] = installment_id
+        if installment_id and installment_id.isdigit():
+            # Judge "still payable" by the live remaining balance (so a
+            # partially paid installment is accepted), and pre-fill the
+            # amount with what is still owed.
+            installment = FeeInstallment.objects.unpaid().filter(
+                pk=installment_id,
+                assignment__is_active=True,
+                assignment__student__is_active=True,
+            ).first()
+            if installment:
+                initial['installment'] = installment.pk
+                initial['amount_paid'] = installment.remaining_balance
         return initial
 
     def get_form_kwargs(self):

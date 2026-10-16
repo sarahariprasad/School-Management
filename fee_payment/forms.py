@@ -6,7 +6,7 @@ import logging
 from decimal import Decimal
 
 from django import forms
-from django.db.models import Sum
+from django.db.models import Sum, Q
 from django.utils.translation import gettext_lazy as _
 
 from .models import (
@@ -224,20 +224,32 @@ class FeePaymentForm(forms.ModelForm):
     def __init__(self, *args, user=None, **kwargs):
         self.user = user
         super().__init__(*args, **kwargs)
-        self.fields['installment'].queryset = FeeInstallment.objects.select_related(
-            'assignment__student',
-            'assignment__fee_structure__category'
-        ).filter(
-            is_fully_paid=False,
+
+        # Offer every installment that still has a balance (partially paid
+        # ones included), judged by the LIVE remaining balance computed from
+        # payments — not the cached is_fully_paid flag, which can lag behind.
+        eligible = Q(
+            remaining_balance__gt=0,
             assignment__is_active=True,
             assignment__student__is_active=True,
         )
-        # An existing payment must remain selectable while it is being edited,
+        # An existing payment must stay selectable while it is being edited,
         # even when it made its installment fully paid.
         if self.instance and self.instance.pk:
-            self.fields['installment'].queryset |= FeeInstallment.objects.filter(
-                pk=self.instance.installment_id
-            )
+            eligible |= Q(pk=self.instance.installment_id)
+
+        self.fields['installment'].queryset = FeeInstallment.objects.select_related(
+            'assignment__student',
+            'assignment__fee_structure__category'
+        ).with_balance().filter(eligible)
+
+        def _label(inst):
+            remaining = getattr(inst, 'remaining_balance', None)
+            if remaining is None:
+                remaining = inst.balance
+            return f"{inst} — Balance ₹{remaining}"
+
+        self.fields['installment'].label_from_instance = _label
 
     def clean_amount_paid(self):
         amount = self.cleaned_data.get('amount_paid')

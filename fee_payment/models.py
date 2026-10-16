@@ -8,7 +8,8 @@ from datetime import date, timedelta
 from calendar import monthrange
 from dateutil.relativedelta import relativedelta
 import logging
-from django.db.models import Sum, Max
+from django.db.models import Sum, Max, OuterRef, Subquery, F, Value, DecimalField
+from django.db.models.functions import Coalesce
 from django.core.exceptions import ValidationError
 from core.mixins import TrackableMixin
 
@@ -61,13 +62,9 @@ def add_months(d: date, months: int) -> date:
 
 
 # ---------- Models ----------
-# NOTE: All concrete models below now inherit TrackableMixin (core.mixins)
-# instead of a locally-defined UserTrackingModel. Same fields
-# (created_by/updated_by/created_at/updated_at), same created_by_display/
-# updated_by_display properties — just one shared mixin app-wide instead of
-# a fee_payment-only duplicate. This changes each model's related_name from
-# '+' to '<modelname>_created' / '<modelname>_updated', so a migration is
-# required (see notes at the end of this file).
+# All concrete models below inherit TrackableMixin (core.mixins):
+# created_by / updated_by / created_at / updated_at, plus the
+# created_by_display / updated_by_display helpers.
 
 class FeeCategory(TrackableMixin, models.Model):
     name = models.CharField(max_length=50, unique=True, db_index=True)
@@ -378,6 +375,40 @@ class StudentFeeAssignment(TrackableMixin, models.Model):
         return self.total_due - self.total_paid
 
 
+class FeeInstallmentQuerySet(models.QuerySet):
+    """
+    Balance-aware queries for installments.
+
+    with_balance() annotates every row with:
+        total_paid         – sum of all payments recorded against it
+        remaining_balance  – amount_due - total_paid
+    Both are computed live from FeePayment rows, so they are always right
+    even if the cached FeeInstallment.is_fully_paid flag has drifted.
+    """
+
+    def with_balance(self):
+        paid_sq = (
+            FeePayment.objects.filter(installment=OuterRef('pk'))
+            .order_by()
+            .values('installment')
+            .annotate(total=Sum('amount_paid'))
+            .values('total')
+        )
+        return self.annotate(
+            total_paid=Coalesce(
+                Subquery(paid_sq),
+                Value(Decimal('0.00')),
+                output_field=DecimalField(max_digits=10, decimal_places=2),
+            )
+        ).annotate(
+            remaining_balance=F('amount_due') - F('total_paid')
+        )
+
+    def unpaid(self):
+        """Installments that still have money outstanding (includes partially paid)."""
+        return self.with_balance().filter(remaining_balance__gt=0)
+
+
 class FeeInstallment(TrackableMixin, models.Model):
     assignment = models.ForeignKey(
         StudentFeeAssignment,
@@ -391,7 +422,12 @@ class FeeInstallment(TrackableMixin, models.Model):
         validators=[MinValueValidator(0)]
     )
     due_date = models.DateField(db_index=True)
+    # Cached convenience flag, kept in sync by FeePayment.save()/delete().
+    # UI and payment-entry logic should NOT rely on it alone — use
+    # remaining_balance (see FeeInstallmentQuerySet.with_balance) instead.
     is_fully_paid = models.BooleanField(default=False, db_index=True)
+
+    objects = FeeInstallmentQuerySet.as_manager()
 
     class Meta:
         unique_together = ('assignment', 'installment_number')
@@ -414,6 +450,18 @@ class FeeInstallment(TrackableMixin, models.Model):
             type(self).objects.filter(pk=self.pk).update(is_fully_paid=should_be_paid)
             self.is_fully_paid = should_be_paid
 
+    @classmethod
+    def resync_paid_flags(cls):
+        """Recalculate is_fully_paid for every installment from actual
+        payments. Returns how many rows were corrected."""
+        corrected = 0
+        for installment in cls.objects.all():
+            before = installment.is_fully_paid
+            installment.refresh_paid_status()
+            if installment.is_fully_paid != before:
+                corrected += 1
+        return corrected
+
     @property
     def amount_paid(self):
         return self.payments.aggregate(total=models.Sum('amount_paid'))['total'] or Decimal('0.00')
@@ -421,6 +469,16 @@ class FeeInstallment(TrackableMixin, models.Model):
     @property
     def balance(self):
         return self.amount_due - self.amount_paid
+
+    # Use the with_balance() annotations when present (no extra query per
+    # row on list pages); otherwise fall back to a live DB lookup.
+    def _remaining_balance(self):
+        value = getattr(self, 'remaining_balance', None)
+        return value if value is not None else self.balance
+
+    def _total_paid(self):
+        value = getattr(self, 'total_paid', None)
+        return value if value is not None else self.amount_paid
 
     @property
     def overdue_after(self):
@@ -432,26 +490,25 @@ class FeeInstallment(TrackableMixin, models.Model):
     def is_overdue(self):
         # It becomes overdue on the 11th when its due date is on/before the
         # 10th; later configured due dates retain their later deadline.
-        return not self.is_fully_paid and date.today() > self.overdue_after
+        return self._remaining_balance() > 0 and date.today() > self.overdue_after
 
     @property
     def status(self):
         """
         Simple label for UI use:
-        Paid / Upcoming / Overdue / Overdue (Partially Paid)
+        Paid / Partially Paid / Pending / Upcoming / Overdue variants.
         Note: is_active/hold state is NOT checked here — check it at the
         StudentFeeAssignment level (current_month_status / next_month_status)
         since a hold should override whatever an individual installment says.
         """
-        if self.is_fully_paid:
+        if self._remaining_balance() <= 0:
             return "Paid"
+        paid = self._total_paid()
         if self.due_date > date.today():
-            return "Upcoming"
-        if self.is_overdue and self.amount_paid > 0:
-            return "Overdue (Partially Paid)"
+            return "Upcoming (Partially Paid)" if paid > 0 else "Upcoming"
         if self.is_overdue:
-            return "Overdue"
-        return "Pending"
+            return "Overdue (Partially Paid)" if paid > 0 else "Overdue"
+        return "Partially Paid" if paid > 0 else "Pending"
 
     def __str__(self):
         return f"{self.assignment.student} - Inst {self.installment_number} (Due: {self.due_date})"
@@ -860,6 +917,7 @@ class SecurityDeposit(TrackableMixin, models.Model):
                 return "Ready for Refund"
             return f"Notice Given — refundable from {self.expected_refund_date.strftime('%d %b %Y')}"
         return "Held"
+
     @property
     def amount_refunded(self):
         """Actual amount paid back to the parent/guardian."""

@@ -25,7 +25,8 @@
                 <select name="status" class="form-select">
                     <option value="">All</option>
                     <option value="paid" {% if request.GET.status == 'paid' %}selected{% endif %}>Paid</option>
-                    <option value="pending" {% if request.GET.status == 'pending' %}selected{% endif %}>Pending</option>
+                    <option value="partial" {% if request.GET.status == 'partial' %}selected{% endif %}>Partially Paid</option>
+                    <option value="pending" {% if request.GET.status == 'pending' %}selected{% endif %}>Pending (nothing paid)</option>
                     <option value="overdue" {% if request.GET.status == 'overdue' %}selected{% endif %}>Overdue</option>
                 </select>
             </div>
@@ -90,17 +91,28 @@
                         </span>
                     </td>
                     <td>
-                        {% if inst.is_fully_paid %}
+                        {# Status comes from the live remaining balance, not the cached is_fully_paid flag #}
+                        {% if inst.remaining_balance <= 0 %}
                             <span class="badge bg-success">Paid</span>
+                        {% elif inst.total_paid > 0 %}
+                            <span class="badge bg-info text-dark">Partially Paid</span>
                         {% else %}
                             <span class="badge bg-warning text-dark">Pending</span>
                         {% endif %}
                     </td>
                     <td>
-                        <a href="{% url 'fee_payment:fee_payment_create' %}?installment={{ inst.pk }}"
-                           class="btn btn-sm btn-success {% if inst.is_fully_paid %}disabled{% endif %}">
-                            <i class="bi bi-cash-stack"></i> Pay
-                        </a>
+                        {# Pay stays enabled for as long as ANY balance remains, including after a partial payment #}
+                        {% if inst.remaining_balance > 0 %}
+                            <a href="{% url 'fee_payment:fee_payment_create' %}?installment={{ inst.pk }}"
+                               class="btn btn-sm btn-success">
+                                <i class="bi bi-cash-stack"></i>
+                                {% if inst.total_paid > 0 %}Pay Balance{% else %}Pay{% endif %}
+                            </a>
+                        {% else %}
+                            <a href="#" class="btn btn-sm btn-success disabled" aria-disabled="true" tabindex="-1">
+                                <i class="bi bi-cash-stack"></i> Pay
+                            </a>
+                        {% endif %}
                         <a href="{% url 'fee_payment:fee_installment_update' inst.pk %}" class="btn btn-sm btn-warning">
                             <i class="bi bi-pencil"></i>
                         </a>
