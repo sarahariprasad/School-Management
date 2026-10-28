@@ -1,0 +1,106 @@
+{# Change / end a recurring slot. Opened by buttons with data-bs-target="#changeModal". #}
+{{ busy_map|json_script:"busyMap" }}
+{{ staff_slots|json_script:"staffSlots" }}
+<div class="modal fade" id="changeModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable sch">
+    <form method="post" id="changeForm" class="modal-content">
+      {% csrf_token %}
+      <input type="hidden" name="next" value="{{ request.get_full_path }}">
+      <div class="modal-header">
+        <div><h5 class="modal-title mb-0"><i class="bi bi-arrow-left-right"></i> Change slot</h5><div class="small text-muted">for <strong id="cmStudent"></strong></div></div>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div class="mb-3">
+          <label class="form-label fw-semibold small mb-1">New therapist <span class="text-muted fw-normal">(same therapy &amp; branch)</span></label>
+          <select name="staff" id="cmStaff" class="form-select" required>
+            {% for s in staff_options %}<option value="{{ s.pk }}" data-therapy="{{ s.therapy_id }}" data-branch="{{ s.branch_pk|default_if_none:'' }}">{{ s.full_name }} ({{ s.therapy }})</option>{% endfor %}
+          </select>
+        </div>
+        <div class="mb-3">
+          <label class="form-label fw-semibold small mb-1">New time slot</label>
+          <select name="time_slot" id="cmSlot" class="form-select" required>
+            {% for sl in slots %}<option value="{{ sl.pk }}" data-label="{{ sl }}">{{ sl }}</option>{% endfor %}
+          </select>
+          <div id="cmHint" class="form-text text-warning" style="display:none"></div>
+        </div>
+        <div class="mb-3">
+          <label class="form-label fw-semibold small mb-1">Days</label>
+          <div class="day-pills">
+            {% for n, label in weekdays %}<input class="btn-check cm-day" type="checkbox" name="weekdays" value="{{ n }}" id="cmDay{{ n }}"><label class="btn btn-outline-primary btn-sm" for="cmDay{{ n }}">{{ label }}</label>{% endfor %}
+          </div>
+        </div>
+        <div class="mb-1">
+          <label class="form-label fw-semibold small mb-1">Effective from</label>
+          <input type="date" name="effective_from" id="cmDate" class="form-control" value="{{ eff|date:'Y-m-d' }}">
+          <div class="form-text">Past sessions are kept. The new slot continues every scheduled day until the student becomes inactive.</div>
+        </div>
+      </div>
+      <div class="modal-footer flex-wrap">
+        <button type="submit" id="cmEnd" class="btn btn-outline-danger me-sm-auto" formnovalidate
+                onclick="return confirm('End this recurring slot from the chosen date?')">End slot</button>
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button type="submit" class="btn btn-primary"><i class="bi bi-check2"></i> Save change</button>
+      </div>
+    </form>
+  </div>
+</div>
+<script>
+(function () {
+  var modal = document.getElementById('changeModal');
+  var slotSel = document.getElementById('cmSlot');
+  var staffSel = document.getElementById('cmStaff');
+  var hint = document.getElementById('cmHint');
+  var busy = JSON.parse(document.getElementById('busyMap').textContent || '{}');
+  var worksSlots = JSON.parse(document.getElementById('staffSlots').textContent || '{}');
+  var cur = {id: 0, student: ''};
+
+  function checkedDays() {
+    return Array.prototype.filter.call(document.querySelectorAll('.cm-day'), function (c) { return c.checked; })
+      .map(function (c) { return c.value; });
+  }
+
+  // A therapist can take several students per hour, so only the student's own
+  // other sessions can clash. Disable those slots on the selected days.
+  function refreshSlots() {
+    var days = checkedDays(), mine = busy[cur.student] || [], moved = false;
+    var allowed = worksSlots[staffSel.value];            // undefined = works every slot
+    Array.prototype.forEach.call(slotSel.options, function (o) {
+      var clash = mine.some(function (a) {
+        return a[0] !== cur.id && String(a[1]) === o.value &&
+               String(a[2]).split(',').some(function (d) { return days.indexOf(d) > -1; });
+      });
+      var notWorking = allowed && allowed.indexOf(parseInt(o.value, 10)) === -1;
+      o.disabled = clash || notWorking;
+      o.textContent = o.dataset.label + (notWorking ? ' — therapist not working' : (clash ? ' — student already busy' : ''));
+    });
+    if (slotSel.selectedOptions[0] && slotSel.selectedOptions[0].disabled) {
+      var free = Array.prototype.filter.call(slotSel.options, function (o) { return !o.disabled; })[0];
+      if (free) { slotSel.value = free.value; moved = true; }
+    }
+    hint.textContent = moved ? 'That time is not available (therapist not working or student already busy), so another slot was selected.' : '';
+    hint.style.display = moved ? '' : 'none';
+  }
+
+  modal.addEventListener('show.bs.modal', function (ev) {
+    var b = ev.relatedTarget; if (!b) return;
+    document.getElementById('changeForm').action = b.dataset.url;
+    document.getElementById('cmEnd').setAttribute('formaction', b.dataset.endUrl);
+    document.getElementById('cmStudent').textContent = b.dataset.student;
+    cur = {id: parseInt(b.dataset.assignment, 10), student: String(b.dataset.studentId)};
+    Array.prototype.forEach.call(staffSel.options, function (o) {   // same therapy only
+      var ok = o.dataset.therapy === b.dataset.therapy &&
+               (!b.dataset.branch || !o.dataset.branch || o.dataset.branch === b.dataset.branch);
+      o.hidden = !ok; o.disabled = !ok;
+    });
+    staffSel.value = String(b.dataset.staff);
+    slotSel.value = String(b.dataset.slot);
+    var days = (b.dataset.days || '').split(',');
+    document.querySelectorAll('.cm-day').forEach(function (c) { c.checked = days.indexOf(c.value) > -1; });
+    refreshSlots();
+    hint.style.display = 'none';
+  });
+  staffSel.addEventListener('change', refreshSlots);
+  document.querySelectorAll('.cm-day').forEach(function (c) { c.addEventListener('change', refreshSlots); });
+})();
+</script>

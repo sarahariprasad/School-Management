@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% comment %}
+  Common layout for every scheduling page:
+  page title + subtitle + action buttons, section tabs, then the page content.
+  Child pages fill: page_title, page_sub, page_actions, page_content (and optionally sch_js).
+{% endcomment %}
+{% block extra_css %}{% include "scheduling/_styles.html" %}{% endblock %}
+{% block content %}
+<div class="sch">
+  <div class="d-flex flex-wrap align-items-start justify-content-between gap-2 mb-3">
+    <div>
+      <h1 class="sch-title">{% block page_icon %}<i class="bi bi-calendar3"></i>{% endblock %}<span>{% block page_title %}Scheduling{% endblock %}</span></h1>
+      <p class="sch-sub mb-0">{% block page_sub %}{% endblock %}</p>
+    </div>
+    <div class="sch-actions d-flex flex-wrap gap-2">{% block page_actions %}{% endblock %}</div>
+  </div>
+
+  <nav class="sch-tabs" aria-label="Scheduling sections">
+    <a class="sch-tab {% block tab_daily %}{% endblock %}" href="{% url 'scheduling:daily_schedule' %}"><i class="bi bi-calendar-check"></i> Daily Schedule</a>
+    <a class="sch-tab {% block tab_calendar %}{% endblock %}" href="{% url 'scheduling:calendar' %}"><i class="bi bi-calendar-week"></i> Calendar</a>
+    <a class="sch-tab {% block tab_assign %}{% endblock %}" href="{% url 'scheduling:assignment_list' %}"><i class="bi bi-diagram-3"></i> Assignments</a>
+    <a class="sch-tab {% block tab_free %}{% endblock %}" href="{% url 'scheduling:free_slots' %}"><i class="bi bi-clock"></i> Free Slots</a>
+    <a class="sch-tab {% block tab_tslots %}{% endblock %}" href="{% url 'scheduling:therapist_slots' %}"><i class="bi bi-grid-3x3-gap"></i> Therapist Slots</a>
+    <a class="sch-tab {% block tab_att_student %}{% endblock %}" href="{% url 'scheduling:attendance' 'student' %}"><i class="bi bi-person-check"></i> Student Attendance</a>
+    <a class="sch-tab {% block tab_att_staff %}{% endblock %}" href="{% url 'scheduling:attendance' 'staff' %}"><i class="bi bi-person-badge"></i> Staff Attendance</a>
+    <a class="sch-tab {% block tab_group %}{% endblock %}" href="{% url 'scheduling:group_list' %}"><i class="bi bi-people"></i> Group Hours</a>
+  </nav>
+  <script>(function(){var a=document.querySelector('.sch-tab.is-active');if(a&&a.scrollIntoView){a.scrollIntoView({inline:'center',block:'nearest'});}})();</script>
+
+  {% block page_content %}{% endblock %}
+</div>
+{% block sch_js %}{% endblock %}
+{% endblock %}

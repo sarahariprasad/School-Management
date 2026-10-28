@@ -1,0 +1,19 @@
+{% extends "scheduling/base_scheduling.html" %}
+{% block title %}{% if instance %}Edit Session{% else %}One-off Session{% endif %}{% endblock %}
+{% block page_icon %}<i class="bi bi-calendar-plus"></i>{% endblock %}
+{% block page_title %}{% if instance %}Edit Session{% else %}One-off / Make-up Session{% endif %}{% endblock %}
+{% block page_sub %}A single one-hour session on one date{% if not instance %}. For a student's regular weekly hour use <a href="{% url 'scheduling:assignment_create' %}">Assignments</a>.{% else %}. Change the status or add a reason for an absence.{% endif %}{% endblock %}
+{% block page_content %}
+<div class="sch-form-card">
+  <div class="sch-card"><div class="p-3 p-md-4">
+    <form method="post" novalidate>
+      {% csrf_token %}
+      {% include "scheduling/_form_fields.html" %}
+      <div class="d-flex flex-wrap gap-2 mt-4">
+        <button class="btn btn-primary"><i class="bi bi-check2"></i> Save session</button>
+        <a class="btn btn-outline-secondary" href="{% url 'scheduling:daily_schedule' %}">Cancel</a>
+      </div>
+    </form>
+  </div></div>
+</div>
+{% endblock %}

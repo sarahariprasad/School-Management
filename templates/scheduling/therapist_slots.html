@@ -1,0 +1,65 @@
+{% extends "scheduling/base_scheduling.html" %}
+{% block title %}Therapist Slots{% endblock %}
+{% block tab_tslots %}is-active{% endblock %}
+{% block page_icon %}<i class="bi bi-grid-3x3-gap"></i>{% endblock %}
+{% block page_title %}Therapist Working Slots{% endblock %}
+{% block page_sub %}Choose the hours each therapist works every day (for example 5 of 8).{% endblock %}
+{% block page_content %}
+<details class="sch-help mb-3" open>
+  <summary>How this works</summary>
+  <ul>
+    <li>Tick the hours a therapist works. The daily schedule then shows <strong>only those hours</strong> and reports how many are completed.</li>
+    <li>A therapist with <strong>nothing ticked works every slot</strong>.</li>
+    <li>An hour that still has students can't be removed — move the students first.</li>
+  </ul>
+</details>
+<form method="post">
+  {% csrf_token %}
+  <div class="sch-card">
+  <div class="table-responsive">
+  <table class="table table-sm table-bordered align-middle text-center matrix mb-0">
+    <thead class="table-light">
+      <tr>
+        <th class="sticky-col">Therapist</th>
+        {% for sl in slots %}<th class="small">{{ sl.start_time|time:"h:i A" }}<br><span class="text-muted fw-normal">{{ sl.end_time|time:"h:i A" }}</span></th>{% endfor %}
+        <th>Slots</th><th class="d-none d-sm-table-cell"></th>
+      </tr>
+    </thead>
+    <tbody>
+    {% for r in rows %}
+      <tr>
+        <td class="sticky-col">{{ r.staff.full_name }}<div class="small text-muted">{{ r.staff.therapy }}{% if not r.configured %} · all slots (default){% endif %}</div></td>
+        {% for c in r.cells %}
+        <td><input type="checkbox" class="form-check-input slot-cb" style="width:1.2rem;height:1.2rem" name="slots_{{ r.staff.pk }}" value="{{ c.slot.pk }}" {% if r.configured and c.on %}checked{% endif %} data-row="{{ r.staff.pk }}"></td>
+        {% endfor %}
+        <td class="fw-semibold"><span class="row-count" data-row="{{ r.staff.pk }}">{{ r.count }}</span></td>
+        <td class="d-none d-sm-table-cell">
+          <button type="button" class="btn btn-sm btn-outline-secondary py-0" data-all="{{ r.staff.pk }}">All</button>
+          <button type="button" class="btn btn-sm btn-outline-secondary py-0" data-none="{{ r.staff.pk }}">None</button>
+        </td>
+      </tr>
+    {% empty %}
+      <tr><td colspan="{{ slots|length|add:3 }}" class="text-muted py-4">No therapists found. Set a Therapy on staff profiles first.</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  </div>
+  </div>
+  <button class="btn btn-primary mt-3"><i class="bi bi-check2"></i> Save slots</button>
+</form>
+<script>
+(function () {
+  var total = {{ slots|length }};
+  function recount(id) {
+    var boxes = document.querySelectorAll('.slot-cb[data-row="' + id + '"]');
+    var n = Array.prototype.filter.call(boxes, function (b) { return b.checked; }).length;
+    document.querySelector('.row-count[data-row="' + id + '"]').textContent = n === 0 ? total : n;
+  }
+  document.querySelectorAll('.slot-cb').forEach(function (b) { b.addEventListener('change', function () { recount(b.dataset.row); }); });
+  document.querySelectorAll('[data-all]').forEach(function (btn) { btn.addEventListener('click', function () {
+    document.querySelectorAll('.slot-cb[data-row="' + btn.dataset.all + '"]').forEach(function (b) { b.checked = true; }); recount(btn.dataset.all); }); });
+  document.querySelectorAll('[data-none]').forEach(function (btn) { btn.addEventListener('click', function () {
+    document.querySelectorAll('.slot-cb[data-row="' + btn.dataset.none + '"]').forEach(function (b) { b.checked = false; }); recount(btn.dataset.none); }); });
+})();
+</script>
+{% endblock %}

@@ -1,0 +1,48 @@
+{% extends "scheduling/base_scheduling.html" %}
+{% block title %}Free Slots{% endblock %}
+{% block tab_free %}is-active{% endblock %}
+{% block page_icon %}<i class="bi bi-clock"></i>{% endblock %}
+{% block page_title %}Free Slots — {{ day|date:"d M Y" }}{% endblock %}
+{% block page_sub %}Who is available each hour, and which students have no session yet.{% endblock %}
+{% block page_content %}
+{% include "scheduling/_filters.html" %}
+
+{% if absent_staff or absent_students %}
+<div class="row g-3 mb-3">
+  <div class="col-12 col-md-6"><div class="sch-card h-100"><div class="sch-card-head fw-semibold text-danger"><i class="bi bi-person-badge"></i> Therapists absent / on leave</div>
+    <ul class="list-group list-group-flush">
+    {% for a in absent_staff %}<li class="list-group-item">{{ a.staff.full_name }} <span class="badge bg-secondary">{{ a.get_status_display }}</span> <small class="text-muted">{{ a.remarks }}</small></li>{% empty %}<li class="list-group-item text-muted">None</li>{% endfor %}
+    </ul></div></div>
+  <div class="col-12 col-md-6"><div class="sch-card h-100"><div class="sch-card-head fw-semibold text-warning-emphasis"><i class="bi bi-person-x"></i> Students absent / on leave</div>
+    <ul class="list-group list-group-flush">
+    {% for a in absent_students %}<li class="list-group-item">{{ a.student.name }} <span class="badge bg-secondary">{{ a.get_status_display }}</span> <small class="text-muted">{{ a.remarks }}</small></li>{% empty %}<li class="list-group-item text-muted">None</li>{% endfor %}
+    </ul></div></div>
+</div>
+{% endif %}
+
+<div class="row g-3">
+{% for row in rows %}
+  <div class="col-12 col-lg-6">
+  <div class="sch-card h-100">
+    <div class="sch-card-head fw-semibold"><i class="bi bi-clock"></i> {{ row.slot }}</div>
+    <div class="p-3">
+      <div class="mb-3">
+        <div class="small text-muted mb-1">Available therapists <span class="text-body-secondary">(students already in this hour)</span></div>
+        {% for f in row.free_staff %}
+          <a class="badge rounded-pill text-bg-success text-decoration-none me-1 mb-1 py-2 px-3" href="{% url 'scheduling:session_create' %}?staff={{ f.staff.pk }}&slot={{ row.slot.pk }}&date={{ day|date:'Y-m-d' }}">{{ f.staff.full_name }} · {{ f.staff.therapy }} ({{ f.count }})</a>
+        {% empty %}<span class="text-muted small">No one available</span>{% endfor %}
+      </div>
+      <div>
+        <div class="small text-muted mb-1">Students without a session <span class="text-body-secondary">(not absent, not in group hours)</span></div>
+        {% for s in row.free_students %}
+          <a class="badge rounded-pill text-bg-light border text-decoration-none me-1 mb-1 py-2 px-3" href="{% url 'scheduling:session_create' %}?student={{ s.pk }}&slot={{ row.slot.pk }}&date={{ day|date:'Y-m-d' }}">{{ s.name }}</a>
+        {% empty %}<span class="text-muted small">Everyone has a session</span>{% endfor %}
+      </div>
+    </div>
+  </div>
+  </div>
+{% empty %}
+  <div class="col-12"><div class="alert alert-info">No time slots defined yet.</div></div>
+{% endfor %}
+</div>
+{% endblock %}

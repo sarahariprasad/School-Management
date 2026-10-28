@@ -1,0 +1,106 @@
+{% extends "scheduling/base_scheduling.html" %}
+{% block title %}Calendar{% endblock %}
+{% block tab_calendar %}is-active{% endblock %}
+{% block page_icon %}<i class="bi bi-calendar-week"></i>{% endblock %}
+{% block page_title %}Calendar{% if mode == "week" and cal_staff %} — {{ cal_staff.full_name }}{% else %} — {{ day|date:"D, d M Y" }}{% endif %}{% endblock %}
+{% block page_sub %}See at a glance which hours are <strong>Free</strong>, <strong>Booked</strong> or <strong>Not available</strong>.{% endblock %}
+{% block page_actions %}
+  <div class="btn-group btn-group-sm" role="group" aria-label="Calendar view">
+    <a class="btn {% if mode == 'day' %}btn-primary{% else %}btn-outline-primary{% endif %}" href="?date={{ day|date:'Y-m-d' }}{{ filter_qs }}&mode=day"><i class="bi bi-people"></i> Day · all therapists</a>
+    <a class="btn {% if mode == 'week' %}btn-primary{% else %}btn-outline-primary{% endif %}" href="?date={{ day|date:'Y-m-d' }}{{ filter_qs }}&mode=week"><i class="bi bi-calendar-week"></i> Week · one therapist</a>
+  </div>
+{% endblock %}
+
+{% block page_content %}
+{% include "scheduling/_filters.html" %}
+
+<div class="legend mb-3">
+  <span><span class="sw" style="background:var(--free-bg)"></span>Free — click to add a student</span>
+  <span><span class="sw" style="background:var(--booked-bg)"></span>Booked</span>
+  <span><span class="sw" style="background:var(--done-bg)"></span>Booked · completed</span>
+  <span><span class="sw" style="background:var(--missed-bg)"></span>Booked · therapist absent</span>
+  <span><span class="sw" style="background:repeating-linear-gradient(45deg,#f1f3f5,#f1f3f5 4px,#fff 4px,#fff 8px)"></span>Not available</span>
+</div>
+
+{% if need_staff %}
+  <div class="alert alert-info py-2"><i class="bi bi-info-circle"></i> Pick a <strong>Therapist</strong> above to see the weekly calendar. Showing the day view for now.</div>
+{% endif %}
+
+{% if mode == "week" and week %}
+  <div class="row g-2 mb-3">
+    <div class="col-4"><div class="sch-stat"><span class="ico ico-blue"><i class="bi bi-bookmark-check"></i></span><div><div class="num">{{ week.totals.booked }}</div><div class="lbl">Booked</div></div></div></div>
+    <div class="col-4"><div class="sch-stat"><span class="ico ico-green"><i class="bi bi-check2-circle"></i></span><div><div class="num">{{ week.totals.free }}</div><div class="lbl">Free</div></div></div></div>
+    <div class="col-4"><div class="sch-stat"><span class="ico ico-grey"><i class="bi bi-slash-circle"></i></span><div><div class="num">{{ week.totals.na }}</div><div class="lbl">Not available</div></div></div></div>
+  </div>
+  <div class="cal-wrap table-responsive">
+  <table class="cal text-center">
+    <thead>
+      <tr><th class="tcol">Time</th>
+      {% for d in week.days %}<th class="{% if d == day %}today{% endif %}">{{ d|date:"D" }}<br><span class="fw-normal small">{{ d|date:"d M" }}</span></th>{% endfor %}</tr>
+    </thead>
+    <tbody>
+    {% for row in week.rows %}
+      <tr>
+        <th class="tcol">{{ row.slot.start_time|time:"h:i A" }}<br><span class="fw-normal text-muted">{{ row.slot.end_time|time:"h:i A" }}</span></th>
+        {% for cell in row.cells %}
+        <td class="cell c-{{ cell.state }} {% if cell.row_state == 'done' %}done{% elif cell.row_state == 'missed' %}missed{% endif %}">
+          {% if cell.state == "booked" %}
+            <a href="{% url 'scheduling:daily_schedule' %}?date={{ cell.date|date:'Y-m-d' }}&staff={{ cal_staff.pk }}" title="{{ cell.names|join:', ' }}">
+              <strong>{{ cell.count }} student{{ cell.count|pluralize }}</strong>
+              <span class="names">{{ cell.names|join:", " }}</span>
+            </a>
+          {% elif cell.state == "free" %}
+            <a href="{% if can_change %}{% url 'scheduling:assignment_create' %}?staff={{ cal_staff.pk }}&slot={{ row.slot.pk }}{% else %}{% url 'scheduling:session_create' %}?staff={{ cal_staff.pk }}&slot={{ row.slot.pk }}&date={{ cell.date|date:'Y-m-d' }}{% endif %}" class="text-success fw-semibold"><i class="bi bi-plus-circle"></i> Free</a>
+          {% else %}
+            <span title="{{ cell.note }}">—<span class="note">{{ cell.note }}</span></span>
+          {% endif %}
+        </td>
+        {% endfor %}
+      </tr>
+    {% empty %}<tr><td colspan="8" class="text-muted py-4">No time slots defined.</td></tr>{% endfor %}
+    </tbody>
+  </table>
+  </div>
+
+{% elif cal %}
+  {% if not cal.working_day %}<div class="alert alert-secondary py-2"><i class="bi bi-moon"></i> This is a non-working day. Only existing bookings are shown.</div>{% endif %}
+  <div class="row g-2 mb-3">
+    <div class="col-4"><div class="sch-stat"><span class="ico ico-blue"><i class="bi bi-bookmark-check"></i></span><div><div class="num">{{ cal.totals.booked }}</div><div class="lbl">Booked</div></div></div></div>
+    <div class="col-4"><div class="sch-stat"><span class="ico ico-green"><i class="bi bi-check2-circle"></i></span><div><div class="num">{{ cal.totals.free }}</div><div class="lbl">Free</div></div></div></div>
+    <div class="col-4"><div class="sch-stat"><span class="ico ico-grey"><i class="bi bi-slash-circle"></i></span><div><div class="num">{{ cal.totals.na }}</div><div class="lbl">Not available</div></div></div></div>
+  </div>
+  {% if not cal.cards %}
+    <div class="alert alert-info"><i class="bi bi-info-circle"></i> No therapists match these filters.</div>
+  {% else %}
+  <div class="cal-wrap table-responsive">
+  <table class="cal text-center">
+    <thead>
+      <tr><th class="tcol">Time</th>
+      {% for c in cal.cards %}<th><a class="text-decoration-none" href="?date={{ day|date:'Y-m-d' }}&mode=week&staff={{ c.staff.pk }}{% if branch_sel %}&branch={{ branch_sel }}{% endif %}">{{ c.staff.full_name }}</a><br><span class="badge bg-secondary">{{ c.staff.therapy }}</span>{% if c.off %} <span class="badge bg-danger">absent</span>{% endif %}</th>{% endfor %}</tr>
+    </thead>
+    <tbody>
+    {% for row in cal.rows %}
+      <tr>
+        <th class="tcol">{{ row.slot.start_time|time:"h:i A" }}<br><span class="fw-normal text-muted">{{ row.slot.end_time|time:"h:i A" }}</span></th>
+        {% for cell in row.cells %}
+        <td class="cell c-{{ cell.state }} {% if cell.row_state == 'done' %}done{% elif cell.row_state == 'missed' %}missed{% endif %}">
+          {% if cell.state == "booked" %}
+            <a href="{% url 'scheduling:daily_schedule' %}?date={{ day|date:'Y-m-d' }}&staff={{ cell.staff.pk }}" title="{{ cell.names|join:', ' }}">
+              <strong>{{ cell.count }} student{{ cell.count|pluralize }}</strong>
+              <span class="names">{{ cell.names|join:", " }}</span>
+            </a>
+          {% elif cell.state == "free" %}
+            <a href="{% if can_change %}{% url 'scheduling:assignment_create' %}?staff={{ cell.staff.pk }}&slot={{ row.slot.pk }}{% else %}{% url 'scheduling:session_create' %}?staff={{ cell.staff.pk }}&slot={{ row.slot.pk }}&date={{ day|date:'Y-m-d' }}{% endif %}" class="text-success fw-semibold"><i class="bi bi-plus-circle"></i> Free</a>
+          {% else %}
+            <span title="{{ cell.note }}">—<span class="note">{{ cell.note }}</span></span>
+          {% endif %}
+        </td>
+        {% endfor %}
+      </tr>
+    {% empty %}<tr><td colspan="{{ cal.cards|length|add:1 }}" class="text-muted py-4">No time slots defined.</td></tr>{% endfor %}
+    </tbody>
+  </table>
+  </div>
+  {% endif %}
+{% endif %}
+{% endblock %}

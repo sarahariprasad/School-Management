@@ -29,7 +29,7 @@ from .models import EducationRecord, StaffDocument, StaffProfile
 # ═══════════════════════════════════════════════════════════════
 # LIST VIEW
 # ═══════════════════════════════════════════════════════════════
-@login_required
+@role_required("SYSTEM_ADMIN", "BRANCH_ADMIN", "FINANCE_ADMIN")
 def staff_list(request):
     search = request.GET.get("search", "").strip()
     status_filter = request.GET.get("status", "").strip().lower()
@@ -80,7 +80,7 @@ def staff_list(request):
 # ═══════════════════════════════════════════════════════════════
 # CREATE VIEW  —  FIXED: validate everything BEFORE touching DB
 # ═══════════════════════════════════════════════════════════════
-@role_required("SYSTEM_ADMIN", "BRANCH_ADMIN")
+@role_required("SYSTEM_ADMIN")
 @transaction.atomic
 def staff_create(request):
     if request.method == "POST":
@@ -161,7 +161,7 @@ def staff_create(request):
 # ═══════════════════════════════════════════════════════════════
 # EDIT VIEW
 # ═══════════════════════════════════════════════════════════════
-@role_required("SYSTEM_ADMIN", "BRANCH_ADMIN")
+@role_required("SYSTEM_ADMIN")
 @transaction.atomic
 def staff_edit(request, pk):
     profile = get_object_or_404(
@@ -254,7 +254,7 @@ def staff_edit(request, pk):
 # ═══════════════════════════════════════════════════════════════
 # DEACTIVATE VIEW
 # ═══════════════════════════════════════════════════════════════
-@role_required("SYSTEM_ADMIN", "BRANCH_ADMIN")
+@role_required("SYSTEM_ADMIN")
 @transaction.atomic
 def staff_deactivate(request, pk):
     profile = get_object_or_404(
@@ -293,7 +293,7 @@ def staff_deactivate(request, pk):
 # ═══════════════════════════════════════════════════════════════
 # DOCUMENTS VIEW
 # ═══════════════════════════════════════════════════════════════
-@role_required("SYSTEM_ADMIN", "BRANCH_ADMIN")
+@role_required("SYSTEM_ADMIN")
 def staff_documents(request, pk):
     profile = get_object_or_404(
         branch_scope(
@@ -310,7 +310,7 @@ def staff_documents(request, pk):
     })
 
 
-@role_required("SYSTEM_ADMIN", "BRANCH_ADMIN")
+@role_required("SYSTEM_ADMIN")
 def education_add(request, pk):
     profile = get_object_or_404(
         branch_scope(request.user, StaffProfile.objects.all(), "user__branch"),
@@ -326,7 +326,7 @@ def education_add(request, pk):
     return redirect("staff_documents", pk=pk)
 
 
-@role_required("SYSTEM_ADMIN", "BRANCH_ADMIN")
+@role_required("SYSTEM_ADMIN")
 def document_add(request, pk):
     profile = get_object_or_404(
         branch_scope(request.user, StaffProfile.objects.all(), "user__branch"),
@@ -348,7 +348,7 @@ def document_add(request, pk):
 from django.http import FileResponse
 
 
-@login_required
+@role_required("SYSTEM_ADMIN", "BRANCH_ADMIN", "FINANCE_ADMIN")
 def staff_file_download(request, pk, kind, document_pk=None):
     profile = get_object_or_404(
         branch_scope(request.user, StaffProfile.objects.all(), "user__branch"),
@@ -411,7 +411,7 @@ def staff_profile_edit(request):
 # ═══════════════════════════════════════════════════════════════
 # ADMIN PROFILE VIEW
 # ═══════════════════════════════════════════════════════════════
-@role_required("SYSTEM_ADMIN", "BRANCH_ADMIN")
+@role_required("SYSTEM_ADMIN", "BRANCH_ADMIN", "FINANCE_ADMIN")
 def staff_profile_admin_view(request, pk):
     profile = get_object_or_404(
         branch_scope(
@@ -441,7 +441,7 @@ def staff_profile_admin_view(request, pk):
 # ═══════════════════════════════════════════════════════════════
 # HISTORY ADD VIEWS
 # ═══════════════════════════════════════════════════════════════
-@role_required("SYSTEM_ADMIN", "BRANCH_ADMIN")
+@role_required("SYSTEM_ADMIN")
 def experience_add(request, pk):
     profile = get_object_or_404(
         branch_scope(request.user, StaffProfile.objects.all(), "user__branch"),
@@ -458,7 +458,7 @@ def experience_add(request, pk):
     return render(request, "staff/experience_form.html", {"form": form, "profile": profile})
 
 
-@role_required("SYSTEM_ADMIN", "BRANCH_ADMIN")
+@role_required("SYSTEM_ADMIN")
 def promotion_add(request, pk):
     profile = get_object_or_404(
         branch_scope(request.user, StaffProfile.objects.all(), "user__branch"),
@@ -475,7 +475,7 @@ def promotion_add(request, pk):
     return render(request, "staff/promotion_form.html", {"form": form, "profile": profile})
 
 
-@role_required("SYSTEM_ADMIN", "BRANCH_ADMIN")
+@role_required("SYSTEM_ADMIN")
 def salary_increment_add(request, pk):
     profile = get_object_or_404(
         branch_scope(request.user, StaffProfile.objects.all(), "user__branch"),
@@ -501,7 +501,7 @@ def salary_increment_add(request, pk):
 # ═══════════════════════════════════════════════════════════════
 # EXCEL EXPORT — ALL STAFF
 # ═══════════════════════════════════════════════════════════════
-@login_required
+@role_required("SYSTEM_ADMIN", "BRANCH_ADMIN", "FINANCE_ADMIN")
 def staff_export_excel(request):
     """Export all accessible staff to Excel."""
     staff_qs = branch_scope(
@@ -585,7 +585,7 @@ def staff_export_excel(request):
 # ═══════════════════════════════════════════════════════════════
 # EXCEL EXPORT — SINGLE STAFF
 # ═══════════════════════════════════════════════════════════════
-@login_required
+@role_required("SYSTEM_ADMIN", "BRANCH_ADMIN", "FINANCE_ADMIN")
 def staff_export_single_excel(request, pk):
     """Export a single staff member's complete details to Excel."""
     profile = get_object_or_404(

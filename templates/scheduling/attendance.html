@@ -1,0 +1,59 @@
+{% extends "scheduling/base_scheduling.html" %}
+{% block title %}{{ kind|title }} Attendance{% endblock %}
+{% block tab_att_student %}{% if kind == "student" %}is-active{% endif %}{% endblock %}
+{% block tab_att_staff %}{% if kind == "staff" %}is-active{% endif %}{% endblock %}
+{% block page_icon %}<i class="bi bi-person-check"></i>{% endblock %}
+{% block page_title %}{{ kind|title }} Attendance — {{ day|date:"d M Y" }}{% endblock %}
+{% block page_sub %}Mark who is present, absent or on leave for the day.{% endblock %}
+{% block page_actions %}<a class="btn btn-success btn-sm" href="{% url 'scheduling:export_attendance' %}?date={{ day|date:'Y-m-d' }}{{ filter_qs }}"><i class="bi bi-file-earmark-excel"></i> Export Excel</a>{% endblock %}
+{% block page_content %}
+{% include "scheduling/_filters.html" %}
+
+<div class="alert alert-info py-2 small">
+  <i class="bi bi-lightbulb"></i>
+  Marking someone <strong>Absent / On Leave</strong> automatically flags their sessions for this date
+  ({% if kind == "staff" %}"Therapist Absent"{% else %}"Student Absent"{% endif %}); choosing <strong>Present</strong> restores them.
+  For a longer Excel period add <code>&amp;from=YYYY-MM-DD&amp;to=YYYY-MM-DD</code> to the export link.
+</div>
+
+<form method="post">
+  {% csrf_token %}
+  <input type="hidden" name="date" value="{{ day|date:'Y-m-d' }}">
+  <div class="sch-card">
+    <div class="sch-card-head d-flex flex-wrap justify-content-between align-items-center gap-2">
+      <span class="small text-muted">{{ rows|length }} {% if kind == "staff" %}staff member{{ rows|length|pluralize }}{% else %}student{{ rows|length|pluralize }}{% endif %}</span>
+      <button type="button" class="btn btn-sm btn-outline-success" id="allPresent"><i class="bi bi-check2-all"></i> Mark all present</button>
+    </div>
+    <div class="table-responsive">
+    <table class="table table-sm align-middle mb-0">
+      <thead class="table-light"><tr><th>{% if kind == "staff" %}Employee{% else %}Student{% endif %}</th><th>Attendance &amp; remarks</th><th class="d-none d-sm-table-cell"></th></tr></thead>
+      <tbody>
+      {% for r in rows %}
+        <tr>
+          <td>
+            {% if kind == "staff" %}{{ r.person.full_name }}<div class="small text-muted">{{ r.person.employee_id }}</div>
+            {% else %}{{ r.person.name }}<div class="small text-muted">{{ r.person.student_id }}</div>{% endif %}
+          </td>
+          <td>
+            <div class="btn-group att-group" role="group">
+              {% for v, l in choices %}
+              <input type="radio" class="btn-check" name="status_{{ r.person.pk }}" id="a{{ r.person.pk }}{{ v }}" value="{{ v }}"
+                     {% if r.record.status == v or not r.record and v == "present" %}checked{% endif %}>
+              <label class="btn btn-outline-{% if v == 'present' %}success{% elif v == 'absent' %}danger{% else %}warning{% endif %}" for="a{{ r.person.pk }}{{ v }}">{{ l }}</label>
+              {% endfor %}
+            </div>
+            <input name="remarks_{{ r.person.pk }}" value="{{ r.record.remarks|default:'' }}" class="form-control form-control-sm mt-1" placeholder="Remarks (optional)" style="min-width:170px">
+          </td>
+          <td class="d-none d-sm-table-cell"><a class="small text-decoration-none" href="{% if kind == 'staff' %}{% url 'scheduling:staff_report' r.person.pk %}{% else %}{% url 'scheduling:student_report' r.person.pk %}{% endif %}">History</a></td>
+        </tr>
+      {% empty %}
+        <tr><td colspan="3" class="text-center text-muted py-4">Nobody to show for these filters.</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+    </div>
+  </div>
+  <button class="btn btn-primary mt-3"><i class="bi bi-check2"></i> Save attendance</button>
+</form>
+<script>document.getElementById('allPresent').addEventListener('click',function(){document.querySelectorAll('input[type=radio][value=present]').forEach(function(r){r.checked=true;});});</script>
+{% endblock %}

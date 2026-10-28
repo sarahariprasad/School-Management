@@ -1,0 +1,20 @@
+{% extends "scheduling/base_scheduling.html" %}
+{% block title %}Group Session{% endblock %}
+{% block tab_group %}is-active{% endblock %}
+{% block page_icon %}<i class="bi bi-people"></i>{% endblock %}
+{% block page_title %}{% if instance %}Edit{% else %}New{% endif %} Group Session{% endblock %}
+{% block page_sub %}Daily group hours. Everyone in the group is added to the attendance list automatically.{% endblock %}
+{% block page_content %}
+<div class="sch-form-card">
+  <div class="sch-card"><div class="p-3 p-md-4">
+    <form method="post" novalidate>
+      {% csrf_token %}
+      {% include "scheduling/_form_fields.html" %}
+      <div class="d-flex flex-wrap gap-2 mt-4">
+        <button class="btn btn-primary"><i class="bi bi-check2"></i> Save</button>
+        <a class="btn btn-outline-secondary" href="{% url 'scheduling:group_list' %}">Cancel</a>
+      </div>
+    </form>
+  </div></div>
+</div>
+{% endblock %}

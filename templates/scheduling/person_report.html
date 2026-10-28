@@ -1,0 +1,90 @@
+{% extends "scheduling/base_scheduling.html" %}
+{% block title %}{% if kind == "staff" %}{{ person.full_name }}{% else %}{{ person.name }}{% endif %} — Schedule & Attendance{% endblock %}
+{% block page_icon %}<i class="bi bi-person-lines-fill"></i>{% endblock %}
+{% block page_title %}{% if kind == "staff" %}{{ person.full_name }}{% else %}{{ person.name }}{% endif %}{% endblock %}
+{% block page_sub %}{% if kind == "staff" %}{{ person.employee_id }} · {{ person.therapy|default:"No therapy" }}{% else %}{{ person.student_id }} · Group: {{ person.group|default:"—" }}{% endif %} · {{ start|date:"d M Y" }} to {{ end|date:"d M Y" }}{% endblock %}
+{% block page_actions %}<a class="btn btn-success btn-sm" href="?from={{ start|date:'Y-m-d' }}&to={{ end|date:'Y-m-d' }}&export=xlsx"><i class="bi bi-file-earmark-excel"></i> Export Excel</a>{% endblock %}
+
+{% block page_content %}
+<form method="get" class="sch-filter mb-3">
+  <div class="row g-2 align-items-end">
+    <div class="col-6 col-md-auto"><label class="form-label">From</label><input type="date" name="from" value="{{ start|date:'Y-m-d' }}" class="form-control form-control-sm"></div>
+    <div class="col-6 col-md-auto"><label class="form-label">To</label><input type="date" name="to" value="{{ end|date:'Y-m-d' }}" class="form-control form-control-sm"></div>
+    <div class="col-12 col-md-auto d-grid"><button class="btn btn-sm btn-primary"><i class="bi bi-funnel"></i> Apply</button></div>
+  </div>
+</form>
+
+<div class="row g-3 mb-3">
+  <div class="col-12 col-md-6"><div class="sch-card h-100"><div class="sch-card-head fw-semibold"><i class="bi bi-calendar-check"></i> Sessions</div><div class="p-3">
+    {% for k, v in session_counts.items %}<span class="badge text-bg-primary me-1 mb-1">{{ k }}: {{ v }}</span>{% empty %}<span class="text-muted">No sessions in this period.</span>{% endfor %}
+  </div></div></div>
+  <div class="col-12 col-md-6"><div class="sch-card h-100"><div class="sch-card-head fw-semibold"><i class="bi bi-person-check"></i> Daily attendance</div><div class="p-3">
+    {% for k, v in att_counts.items %}<span class="badge text-bg-info me-1 mb-1">{{ k }}: {{ v }}</span>{% empty %}<span class="text-muted">No attendance records.</span>{% endfor %}
+  </div></div></div>
+</div>
+
+<div class="sch-section-title"><i class="bi bi-diagram-3"></i> {% if kind == "staff" %}Students under this therapist{% else %}Recurring slots{% endif %}</div>
+<div class="sch-card"><div class="table-responsive">
+<table class="table table-sm align-middle mb-0">
+  <thead class="table-light"><tr><th>Time</th><th>{% if kind == "staff" %}Student{% else %}Therapist{% endif %}</th><th>Therapy</th><th class="d-none d-sm-table-cell">Days</th><th></th></tr></thead>
+  <tbody>
+  {% for a in assignments %}
+    <tr>
+      <td class="text-nowrap">{{ a.time_slot }}</td>
+      <td>{% if kind == "staff" %}<a class="text-decoration-none" href="{% url 'scheduling:student_report' a.student.pk %}">{{ a.student.name }}</a>{% else %}{{ a.staff.full_name }}{% endif %}</td>
+      <td><span class="badge bg-secondary">{{ a.therapy }}</span></td>
+      <td class="d-none d-sm-table-cell">{{ a.weekday_display }}</td>
+      <td class="text-end">{% if can_change %}
+        <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#changeModal"
+          data-url="{% url 'scheduling:assignment_change' a.pk %}" data-end-url="{% url 'scheduling:assignment_end' a.pk %}"
+          data-assignment="{{ a.pk }}" data-student-id="{{ a.student_id }}" data-branch="{{ a.student.student_branch_id|default_if_none:'' }}" data-student="{{ a.student.name }}" data-therapy="{{ a.therapy_id }}" data-staff="{{ a.staff_id }}"
+          data-slot="{{ a.time_slot_id }}" data-days="{{ a.weekdays }}">Change</button>{% endif %}</td>
+    </tr>
+  {% empty %}<tr><td colspan="5" class="text-muted text-center py-3">No recurring slots.</td></tr>{% endfor %}
+  </tbody>
+</table>
+</div></div>
+
+<div class="sch-section-title"><i class="bi bi-calendar-check"></i> Sessions</div>
+<div class="sch-card"><div class="table-responsive">
+<table class="table table-sm align-middle mb-0">
+  <thead class="table-light"><tr><th>Date</th><th>Slot</th><th class="d-none d-md-table-cell">Therapy</th><th>{% if kind == "staff" %}Student{% else %}Therapist{% endif %}</th><th>Status</th><th class="d-none d-md-table-cell">Reason</th></tr></thead>
+  <tbody>
+  {% for s in sessions %}
+    <tr>
+      <td class="text-nowrap">{{ s.date|date:"d M Y" }}</td><td class="text-nowrap">{{ s.time_slot }}</td><td class="d-none d-md-table-cell">{{ s.therapy }}</td>
+      <td>{% if kind == "staff" %}{{ s.student.name }}{% else %}{{ s.staff.full_name }}{% endif %}</td>
+      <td><span class="badge bg-{{ s.badge_class }}">{{ s.get_status_display }}</span></td>
+      <td class="d-none d-md-table-cell">{{ s.absence_reason }}</td>
+    </tr>
+  {% empty %}<tr><td colspan="6" class="text-muted text-center py-3">No sessions in this period.</td></tr>{% endfor %}
+  </tbody>
+</table>
+</div></div>
+
+<div class="sch-section-title"><i class="bi bi-person-check"></i> Daily attendance</div>
+<div class="sch-card"><div class="table-responsive">
+<table class="table table-sm mb-0">
+  <thead class="table-light"><tr><th>Date</th><th>Status</th><th>Remarks</th></tr></thead>
+  <tbody>
+  {% for a in attendance %}<tr><td>{{ a.date|date:"d M Y" }}</td><td>{{ a.get_status_display }}</td><td>{{ a.remarks }}</td></tr>
+  {% empty %}<tr><td colspan="3" class="text-muted text-center py-3">No records.</td></tr>{% endfor %}
+  </tbody>
+</table>
+</div></div>
+
+{% if kind == "student" %}
+<div class="sch-section-title"><i class="bi bi-people"></i> Group session attendance</div>
+<div class="sch-card"><div class="table-responsive">
+<table class="table table-sm mb-0">
+  <thead class="table-light"><tr><th>Date</th><th>Group</th><th>Status</th><th>Remarks</th></tr></thead>
+  <tbody>
+  {% for g in group_att %}<tr><td>{{ g.group_session.date|date:"d M Y" }}</td><td>{{ g.group_session.group }}</td><td>{{ g.get_status_display }}</td><td>{{ g.remarks }}</td></tr>
+  {% empty %}<tr><td colspan="4" class="text-muted text-center py-3">No records.</td></tr>{% endfor %}
+  </tbody>
+</table>
+</div></div>
+{% endif %}
+
+{% if can_change %}{% include "scheduling/_change_modal.html" with eff=end %}{% endif %}
+{% endblock %}

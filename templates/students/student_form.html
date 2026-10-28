@@ -199,26 +199,90 @@
                 </div>
 
                 <!-- STEP 3: Group -->
-                <div class="wizard-panel" data-panel="group">
-                    <div class="card staff-form-card">
-                        <div class="card-body">
-                            <h6 class="card-title"><i class="bi bi-diagram-3-fill me-2"></i>Group</h6>
-                            <div class="row g-3">
-                                <div class="col-12 col-md-6">
-                                    <label for="{{ form.group.id_for_label }}" class="form-label">Group</label>
-                                    {{ form.group }}
-                                    {% if form.group.errors %}<div class="text-danger small mt-1">{{ form.group.errors|striptags }}</div>{% endif %}
-                                    <div class="form-hint mt-1">Red / Green / Orange. You can leave this unset and assign it later.</div>
-                                </div>
-                            </div>
-                            <div class="alert alert-info small mt-3 mb-0">
-                                <i class="bi bi-info-circle-fill me-1"></i>
-                                Therapy enrollments (with their assigned therapist) are added from the student's
-                                detail page once the student record is created.
-                            </div>
+                <!-- STEP 3: Group & Therapy -->
+<div class="wizard-panel" data-panel="group">
+    <div class="card staff-form-card">
+        <div class="card-body">
+            <h6 class="card-title">
+                <i class="bi bi-diagram-3-fill me-2"></i>
+                Group & Therapy Assignment
+            </h6>
+
+            <p class="text-muted small">
+                Select a group, one or more therapies, both, or leave these
+                options unselected to assign them later.
+            </p>
+
+            <div class="row g-4">
+
+                <!-- Group selection -->
+                <div class="col-12 col-lg-5">
+                    <label for="{{ form.group.id_for_label }}"
+                           class="form-label fw-semibold">
+                        <i class="bi bi-people-fill me-1"></i>
+                        Group
+                    </label>
+
+                    {{ form.group }}
+
+                    {% if form.group.errors %}
+                        <div class="text-danger small mt-1">
+                            {{ form.group.errors|striptags }}
                         </div>
+                    {% endif %}
+
+                    <div class="form-hint mt-2">
+                        Optional. Select the student's group or leave it
+                        as Not yet assigned.
                     </div>
                 </div>
+
+                <!-- Therapy selection -->
+                <div class="col-12 col-lg-7">
+                    <label class="form-label fw-semibold">
+                        <i class="bi bi-heart-pulse-fill me-1"></i>
+                        Therapies
+                    </label>
+
+                    <div class="border rounded-3 p-3">
+                        {% for therapy in form.therapies %}
+                            <div class="form-check mb-2">
+                                {{ therapy.tag }}
+                                <label class="form-check-label"
+                                       for="{{ therapy.id_for_label }}">
+                                    {{ therapy.choice_label }}
+                                </label>
+                            </div>
+                        {% empty %}
+                            <p class="text-muted small mb-0">
+                                No therapies are available.
+                            </p>
+                        {% endfor %}
+                    </div>
+
+                    {% if form.therapies.errors %}
+                        <div class="text-danger small mt-1">
+                            {{ form.therapies.errors|striptags }}
+                        </div>
+                    {% endif %}
+
+                    <div class="form-hint mt-2">
+                        Optional. Select multiple therapies if needed.
+                        Therapist and frequency can be configured later
+                        from the student's detail page.
+                    </div>
+                </div>
+
+            </div>
+
+            <div class="alert alert-info small mt-4 mb-0">
+                <i class="bi bi-info-circle-fill me-1"></i>
+                Group and therapy selections are independent. You can choose
+                only a group, only therapies, both, or neither.
+            </div>
+        </div>
+    </div>
+</div>
 
                 <!-- STEP 4: Documents -->
                 <div class="wizard-panel" data-panel="docs">

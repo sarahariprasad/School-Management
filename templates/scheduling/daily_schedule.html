@@ -1,0 +1,172 @@
+{% extends "scheduling/base_scheduling.html" %}
+{% block title %}Daily Schedule{% endblock %}
+{% block tab_daily %}is-active{% endblock %}
+{% block page_icon %}<i class="bi bi-calendar-check"></i>{% endblock %}
+{% block page_title %}Daily Schedule — {{ day|date:"D, d M Y" }}{% endblock %}
+{% block page_sub %}Every therapist, every hour, and the students in it. Mark attendance with the ⋮ menu on each student.{% endblock %}
+{% block page_actions %}
+  <a class="btn btn-success btn-sm" href="{% url 'scheduling:export_schedule' %}?date={{ day|date:'Y-m-d' }}{{ filter_qs }}"><i class="bi bi-file-earmark-excel"></i> Export Excel</a>
+  {% if can_change %}<a class="btn btn-primary btn-sm" href="{% url 'scheduling:assignment_create' %}"><i class="bi bi-person-plus"></i> Assign Student</a>{% endif %}
+{% endblock %}
+
+{% block page_content %}
+{% include "scheduling/_filters.html" %}
+
+<div class="row row-cols-2 row-cols-md-3 row-cols-xl-5 g-2 mb-3">
+  <div class="col"><div class="sch-stat"><span class="ico ico-blue"><i class="bi bi-people"></i></span><div><div class="num">{{ total }}</div><div class="lbl">Sessions</div></div></div></div>
+  <div class="col"><div class="sch-stat"><span class="ico ico-blue"><i class="bi bi-hourglass-split"></i></span><div><div class="num">{{ counts.scheduled|default:0 }}</div><div class="lbl">Scheduled</div></div></div></div>
+  <div class="col"><div class="sch-stat"><span class="ico ico-green"><i class="bi bi-check-circle"></i></span><div><div class="num">{{ counts.completed|default:0 }}</div><div class="lbl">Completed</div></div></div></div>
+  <div class="col"><div class="sch-stat"><span class="ico ico-amber"><i class="bi bi-person-x"></i></span><div><div class="num">{{ counts.student_absent|default:0 }}</div><div class="lbl">Student absent</div></div></div></div>
+  <div class="col"><div class="sch-stat"><span class="ico ico-red"><i class="bi bi-person-badge"></i></span><div><div class="num">{{ counts.staff_absent|default:0 }}</div><div class="lbl">Therapist absent</div></div></div></div>
+</div>
+
+<details class="sch-help mb-3">
+  <summary>How to read this page</summary>
+  <ul>
+    <li>Each card is one therapist and shows <strong>only the hours that therapist works</strong>.</li>
+    <li>A therapist can have <strong>several students in the same hour</strong>. Each student has their own status and ⋮ menu.</li>
+    <li><span class="badge bg-success">✓</span> next to a time means everyone in that hour is done. Use <strong>Complete all</strong> to finish a whole day in one click.</li>
+    <li>Recurring slots continue every day until the student becomes inactive. Use <strong>Add student</strong> for a new slot or a one-off make-up.</li>
+  </ul>
+</details>
+
+{% if not cards %}
+  <div class="alert alert-info"><i class="bi bi-info-circle"></i> No therapists match these filters. Make sure staff profiles have a <strong>Therapy</strong> set.</div>
+{% elif not slots %}
+  <div class="alert alert-info"><i class="bi bi-info-circle"></i> No time slots yet. Run <code>python manage.py seed_timeslots</code> or add them in Django admin.</div>
+{% else %}
+<div class="row g-3 mb-4">
+  {% for card in cards %}
+  <div class="col-12 col-xl-6">
+    <div class="sch-card h-100">
+      <div class="sch-card-head">
+        <div class="d-flex align-items-center gap-2">
+          <span class="sch-avatar">{{ card.staff.full_name|slice:":1"|upper }}</span>
+          <div class="flex-grow-1">
+            <a href="{% url 'scheduling:staff_report' card.staff.pk %}" class="fw-semibold text-decoration-none">{{ card.staff.full_name }}</a>
+            <div>
+              <span class="badge bg-secondary">{{ card.staff.therapy }}</span>
+              {% if card.off %}<span class="badge bg-danger">Absent today</span>{% endif %}
+            </div>
+          </div>
+          <div class="text-end">
+            {% if card.all_done %}
+              <span class="badge bg-success"><i class="bi bi-check-circle"></i> All slots completed</span>
+            {% elif card.pending and not card.off %}
+              <form method="post" action="{% url 'scheduling:slot_complete' %}" class="d-inline">
+                {% csrf_token %}
+                <input type="hidden" name="staff" value="{{ card.staff.pk }}">
+                <input type="hidden" name="date" value="{{ day|date:'Y-m-d' }}">
+                <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                <button class="btn btn-sm btn-outline-success" onclick="return confirm('Mark every pending student of {{ card.staff.full_name|escapejs }} as completed for today?')"><i class="bi bi-check2-all"></i> Complete all</button>
+              </form>
+            {% endif %}
+          </div>
+        </div>
+        <div class="progress sch-progress mt-2" title="{{ card.done }} of {{ card.booked }} booked slots done">
+          <div class="progress-bar" style="width:{{ card.percent }}%"></div>
+        </div>
+        <div class="small text-muted mt-1">
+          <strong class="text-dark">{{ card.done }}/{{ card.booked }}</strong> booked slots done
+          {% if card.pending %}· <span class="text-primary">{{ card.pending }} pending</span>{% endif %}
+          {% if card.missed %}· <span class="text-danger">{{ card.missed }} missed</span>{% endif %}
+          · {{ card.empty }} empty · works {{ card.working }} slot{{ card.working|pluralize }}/day · {{ card.students }} student{{ card.students|pluralize }}
+        </div>
+      </div>
+
+      {% for r in card.rows %}
+      <div class="slot-row {% if r.state == 'free' %}is-free{% elif r.state == 'done' %}is-done{% elif r.state == 'missed' %}is-missed{% elif r.state == 'off' %}is-off{% endif %}">
+        <div class="slot-time">
+          <div class="t1">{{ r.slot.start_time|time:"h:i A" }}</div>
+          <div class="t2">{{ r.slot.end_time|time:"h:i A" }}</div>
+          {% if r.state == "done" %}<div class="text-success" title="Everyone in this hour is done"><i class="bi bi-check-circle-fill"></i></div>{% endif %}
+          {% if r.extra %}<span class="badge bg-light text-dark border" title="Outside this therapist's working slots">extra</span>{% endif %}
+          {% if r.pending and not card.off %}
+          <form method="post" action="{% url 'scheduling:slot_complete' %}">
+            {% csrf_token %}
+            <input type="hidden" name="staff" value="{{ card.staff.pk }}">
+            <input type="hidden" name="slot" value="{{ r.slot.pk }}">
+            <input type="hidden" name="date" value="{{ day|date:'Y-m-d' }}">
+            <input type="hidden" name="next" value="{{ request.get_full_path }}">
+            <button class="btn btn-sm btn-outline-success py-0 px-1 mt-1" title="Mark every student in this hour completed"><i class="bi bi-check2"></i></button>
+          </form>
+          {% endif %}
+        </div>
+
+        <div class="slot-body">
+          {% for s in r.sessions %}
+          <div class="stu s-{{ s.status }}">
+            <div>
+              <a href="{% url 'scheduling:student_report' s.student.pk %}" class="name">{{ s.student.name }}</a>
+              <span class="badge bg-{{ s.badge_class }}">{{ s.get_status_display }}</span>
+              {% if not s.assignment_id %}<span class="badge bg-light text-dark border">One-off</span>{% endif %}
+              {% if s.absence_reason %}<div class="small text-muted fst-italic">{{ s.absence_reason }}</div>{% endif %}
+            </div>
+            <div class="dropdown">
+              <button class="btn btn-sm btn-light border" data-bs-toggle="dropdown" data-bs-boundary="viewport"
+                      data-bs-popper-config='{"strategy":"fixed"}' aria-label="Actions for {{ s.student.name }}"><i class="bi bi-three-dots-vertical"></i></button>
+              <ul class="dropdown-menu dropdown-menu-end">
+                <li><h6 class="dropdown-header">{{ s.student.name }} — mark as</h6></li>
+                {% for val, label in statuses.choices %}
+                <li>
+                  <form method="post" action="{% url 'scheduling:session_mark' s.pk %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="status" value="{{ val }}">
+                    <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                    <button class="dropdown-item {% if s.status == val %}active{% endif %}">{{ label }}</button>
+                  </form>
+                </li>
+                {% endfor %}
+                <li><hr class="dropdown-divider"></li>
+                {% if can_change and s.assignment_id %}
+                <li><button type="button" class="dropdown-item" data-bs-toggle="modal" data-bs-target="#changeModal"
+                     data-url="{% url 'scheduling:assignment_change' s.assignment_id %}"
+                     data-end-url="{% url 'scheduling:assignment_end' s.assignment_id %}"
+                     data-assignment="{{ s.assignment_id }}" data-student-id="{{ s.student_id }}" data-branch="{{ s.student.student_branch_id|default_if_none:'' }}"
+                     data-student="{{ s.student.name }}" data-therapy="{{ s.therapy_id }}"
+                     data-staff="{{ s.staff_id }}" data-slot="{{ s.time_slot_id }}"
+                     data-days="{{ s.assignment.weekdays }}"><i class="bi bi-arrow-left-right"></i> Change slot / therapist</button></li>
+                {% endif %}
+                {% if s.status == "staff_absent" %}
+                <li><a class="dropdown-item" href="{% url 'scheduling:session_create' %}?reschedule={{ s.pk }}"><i class="bi bi-calendar-plus"></i> Make-up session</a></li>
+                {% endif %}
+                <li><a class="dropdown-item" href="{% url 'scheduling:session_edit' s.pk %}"><i class="bi bi-pencil"></i> Edit / add reason</a></li>
+              </ul>
+            </div>
+          </div>
+          {% empty %}
+            {% if r.state == "off" %}<span class="text-muted">Therapist off today</span>
+            {% else %}<span class="free-label"><i class="bi bi-check2-circle"></i> Free</span>{% endif %}
+          {% endfor %}
+
+          {% if not card.off %}
+          <div class="dropdown mt-2">
+            <button class="btn btn-sm btn-outline-secondary add-btn py-0" data-bs-toggle="dropdown" data-bs-boundary="viewport"
+                    data-bs-popper-config='{"strategy":"fixed"}'><i class="bi bi-plus-lg"></i> Add student</button>
+            <ul class="dropdown-menu">
+              {% if can_change %}<li><a class="dropdown-item" href="{% url 'scheduling:assignment_create' %}?staff={{ card.staff.pk }}&slot={{ r.slot.pk }}"><i class="bi bi-person-plus"></i> Assign student (recurring)</a></li>{% endif %}
+              <li><a class="dropdown-item" href="{% url 'scheduling:session_create' %}?staff={{ card.staff.pk }}&slot={{ r.slot.pk }}&date={{ day|date:'Y-m-d' }}"><i class="bi bi-calendar-plus"></i> One-off session today</a></li>
+            </ul>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endfor %}
+</div>
+<div class="legend mb-4">
+  <span><span class="sw" style="background:var(--booked-bg)"></span>Scheduled</span>
+  <span><span class="sw" style="background:var(--done-bg)"></span>Completed</span>
+  <span><span class="sw" style="background:var(--absent-bg)"></span>Student absent</span>
+  <span><span class="sw" style="background:var(--missed-bg)"></span>Therapist absent</span>
+  <span><span class="sw" style="background:var(--na-bg)"></span>Therapist off</span>
+</div>
+{% endif %}
+
+<div class="sch-section-title"><i class="bi bi-people"></i> Group sessions</div>
+{% include "scheduling/_group_table.html" with sessions=group_sessions %}
+
+{% if can_change %}{% include "scheduling/_change_modal.html" with eff=day %}{% endif %}
+{% endblock %}

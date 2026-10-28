@@ -43,3 +43,13 @@ def profile(request):
         "managed_branches": user.get_managed_branch_ids(),
     }
     return render(request, "accounts/profile.html", context)
+
+
+@login_required
+def role_based_redirect(request):
+    role = getattr(request.user, "role", "")
+
+    if role in ("SYSTEM_ADMIN", "BRANCH_ADMIN", "FINANCE_ADMIN"):
+        return redirect("dashboard")
+
+    return redirect("staff_profile")

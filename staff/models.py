@@ -1,3 +1,4 @@
+
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.core.validators import FileExtensionValidator
@@ -35,15 +36,19 @@ class StaffProfile(TrackableMixin, models.Model):
         FINANCE = "FINANCE", "Finance"
         SUPPORT = "SUPPORT", "Support"
 
-    # ── User Link ──
+    # User Link
     user = models.OneToOneField(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
         related_name="staff_profile",
     )
 
-    # ── Basic Info ──
-    employee_id = models.CharField(max_length=30, unique=True, db_index=True)
+    # Basic Info
+    employee_id = models.CharField(
+        max_length=30,
+        unique=True,
+        db_index=True,
+    )
     gender = models.CharField(
         max_length=1,
         choices=Gender.choices,
@@ -51,15 +56,28 @@ class StaffProfile(TrackableMixin, models.Model):
         default="",
     )
     date_of_birth = models.DateField(blank=True, null=True)
-    department = models.CharField(max_length=20, choices=Department.choices)
+    department = models.CharField(
+        max_length=20,
+        choices=Department.choices,
+    )
     designation = models.CharField(max_length=100)
 
-    # ── Employment Dates ──
+    # Optional primary therapy for this staff member.
+    # String reference prevents a circular import with students.models.
+    therapy = models.ForeignKey(
+        "students.Therapy",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="staff_profiles",
+    )
+
+    # Employment Dates
     joining_date = models.DateField()
     leaving_date = models.DateField(null=True, blank=True)
     exit_reason = models.TextField(blank=True)
 
-    # ── Contact ──
+    # Contact
     phone = models.CharField(max_length=20, blank=True)
     emergency_contact = models.CharField(max_length=20, blank=True)
     emergency_contact_name = models.CharField(max_length=100, blank=True)
@@ -69,7 +87,7 @@ class StaffProfile(TrackableMixin, models.Model):
     postal_code = models.CharField(max_length=15, blank=True)
     blood_group = models.CharField(max_length=10, blank=True)
 
-    # ── Documents ──
+    # Documents
     address_proof_type = models.CharField(max_length=60, blank=True)
     address_proof = models.FileField(
         upload_to=staff_document_path,
@@ -86,7 +104,7 @@ class StaffProfile(TrackableMixin, models.Model):
         ],
     )
 
-    # ── Status ──
+    # Status
     is_active = models.BooleanField(default=True, db_index=True)
     # created_at / updated_at / created_by / updated_by
     # are provided by TrackableMixin
@@ -101,19 +119,21 @@ class StaffProfile(TrackableMixin, models.Model):
         ]
 
     def __str__(self):
-        return f"{self.employee_id} — {self.user.get_full_name() or self.user.email}"
+        return (
+            f"{self.employee_id} — "
+            f"{self.user.get_full_name() or self.user.email}"
+        )
 
     @property
     def full_name(self):
-        # If the queryset annotated this value, return it directly
+        # If the queryset annotated this value, return it directly.
         if hasattr(self, "_full_name"):
             return self._full_name
         return self.user.get_full_name() or self.user.email
 
     @full_name.setter
     def full_name(self, value):
-        # Allows queryset annotations (e.g. .annotate(full_name=...))
-        # to attach a value without raising AttributeError
+        # Allows queryset annotations to attach this value.
         self._full_name = value
 
     @property

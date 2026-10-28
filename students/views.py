@@ -169,38 +169,74 @@ def student_detail(request, pk):
 def student_create(request):
     if request.method == "POST":
         form = StudentForm(request.POST, request.FILES)
+
         if form.is_valid():
             try:
                 with transaction.atomic():
+                    # Save the student without committing first.
                     student = form.save(commit=False)
-                    # student_form.html has no Status tab, so the is_active checkbox is
-                    # never submitted - Django then treats it as an unchecked box (False),
-                    # even though the model default is True. Force it explicitly here so
-                    # every newly created student starts Active.
+
+                    # New students always start active.
                     student.is_active = True
                     student.inactive_date = None
                     student.created_by = request.user
                     student.updated_by = request.user
+
+                    # Save the student before creating therapy enrollments.
                     student.save()
 
-                    log_audit(request.user, student, "CREATE", snapshot=snapshot_instance(student))
+                    # Save the selected therapies.
+                    # Group is saved automatically with the student.
+                    form.save_therapies(student)
 
-                messages.success(request, f"Student {student.name} was added successfully.")
+                    # Record the creation audit.
+                    log_audit(
+                        request.user,
+                        student,
+                        "CREATE",
+                        snapshot=snapshot_instance(student),
+                    )
+
+                messages.success(
+                    request,
+                    f"Student {student.name} was added successfully.",
+                )
+
                 return redirect("student_detail", pk=student.pk)
+
             except IntegrityError:
-                logger.exception("IntegrityError creating student with data=%s", form.cleaned_data)
+                logger.exception(
+                    "IntegrityError creating student with data=%s",
+                    form.cleaned_data,
+                )
                 messages.error(
                     request,
-                    "Could not save this student — a student with that ID may already exist.",
+                    "Could not save this student — a student with "
+                    "that ID may already exist.",
                 )
+
             except Exception:
                 logger.exception("Unexpected error creating student")
-                messages.error(request, "An unexpected error occurred while saving. Please try again.")
+                messages.error(
+                    request,
+                    "An unexpected error occurred while saving. "
+                    "Please try again.",
+                )
+
         else:
-            messages.error(request, "Please correct the errors below.")
+            messages.error(
+                request,
+                "Please correct the errors below.",
+            )
+
     else:
         form = StudentForm()
-    return render(request, "students/student_form.html", {"form": form})
+
+    return render(
+        request,
+        "students/student_form.html",
+        {"form": form},
+    )
 
 
 @role_required("SYSTEM_ADMIN", "BRANCH_ADMIN")
@@ -208,43 +244,98 @@ def student_edit(request, pk):
     student = get_object_or_404(Student, pk=pk)
 
     student_ct = ContentType.objects.get_for_model(Student)
+
     audit_logs = (
-        AuditLog.objects.filter(content_type=student_ct, object_id=student.pk)
+        AuditLog.objects.filter(
+            content_type=student_ct,
+            object_id=student.pk,
+        )
         .select_related("user")
         .order_by("-action_time")[:20]
     )
 
     if request.method == "POST":
         old_student = Student.objects.get(pk=student.pk)
-        form = StudentForm(request.POST, request.FILES, instance=student)
+
+        form = StudentForm(
+            request.POST,
+            request.FILES,
+            instance=student,
+        )
+
         if form.is_valid():
             try:
                 with transaction.atomic():
+                    # Save the updated student.
                     student = form.save(commit=False)
                     student.updated_by = request.user
                     student.save()
 
-                    changes = build_field_changes(old_student, student)
-                    if changes:
-                        log_audit(request.user, student, "UPDATE", field_changes=changes)
+                    # Synchronize the selected therapies.
+                    # Existing active enrollments retain their therapist
+                    # and frequency when the therapy remains selected.
+                    form.save_therapies(student)
 
-                messages.success(request, f"Student {student.name} was updated successfully.")
+                    # Audit changes to the student model fields.
+                    changes = build_field_changes(
+                        old_student,
+                        student,
+                    )
+
+                    if changes:
+                        log_audit(
+                            request.user,
+                            student,
+                            "UPDATE",
+                            field_changes=changes,
+                        )
+
+                messages.success(
+                    request,
+                    f"Student {student.name} was updated successfully.",
+                )
+
                 return redirect("student_detail", pk=student.pk)
+
             except IntegrityError:
-                logger.exception("IntegrityError updating student pk=%s", pk)
-                messages.error(request, "Could not save changes due to a data conflict. Please try again.")
+                logger.exception(
+                    "IntegrityError updating student pk=%s",
+                    pk,
+                )
+                messages.error(
+                    request,
+                    "Could not save changes due to a data conflict. "
+                    "Please try again.",
+                )
+
             except Exception:
-                logger.exception("Unexpected error updating student pk=%s", pk)
-                messages.error(request, "An unexpected error occurred while saving. Please try again.")
+                logger.exception(
+                    "Unexpected error updating student pk=%s",
+                    pk,
+                )
+                messages.error(
+                    request,
+                    "An unexpected error occurred while saving. "
+                    "Please try again.",
+                )
+
         else:
-            messages.error(request, "Please correct the errors below.")
+            messages.error(
+                request,
+                "Please correct the errors below.",
+            )
+
     else:
         form = StudentForm(instance=student)
 
     return render(
         request,
         "students/student_edit.html",
-        {"form": form, "student": student, "audit_logs": audit_logs},
+        {
+            "form": form,
+            "student": student,
+            "audit_logs": audit_logs,
+        },
     )
 
 

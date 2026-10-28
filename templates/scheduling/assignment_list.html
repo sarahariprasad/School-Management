@@ -1,0 +1,102 @@
+{% extends "scheduling/base_scheduling.html" %}
+{% block title %}Slot Assignments{% endblock %}
+{% block tab_assign %}is-active{% endblock %}
+{% block page_icon %}<i class="bi bi-diagram-3"></i>{% endblock %}
+{% block page_title %}Recurring Slot Assignments{% endblock %}
+{% block page_sub %}Each student keeps the same hour with the same therapist every scheduled day until they become inactive.{% endblock %}
+{% block page_actions %}
+  <a class="btn btn-success btn-sm" href="?export=xlsx&status={{ status }}{% if branch_sel %}&branch={{ branch_sel }}{% endif %}{% if q %}&q={{ q|urlencode }}{% endif %}{% if therapy %}&therapy={{ therapy.pk }}{% endif %}{% if staff_id %}&staff={{ staff_id }}{% endif %}"><i class="bi bi-file-earmark-excel"></i> Export Excel</a>
+  {% if can_change %}<a class="btn btn-primary btn-sm" href="{% url 'scheduling:assignment_create' %}"><i class="bi bi-plus-circle"></i> New Assignment</a>{% endif %}
+{% endblock %}
+
+{% block page_content %}
+<form method="get" class="sch-filter mb-3">
+  <div class="row g-2 align-items-end">
+    <div class="col-12 col-md-3"><label class="form-label">Student</label><input name="q" value="{{ q }}" class="form-control form-control-sm" placeholder="Search name or ID"></div>
+    {% if branches %}
+    <div class="col-6 col-md-2"><label class="form-label">Branch</label>
+      {% if branch_locked %}<div class="form-control form-control-sm bg-light"><i class="bi bi-building"></i> {{ branches.0 }}</div><input type="hidden" name="branch" value="{{ branch_sel }}">
+      {% else %}<select name="branch" class="form-select form-select-sm" onchange="this.form.staff.value='';this.form.submit()"><option value="">All branches</option>
+        {% for b in branches %}<option value="{{ b.pk }}" {% if branch_sel == b.pk %}selected{% endif %}>{{ b }}</option>{% endfor %}</select>{% endif %}
+    </div>
+    {% endif %}
+    <div class="col-6 col-md-2"><label class="form-label">Therapy</label>
+      <select name="therapy" class="form-select form-select-sm"><option value="">All therapies</option>
+        {% for t in therapies %}<option value="{{ t.pk }}" {% if therapy and therapy.pk == t.pk %}selected{% endif %}>{{ t.name }}</option>{% endfor %}</select></div>
+    <div class="col-6 col-md-2"><label class="form-label">Therapist</label>
+      <select name="staff" class="form-select form-select-sm"><option value="">All therapists</option>
+        {% for s in therapists %}<option value="{{ s.pk }}" {% if staff_id == s.pk %}selected{% endif %}>{{ s.full_name }}</option>{% endfor %}</select></div>
+    <div class="col-6 col-md-1"><label class="form-label">Show</label>
+      <select name="status" class="form-select form-select-sm">
+        <option value="current" {% if status == "current" %}selected{% endif %}>Current</option>
+        <option value="ended" {% if status == "ended" %}selected{% endif %}>Ended</option>
+        <option value="all" {% if status == "all" %}selected{% endif %}>All</option>
+      </select></div>
+    <div class="col-12 col-md-auto d-grid"><button class="btn btn-sm btn-primary"><i class="bi bi-funnel"></i> Filter</button></div>
+  </div>
+</form>
+
+<div class="sch-card">
+<div class="table-responsive">
+<table class="table table-hover align-middle mb-0">
+  <thead class="table-light"><tr>
+    <th>Student</th><th class="d-none d-sm-table-cell">Therapy</th><th>Therapist &amp; time</th>
+    <th class="d-none d-lg-table-cell">Days</th><th class="d-none d-md-table-cell">From</th><th class="d-none d-md-table-cell">To</th><th></th>
+  </tr></thead>
+  <tbody>
+  {% for a in assignments %}
+    <tr>
+      <td>
+        <a class="fw-semibold text-decoration-none" href="{% url 'scheduling:student_report' a.student.pk %}">{{ a.student.name }}</a>
+        <div class="small text-muted">{{ a.student.student_id }}{% if not a.student.is_active %} · <span class="text-danger">inactive</span>{% endif %}</div>
+        <div class="d-sm-none small"><span class="badge bg-secondary">{{ a.therapy }}</span></div>
+      </td>
+      <td class="d-none d-sm-table-cell"><span class="badge bg-secondary">{{ a.therapy }}</span></td>
+      <td>
+        <a class="text-decoration-none" href="{% url 'scheduling:staff_report' a.staff.pk %}">{{ a.staff.full_name }}</a>
+        <div class="small text-muted text-nowrap"><i class="bi bi-clock"></i> {{ a.time_slot }}</div>
+        <div class="d-lg-none small text-muted">{{ a.weekday_display }}</div>
+      </td>
+      <td class="d-none d-lg-table-cell">{{ a.weekday_display }}</td>
+      <td class="d-none d-md-table-cell text-nowrap">{{ a.start_date|date:"d M Y" }}</td>
+      <td class="d-none d-md-table-cell text-nowrap">{% if a.end_date %}{{ a.end_date|date:"d M Y" }}{% else %}<span class="badge bg-success">Ongoing</span>{% endif %}</td>
+      <td class="text-end text-nowrap">
+        {% if can_change and a.is_current %}
+        <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#changeModal"
+          data-url="{% url 'scheduling:assignment_change' a.pk %}" data-end-url="{% url 'scheduling:assignment_end' a.pk %}"
+          data-assignment="{{ a.pk }}" data-student-id="{{ a.student_id }}" data-branch="{{ a.student.student_branch_id|default_if_none:'' }}" data-student="{{ a.student.name }}" data-therapy="{{ a.therapy_id }}" data-staff="{{ a.staff_id }}"
+          data-slot="{{ a.time_slot_id }}" data-days="{{ a.weekdays }}"><i class="bi bi-arrow-left-right"></i> <span class="d-none d-sm-inline">Change</span></button>
+        {% endif %}
+      </td>
+    </tr>
+  {% empty %}
+    <tr><td colspan="7" class="text-center text-muted py-5"><i class="bi bi-inbox fs-3 d-block"></i>No assignments found for these filters.</td></tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>
+</div>
+
+{% if unassigned %}
+<div class="sch-section-title"><i class="bi bi-exclamation-triangle text-warning"></i> Enrolled but no slot yet <span class="badge bg-warning text-dark">{{ unassigned|length }}</span></div>
+<div class="sch-card">
+<div class="table-responsive">
+<table class="table table-sm align-middle mb-0">
+  <thead class="table-light"><tr><th>Student</th><th>Therapy</th><th class="d-none d-md-table-cell">Therapist</th><th></th></tr></thead>
+  <tbody>
+  {% for e in unassigned %}
+    <tr>
+      <td>{{ e.student.name }} <small class="text-muted">{{ e.student.student_id }}</small></td>
+      <td><span class="badge bg-secondary">{{ e.therapy }}</span></td>
+      <td class="d-none d-md-table-cell">{{ e.staff.full_name|default:"—" }}</td>
+      <td class="text-end">{% if can_change %}<a class="btn btn-sm btn-success" href="{% url 'scheduling:assignment_create' %}?student={{ e.student_id }}&therapy={{ e.therapy_id }}{% if e.staff_id %}&staff={{ e.staff_id }}{% endif %}"><i class="bi bi-plus-circle"></i> Assign slot</a>{% endif %}</td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>
+</div>
+{% endif %}
+
+{% if can_change %}{% include "scheduling/_change_modal.html" with eff=today %}{% endif %}
+{% endblock %}

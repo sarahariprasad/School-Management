@@ -1,0 +1,139 @@
+{# Scheduling styles, inlined so they apply without any static-files setup #}
+<style>
+/* ===== Scheduling app styles (Bootstrap 5 companion) ===== */
+.sch {
+  --sch-radius: 14px;
+  --sch-border: #e4e9f0;
+  --sch-muted: #6b7686;
+  --sch-shadow: 0 1px 2px rgba(16, 24, 40, .05), 0 1px 3px rgba(16, 24, 40, .06);
+
+  --free-bg: #e8f7ee;     --free-fg: #146c43;   --free-bd: #b9e3c9;
+  --booked-bg: #e8f0ff;   --booked-fg: #0a58ca; --booked-bd: #c0d4fb;
+  --done-bg: #d5f0de;     --done-fg: #0f5132;
+  --missed-bg: #fdeaec;   --missed-fg: #b02a37;
+  --absent-bg: #fff4d6;   --absent-fg: #7a5a00;
+  --na-bg: #f1f3f5;       --na-fg: #7b8591;
+}
+
+/* ---------- page header ---------- */
+.sch-title { font-size: 1.35rem; font-weight: 600; margin: 0; display: flex; align-items: center; gap: .5rem; }
+.sch-title i { color: var(--booked-fg); }
+.sch-sub { color: var(--sch-muted); font-size: .9rem; margin-top: .15rem; }
+
+/* ---------- section tabs (own classes, scroll sideways on phones) ---------- */
+.sch-tabs { display: flex; gap: .4rem; overflow-x: auto; white-space: nowrap; padding: 0 0 .45rem; margin-bottom: 1rem;
+            -webkit-overflow-scrolling: touch; scrollbar-width: thin; }
+.sch-tab { display: inline-flex; align-items: center; gap: .35rem; flex: none; padding: .42rem .95rem; border-radius: 999px;
+           font-size: .86rem; font-weight: 500; color: #3b4656 !important; background: #fff;
+           border: 1px solid var(--sch-border); text-decoration: none !important; transition: background .15s; }
+.sch-tab:hover { background: #eef3fb; }
+.sch-tab.is-active { background: #0d6efd; border-color: #0d6efd; color: #fff !important; box-shadow: 0 1px 4px rgba(13,110,253,.35); }
+
+/* ---------- filter bar ---------- */
+.sch-filter { background: #fff; border: 1px solid var(--sch-border); border-radius: var(--sch-radius);
+              padding: .8rem .9rem; box-shadow: var(--sch-shadow); }
+.sch-filter .form-label { font-size: .72rem; text-transform: uppercase; letter-spacing: .04em;
+                          color: var(--sch-muted); margin-bottom: .2rem; }
+.sch-datenav .btn { padding: .3rem .6rem; }
+
+/* ---------- generic cards ---------- */
+.sch-card { background: #fff; border: 1px solid var(--sch-border); border-radius: var(--sch-radius);
+            box-shadow: var(--sch-shadow); overflow: visible; }
+.sch-card > .sch-card-head { padding: .75rem .9rem; border-bottom: 1px solid var(--sch-border);
+                             border-radius: var(--sch-radius) var(--sch-radius) 0 0; background: #fbfcfe; }
+.sch-section-title { font-size: 1rem; font-weight: 600; margin: 1.5rem 0 .6rem; display: flex; align-items: center; gap: .4rem; }
+
+/* ---------- stat tiles ---------- */
+.sch-stat { background: #fff; border: 1px solid var(--sch-border); border-radius: var(--sch-radius);
+            padding: .65rem .8rem; display: flex; align-items: center; gap: .7rem; box-shadow: var(--sch-shadow); height: 100%; }
+.sch-stat .ico { width: 38px; height: 38px; border-radius: 10px; display: grid; place-items: center; font-size: 1.1rem; flex: none; }
+.sch-stat .num { font-size: 1.3rem; font-weight: 600; line-height: 1.1; }
+.sch-stat .lbl { font-size: .72rem; color: var(--sch-muted); text-transform: uppercase; letter-spacing: .03em; }
+.ico-blue { background: var(--booked-bg); color: var(--booked-fg); }
+.ico-green { background: var(--done-bg); color: var(--done-fg); }
+.ico-amber { background: var(--absent-bg); color: var(--absent-fg); }
+.ico-red { background: var(--missed-bg); color: var(--missed-fg); }
+.ico-grey { background: var(--na-bg); color: var(--na-fg); }
+
+/* ---------- help box ---------- */
+.sch-help { background: #f4f8ff; border: 1px solid #d6e4ff; border-radius: 12px; padding: .6rem .9rem; font-size: .88rem; }
+.sch-help summary { cursor: pointer; font-weight: 600; color: #0a58ca; list-style: none; }
+.sch-help summary::-webkit-details-marker { display: none; }
+.sch-help summary::before { content: "\F431"; font-family: "bootstrap-icons"; margin-right: .4rem; }
+.sch-help ul { margin: .5rem 0 0; padding-left: 1.2rem; }
+
+/* ---------- therapist card (daily schedule) ---------- */
+.sch-avatar { width: 38px; height: 38px; border-radius: 50%; display: grid; place-items: center; flex: none;
+              background: #e8f0ff; color: #0a58ca; font-weight: 600; }
+.sch-progress { height: 7px; background: #e9eef6; border-radius: 99px; }
+.sch-progress .progress-bar { background: #198754; border-radius: 99px; }
+.slot-row { display: grid; grid-template-columns: 78px 1fr; gap: .6rem; padding: .65rem .9rem;
+            border-top: 1px solid #eef1f6; }
+.slot-row:first-of-type { border-top: 0; }
+.slot-row.is-free { background: #fafdfb; }
+.slot-row.is-done { background: #f3fbf6; }
+.slot-row.is-missed { background: #fff6f7; }
+.slot-row.is-off { background: var(--na-bg); }
+.slot-time { font-size: .8rem; line-height: 1.25; }
+.slot-time .t1 { font-weight: 600; color: #1f2937; }
+.slot-time .t2 { color: var(--sch-muted); }
+.stu { display: flex; justify-content: space-between; align-items: flex-start; gap: .5rem;
+       padding: .35rem .55rem; border-radius: 10px; background: var(--booked-bg); border: 1px solid var(--booked-bd); }
+.stu + .stu { margin-top: .35rem; }
+.stu.s-completed { background: var(--done-bg); border-color: #b4e0c3; }
+.stu.s-student_absent { background: var(--absent-bg); border-color: #f1dd9d; }
+.stu.s-staff_absent { background: var(--missed-bg); border-color: #f3c0c6; }
+.stu .name { font-weight: 600; text-decoration: none; word-break: break-word; }
+.free-label { color: var(--free-fg); font-weight: 600; }
+.add-btn { border-style: dashed; }
+
+/* keep dropdown menus above neighbouring cards and inside the viewport */
+.sch .dropdown-menu { z-index: 1085; max-height: 70vh; overflow-y: auto; }
+
+/* ---------- calendar ---------- */
+.cal-wrap { border: 1px solid var(--sch-border); border-radius: var(--sch-radius); background: #fff; box-shadow: var(--sch-shadow); }
+.cal { margin: 0; border-collapse: separate; border-spacing: 0; width: 100%; }
+.cal th, .cal td { border-bottom: 1px solid #eef1f6; border-right: 1px solid #eef1f6; padding: .35rem; vertical-align: middle; }
+.cal thead th { background: #f7f9fc; text-align: center; font-weight: 600; font-size: .82rem; position: sticky; top: 0; }
+.cal .tcol { position: sticky; left: 0; background: #f7f9fc; z-index: 2; min-width: 84px; font-size: .78rem; text-align: center; }
+.cal td.cell { min-width: 104px; height: 58px; text-align: center; font-size: .78rem; }
+.cal .c-free { background: var(--free-bg); }
+.cal .c-booked { background: var(--booked-bg); }
+.cal .c-booked.done { background: var(--done-bg); }
+.cal .c-booked.missed { background: var(--missed-bg); }
+.cal .c-na { background: repeating-linear-gradient(45deg, var(--na-bg), var(--na-bg) 6px, #f8f9fa 6px, #f8f9fa 12px); color: var(--na-fg); }
+.cal .cell a { display: block; text-decoration: none; }
+.cal .cell .names { display: block; max-width: 140px; margin: 0 auto; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #44506a; }
+.cal .cell .note { display: block; font-size: .68rem; }
+.cal th.today { background: #dbe8ff; }
+.legend { display: flex; flex-wrap: wrap; gap: .4rem .9rem; font-size: .8rem; color: #44506a; }
+.legend .sw { display: inline-block; width: 14px; height: 14px; border-radius: 4px; border: 1px solid #b6bfcc; vertical-align: -2px; margin-right: .25rem; }
+
+/* ---------- matrix (therapist slots) ---------- */
+.matrix th, .matrix td { white-space: nowrap; }
+.matrix .sticky-col { position: sticky; left: 0; background: #fff; z-index: 1; min-width: 150px; text-align: left; }
+.matrix thead .sticky-col { background: #f7f9fc; }
+
+/* ---------- attendance radios ---------- */
+.att-group .btn { padding: .25rem .6rem; font-size: .8rem; }
+.btn-check:checked + .btn-outline-success { color: #fff; }
+
+/* ---------- forms ---------- */
+.sch-form-card { max-width: 760px; }
+.day-pills { display: flex; flex-wrap: wrap; gap: .4rem; }
+.day-pills .btn { min-width: 52px; }
+
+/* ---------- small screens ---------- */
+@media (max-width: 575.98px) {
+  .sch-title { font-size: 1.15rem; }
+  .slot-row { grid-template-columns: 62px 1fr; padding: .6rem .65rem; }
+  .sch-actions { width: 100%; }
+  .sch-actions .btn { flex: 1 1 auto; }
+  .sch-filter .row > [class*="col-"] { width: 100%; }
+  .sch-stat { padding: .5rem .6rem; }
+  .sch-stat .ico { width: 32px; height: 32px; font-size: 1rem; }
+  .sch-stat .num { font-size: 1.1rem; }
+}
+@media print { .sch-tabs, .sch-filter, .sch-actions, .dropdown, .btn { display: none !important; } }
+
+</style>

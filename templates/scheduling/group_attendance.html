@@ -1,0 +1,45 @@
+{% extends "scheduling/base_scheduling.html" %}
+{% block title %}Group Attendance{% endblock %}
+{% block tab_group %}is-active{% endblock %}
+{% block page_icon %}<i class="bi bi-person-check"></i>{% endblock %}
+{% block page_title %}Group Attendance — {{ gs.group }}{% endblock %}
+{% block page_sub %}{{ gs.date|date:"d M Y" }} · {{ gs.start_time|time:"h:i A" }} – {{ gs.end_time|time:"h:i A" }}{% if gs.activity %} · {{ gs.activity }}{% endif %}{% endblock %}
+{% block page_content %}
+<form method="post">
+  {% csrf_token %}
+  <div class="sch-card">
+    <div class="sch-card-head d-flex flex-wrap justify-content-between align-items-center gap-2">
+      <span class="small text-muted">{{ records|length }} student{{ records|length|pluralize }}</span>
+      <button type="button" class="btn btn-sm btn-outline-success" id="allPresent"><i class="bi bi-check2-all"></i> Mark all present</button>
+    </div>
+    <div class="table-responsive">
+    <table class="table table-sm align-middle mb-0">
+      <thead class="table-light"><tr><th>Student</th><th>Attendance &amp; remarks</th></tr></thead>
+      <tbody>
+      {% for r in records %}
+        <tr>
+          <td>{{ r.student.name }}<div class="small text-muted">{{ r.student.student_id }}</div></td>
+          <td>
+            <div class="btn-group att-group" role="group">
+              {% for v, l in choices %}
+              <input type="radio" class="btn-check" name="status_{{ r.pk }}" id="g{{ r.pk }}{{ v }}" value="{{ v }}" {% if r.status == v %}checked{% endif %}>
+              <label class="btn btn-outline-{% if v == 'present' %}success{% elif v == 'absent' %}danger{% else %}warning{% endif %}" for="g{{ r.pk }}{{ v }}">{{ l }}</label>
+              {% endfor %}
+            </div>
+            <input name="remarks_{{ r.pk }}" value="{{ r.remarks }}" class="form-control form-control-sm mt-1" placeholder="Remarks (optional)" style="min-width:170px">
+          </td>
+        </tr>
+      {% empty %}
+        <tr><td colspan="2" class="text-center text-muted py-4">No active students in this group.</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+    </div>
+  </div>
+  <div class="d-flex flex-wrap gap-2 mt-3">
+    <button class="btn btn-primary"><i class="bi bi-check2"></i> Save attendance</button>
+    <a class="btn btn-outline-secondary" href="{% url 'scheduling:group_list' %}?date={{ gs.date|date:'Y-m-d' }}">Back</a>
+  </div>
+</form>
+<script>document.getElementById('allPresent').addEventListener('click',function(){document.querySelectorAll('input[type=radio][value=present]').forEach(function(r){r.checked=true;});});</script>
+{% endblock %}

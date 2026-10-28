@@ -1,0 +1,51 @@
+{% comment %}Date navigation + optional Branch / Therapy / Therapist filters.
+   Uses: day, prev_day, next_day, filter_qs, mode, branches, branch_sel, branch_locked, therapies, therapy, staff_choices, staff_sel{% endcomment %}
+<form method="get" class="sch-filter mb-3">
+  {% if mode %}<input type="hidden" name="mode" value="{{ mode }}">{% endif %}
+  <div class="row g-2 align-items-end">
+    <div class="col-12 col-md-auto">
+      <label class="form-label">Date</label>
+      <div class="input-group input-group-sm sch-datenav">
+        <a class="btn btn-outline-secondary" href="?date={{ prev_day|date:'Y-m-d' }}{{ filter_qs }}{% if mode %}&mode={{ mode }}{% endif %}" aria-label="Previous"><i class="bi bi-chevron-left"></i></a>
+        <input type="date" name="date" value="{{ day|date:'Y-m-d' }}" class="form-control" onchange="this.form.submit()">
+        <a class="btn btn-outline-secondary" href="?date={{ next_day|date:'Y-m-d' }}{{ filter_qs }}{% if mode %}&mode={{ mode }}{% endif %}" aria-label="Next"><i class="bi bi-chevron-right"></i></a>
+        <a class="btn btn-outline-primary" href="?{{ filter_qs|slice:'1:' }}{% if mode %}{% if filter_qs %}&{% endif %}mode={{ mode }}{% endif %}">Today</a>
+      </div>
+    </div>
+
+    {% if branches %}
+    <div class="col-6 col-md-auto">
+      <label class="form-label">Branch</label>
+      {% if branch_locked %}
+        <div class="form-control form-control-sm bg-light"><i class="bi bi-building"></i> {{ branches.0 }}</div>
+        <input type="hidden" name="branch" value="{{ branch_sel }}">
+      {% else %}
+        <select name="branch" class="form-select form-select-sm" onchange="if(this.form.staff){this.form.staff.value='';}this.form.submit()">
+          <option value="">All branches</option>
+          {% for b in branches %}<option value="{{ b.pk }}" {% if branch_sel == b.pk %}selected{% endif %}>{{ b }}</option>{% endfor %}
+        </select>
+      {% endif %}
+    </div>
+    {% endif %}
+
+    {% if therapies %}
+    <div class="col-6 col-md-auto">
+      <label class="form-label">Therapy</label>
+      <select name="therapy" class="form-select form-select-sm" onchange="if(this.form.staff){this.form.staff.value='';}this.form.submit()">
+        <option value="">All therapies</option>
+        {% for t in therapies %}<option value="{{ t.pk }}" {% if therapy and therapy.pk == t.pk %}selected{% endif %}>{{ t.name }}</option>{% endfor %}
+      </select>
+    </div>
+    {% endif %}
+
+    {% if staff_choices is not None %}
+    <div class="col-12 col-md-auto">
+      <label class="form-label">Therapist</label>
+      <select name="staff" class="form-select form-select-sm" onchange="this.form.submit()">
+        <option value="">All therapists</option>
+        {% for s in staff_choices %}<option value="{{ s.pk }}" {% if staff_sel == s.pk %}selected{% endif %}>{{ s.full_name }} ({{ s.therapy }})</option>{% endfor %}
+      </select>
+    </div>
+    {% endif %}
+  </div>
+</form>

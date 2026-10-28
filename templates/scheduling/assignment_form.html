@@ -1,0 +1,28 @@
+{% extends "scheduling/base_scheduling.html" %}
+{% block title %}Assign Recurring Slot{% endblock %}
+{% block tab_assign %}is-active{% endblock %}
+{% block page_icon %}<i class="bi bi-person-plus"></i>{% endblock %}
+{% block page_title %}Assign Recurring Slot{% endblock %}
+{% block page_sub %}Give a student a fixed one-hour slot with a therapist.{% endblock %}
+{% block page_content %}
+<div class="sch-form-card">
+  <details class="sch-help mb-3" open>
+    <summary>Good to know</summary>
+    <ul>
+      <li>The student keeps this slot on the chosen days <strong>until they become inactive</strong> or an admin changes or ends it.</li>
+      <li>A therapist can take <strong>several students in the same hour</strong>; one student can only be in one place per hour.</li>
+      <li>Only hours the therapist works are accepted (see <a href="{% url 'scheduling:therapist_slots' %}">Therapist Slots</a>).</li>
+    </ul>
+  </details>
+  <div class="sch-card"><div class="p-3 p-md-4">
+    <form method="post" novalidate>
+      {% csrf_token %}
+      {% include "scheduling/_form_fields.html" %}
+      <div class="d-flex flex-wrap gap-2 mt-4">
+        <button class="btn btn-primary"><i class="bi bi-check2"></i> Save assignment</button>
+        <a class="btn btn-outline-secondary" href="{% url 'scheduling:assignment_list' %}">Cancel</a>
+      </div>
+    </form>
+  </div></div>
+</div>
+{% endblock %}

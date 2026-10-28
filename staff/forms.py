@@ -86,7 +86,7 @@ class StaffCreateForm(forms.ModelForm):
         model = StaffProfile
         fields = [
             "employee_id", "gender", "date_of_birth", "department",
-            "designation", "joining_date", "phone", "emergency_contact",
+            "designation","therapy", "joining_date", "phone", "emergency_contact",
             "emergency_contact_name", "address", "city", "state",
             "postal_code", "address_proof_type", "address_proof",
             "photo", "is_active","blood_group",
@@ -97,6 +97,7 @@ class StaffCreateForm(forms.ModelForm):
             "date_of_birth": _date(),
             "department": _select(),
             "designation": _text(placeholder="e.g. Class Teacher"),
+            "therapy": forms.Select(attrs={"class": "form-select"}),
             "joining_date": _date(),
             "phone": _text(placeholder="+91 98765 43210"),
             "emergency_contact": _text(placeholder="+91 98765 43210"),
@@ -187,7 +188,7 @@ class StaffProfileForm(forms.ModelForm):
     class Meta:
         model = StaffProfile
         fields = [
-            "employee_id", "gender", "date_of_birth", "department",
+            "employee_id", "gender", "date_of_birth", "department", "therapy",
             "designation", "joining_date", "phone", "emergency_contact",
             "emergency_contact_name", "address", "city", "state",
             "postal_code", "address_proof_type", "address_proof",
@@ -199,6 +200,7 @@ class StaffProfileForm(forms.ModelForm):
             "date_of_birth": _date(),
             "department": _select(),
             "designation": _text(),
+            "therapy": forms.Select(attrs={"class": "form-select"}),
             "joining_date": _date(),
             "phone": _text(),
             "emergency_contact": _text(),
