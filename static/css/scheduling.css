@@ -133,3 +133,10 @@
   .sch-stat .num { font-size: 1.1rem; }
 }
 @media print { .sch-tabs, .sch-filter, .sch-actions, .dropdown, .btn { display: none !important; } }
+
+.progress-bar {
+  width: var(--progress);
+  height: 8px;
+  background-color: #3498db;
+  border-radius: 4px;
+}

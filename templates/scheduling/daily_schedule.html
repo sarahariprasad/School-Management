@@ -64,7 +64,10 @@
           </div>
         </div>
         <div class="progress sch-progress mt-2" title="{{ card.done }} of {{ card.booked }} booked slots done">
-          <div class="progress-bar" style="width:{{ card.percent }}%"></div>
+          <div
+  class="progress-bar"
+  style="--progress: {{ card.percent }}%;"
+></div>
         </div>
         <div class="small text-muted mt-1">
           <strong class="text-dark">{{ card.done }}/{{ card.booked }}</strong> booked slots done
